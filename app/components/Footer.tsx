@@ -19,7 +19,7 @@ export default function Footer() {
                     Socials
                 </div>
             </div>
-            <div id="copyright" className="brand-max-w text-sm font-thin">© 2025 Whiisk Co.</div>
+            <div id="copyright" className="brand-max-w text-sm font-thin">© {new Date().getFullYear()} Whiisk Co. All rights reserved.</div>
         </footer>
     )
 }

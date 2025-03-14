@@ -1,19 +1,8 @@
 @import "tailwindcss";
 
-:root {
+/*:root {
 
-  --background: var(--white);
-  --foreground: var(--dark-grey);
-
-  --dark-blue: #31515C;
-  --light-blue: #B3DEE5;
-  --orange: #FFA101;
-  --yellow: #FAE6B1;
-
-  --dark-grey: #353535;
-  --white: #ffffff;
-
-}
+}*/
 
 @layer base {
 
@@ -38,17 +27,17 @@
 }
 
 @theme inline {
-  --color-background: var(--white);
-  --color-foreground: var(--dark-grey);
+  --color-background: #FFFFFF;
+  --color-foreground: #353535;
   --color-dark-blue: #31515C;
   --color-light-blue: #B3DEE5;
   --color-accent: #FFA101;
   --color-yellow: #FAE6B1;
-  --color-medium-grey: #848484;
-  --color-light-grey: #F3F3F3;
-  
-  --font-sans: var(--font-reddit-sans);
 
+  --color-dark-grey: #353535;
+  --color-medium-grey: #848484;
+  --color-light-grey: #F6F6F6;
+  --font-sans: var(--font-reddit-sans);
   --header-height: 104px;
 }
 

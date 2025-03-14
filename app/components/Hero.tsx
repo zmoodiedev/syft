@@ -28,9 +28,9 @@ export default function Hero() {
                 <span className="block text-[96px] font-bold tracking-tight leading-none mb-[2rem] highlight">Recipes</span>
                 <span className="block text-[1.7rem] leading-none pb-[2rem] font-light">No distractions.</span>
                 <Button
-                    href="/login"
+                    href="/recipes"
                     text="Get Whiisking!"
-                    className="blue"
+                    className="bg-light-blue"
                 />
                 <Image
                     ref={imageRef}

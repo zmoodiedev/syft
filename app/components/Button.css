@@ -14,9 +14,6 @@ a.btn {
         color: var(--background);
     }
 
-    &.orange {
-        background-color: var(--orange);
-    }
 
     &.blue {
         background-color: var(--light-blue);

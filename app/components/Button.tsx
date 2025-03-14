@@ -10,14 +10,14 @@ interface ButtonProps {
 export default function Button({ text, href, className = '' }: ButtonProps) {
     return href ? (
         <Link
-            className={`btn ${className}`}
+            className={`btn ${className} `}
             href={href}
         >
             {text}
         </Link>
     ) : (
         <button 
-            className={`btn ${className}`}
+            className={`btn ${className} `}
         >
             {text}
         </button>

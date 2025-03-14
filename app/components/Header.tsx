@@ -23,7 +23,7 @@ export default function Header() {
                     <Button
                         text="Sign Up"
                         href="/login"
-                        className="orange"
+                        className="bg-accent"
                     />
                 </nav>
             </div>

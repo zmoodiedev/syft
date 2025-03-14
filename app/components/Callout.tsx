@@ -21,7 +21,7 @@ export default function Callout() {
                     <Button
                         text="Learn More"
                         href="/login"
-                        className="blue"
+                        className="bg-light-blue"
                     />
                 </div>
             </section>
