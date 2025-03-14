@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+:root {
+
+  --background: var(--white);
+  --foreground: var(--dark-grey);
+
+  --dark-blue: #31515C;
+  --light-blue: #B3DEE5;
+  --orange: #FFA101;
+  --yellow: #FAE6B1;
+
+  --dark-grey: #353535;
+  --white: #ffffff;
+
+}
+
+@layer base {
+
+  body {
+    font-size: 18px;
+  }
+
+  h1 {
+    font-size: var(--text-6xl);
+    font-weight: 700;
+  }
+  h2 {
+    font-size: var(--text-5xl);
+    font-weight: 700;
+    font-family: var(--reddit-sans);
+  }
+  h3 {
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    font-family: var(--reddit-sans);
+  }
+}
+
+@theme inline {
+  --color-background: var(--white);
+  --color-foreground: var(--dark-grey);
+  --color-dark-blue: #31515C;
+  --color-light-blue: #B3DEE5;
+  --color-accent: #FFA101;
+  --color-yellow: #FAE6B1;
+  --color-medium-grey: #848484;
+  --color-light-grey: #F3F3F3;
+  
+  --font-sans: var(--font-reddit-sans);
+
+  --header-height: 104px;
+}
+
+@layer components {
+
+  .brand-max-w {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+
+  .highlight {
+    width: max-content;
+    position: relative;
+    
+    &::after {
+      content: "";
+      display: block;
+      height: .7rem;
+      background: var(--orange);
+      position: absolute;
+      bottom: 0.1rem;
+      width: 100%;
+      z-index: -1;
+      transform: skew(15deg, 358deg);
+    }
+  }
+
+}
+
+/*@media (prefers-color-scheme: dark) {
+  :root {
+    --background: var(--dark-grey);
+    --foreground: var(--white);
+  }
+}*/
+

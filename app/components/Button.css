@@ -1,0 +1,24 @@
+a.btn {
+    font-size: .9rem;
+    font-weight: 500;
+    transition: all .1s ease-in;
+    display: block;
+    color: var(--foreground);
+    border-radius: 6px;
+    padding: 8px 26px;
+    text-align: center;
+    max-width: max-content;
+
+    &:hover {
+        background-color: var(--foreground);
+        color: var(--background);
+    }
+
+    &.orange {
+        background-color: var(--orange);
+    }
+
+    &.blue {
+        background-color: var(--light-blue);
+    }
+}
