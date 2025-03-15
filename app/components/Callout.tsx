@@ -15,7 +15,7 @@ export default function Callout() {
                     />
                 </div>
                 <div className="callout-txt w-1/2 flex flex-col justify-center">
-                    <h2><span className="text-3xl block font-thin">Import</span>
+                    <h2 className="text-5xl mb-4"><span className="text-3xl block font-thin">Import</span>
                     Online Recipes</h2>
                     <p className="mb-10">Store and sort all of your favorite recipes—whether from cookbooks, websites, or handwritten cards. No ads, no distractions—just the recipes you love.</p>
                     <Button

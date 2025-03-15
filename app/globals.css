@@ -11,11 +11,11 @@
   }
 
   h1 {
-    font-size: var(--text-6xl);
+    font-size: var(--text-4xl);
     font-weight: 700;
   }
   h2 {
-    font-size: var(--text-5xl);
+    font-size: var(--text-3xl);
     font-weight: 700;
     font-family: var(--reddit-sans);
   }
@@ -24,10 +24,16 @@
     font-weight: 700;
     font-family: var(--reddit-sans);
   }
+
+  h4 {
+    font-size: var(--text-xl);
+    font-weight: 600;
+    font-family: var(--reddit-sans);
+  }
 }
 
 @theme inline {
-  --color-background: #FFFFFF;
+  --color-background: #F6F6F6;
   --color-foreground: #353535;
   --color-dark-blue: #31515C;
   --color-light-blue: #B3DEE5;

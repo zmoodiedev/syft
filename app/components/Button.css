@@ -7,7 +7,7 @@ a.btn {
     border-radius: 6px;
     padding: 8px 26px;
     text-align: center;
-    max-width: max-content;
+    width: max-content;
 
     &:hover {
         background-color: var(--foreground);

@@ -17,7 +17,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body
-        className={`${redditSans.variable} antialiased min-h-full bg-background text-foreground overflow-x-hidden`}
+        className={`${redditSans.variable} antialiased min-h-screen flex flex-col bg-background text-foreground overflow-x-hidden`}
       >
         <Header />
           {children}
