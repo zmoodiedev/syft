@@ -1,0 +1,27 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if the user owns the document
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Rules for recipes collection
+    match /recipes/{recipeId} {
+      // Allow read if the user owns the recipe
+      allow read: if isAuthenticated() && isOwner(resource.data.userId);
+      
+      // Allow create if user is authenticated and sets themselves as owner
+      allow create: if isAuthenticated() && isOwner(request.resource.data.userId);
+      
+      // Allow update/delete if user owns the recipe
+      allow update, delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+  }
+} 

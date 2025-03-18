@@ -20,7 +20,7 @@ const foodItems = [
         src: '/images/food/salad.png',
         alt: 'Fresh salad',
         initialX: '65%', // percentage from the right edge
-        initialY: 50,
+        initialY: 350,
         speed: 0.5,
         scale: 0.6,
         rotate: 10,
@@ -44,7 +44,7 @@ export default function Hero() {
     const springConfig = { stiffness: 100, damping: 30, mass: 0.5 };
     
     // Create smooth spring-based transforms for each food item
-    const pastaY = useTransform(scrollY, [0, 500], [foodItems[0].initialY, foodItems[0].initialY + (foodItems[0].speed * -200)]);
+    const pastaY = useTransform(scrollY, [0, 600], [foodItems[0].initialY, foodItems[0].initialY + (foodItems[0].speed * 600)]);
     const saladY = useTransform(scrollY, [0, 500], [foodItems[1].initialY, foodItems[1].initialY + (foodItems[1].speed * -200)]);
     const dessertY = useTransform(scrollY, [0, 500], [foodItems[2].initialY, foodItems[2].initialY + (foodItems[2].speed * -200)]);
     
@@ -55,7 +55,7 @@ export default function Hero() {
     const transforms = [springPastaY, springSaladY, springDessertY];
 
     return (
-        <section ref={sectionRef} id="hero" className="w-full min-h-[575px] flex items-stretch isolate overflow-hidden relative">
+        <section ref={sectionRef} id="hero" className="w-full min-h-[calc(600px+var(--header-height))] -mt-[var(--header-height)] flex items-stretch isolate overflow-hidden relative">
             <div className='hero-text w-full brand-max-w relative flex flex-col justify-center z-10'>
                 <span className="block text-[1.7rem] leading-none font-light">Your favorite</span>
                 <span className="block text-[96px] font-bold tracking-tight leading-none mb-[2rem] highlight">Recipes</span>

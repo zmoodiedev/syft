@@ -40,7 +40,7 @@ export default function Header() {
                                 href="/recipes">Your Recipes</Link></li>
                         <li>
                             <Link
-                                href="/recipes/add-recipe">Add a Recipe</Link></li>
+                                href="/add-recipe">Add a Recipe</Link></li>
                     </ul>
                 )}
                 <nav className="flex flex-row gap-[1rem] items-center">

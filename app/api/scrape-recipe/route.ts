@@ -88,7 +88,7 @@ export async function POST(request: Request) {
             const instructions: string[] = [];
 
             // Common selectors for recipe ingredients
-            $('li[class*="ingredient"], .ingredient-item, .ingredients li').each((_, el) => {
+            $('li[class*="ingredient"], .ingredient-item, .ingredients li, [class*="ingredients__item"], .mntl-structured-ingredients__list-item').each((_, el) => {
                 const text = $(el).text().trim();
                 const parts = text.split(' ');
                 ingredients.push({
@@ -99,24 +99,67 @@ export async function POST(request: Request) {
             });
 
             // Common selectors for recipe instructions
-            $('li[class*="instruction"], .instruction-item, .instructions li, .preparation-steps li').each((_, el) => {
+            // Added AllRecipes specific selectors and other common variations
+            $(`
+                li[class*="instruction"], 
+                .instruction-item, 
+                .instructions li, 
+                .preparation-steps li,
+                .recipe-directions__list li,
+                .steps li,
+                .step li,
+                .mntl-sc-block-group--LI p,
+                [class*="recipe__steps"] li,
+                [class*="recipe-steps"] li,
+                [class*="recipe-instructions"] li,
+                [class*="recipesteps"] li,
+                .recipe-method-step,
+                [id*="recipe-steps"] li,
+                [id*="recipe_steps"] li,
+                [id*="recipesteps"] li
+            `).each((_, el) => {
                 const text = $(el).text().trim();
-                if (text) {
-                    instructions.push(text);
+                // Remove any advertisement text or other common unwanted content
+                const cleanText = text.replace(/advertisement|sponsored|ad/gi, '').trim();
+                if (cleanText) {
+                    instructions.push(cleanText);
                 }
             });
 
-            // Try to find recipe name
+            // Try to find recipe name with expanded selectors
             const name = $('h1').first().text().trim() ||
                         $('[class*="recipe-title"]').first().text().trim() ||
-                        $('[class*="recipe-name"]').first().text().trim();
+                        $('[class*="recipe-name"]').first().text().trim() ||
+                        $('[class*="recipe-header"]').first().text().trim() ||
+                        $('[id*="recipe-title"]').first().text().trim();
 
-            // Try to find servings
-            const servings = $('[class*="servings"], [class*="yield"]').first().text().trim();
+            // Try to find servings with expanded selectors
+            const servings = $('[class*="servings"], [class*="yield"], [class*="serves"], [itemprop="recipeYield"]')
+                .first()
+                .text()
+                .trim()
+                .replace(/serves|servings|yield:\s*/i, '')
+                .trim();
 
-            // Try to find times
-            const prepTime = $('[class*="prep-time"]').first().text().trim();
-            const cookTime = $('[class*="cook-time"]').first().text().trim();
+            // Try to find times with expanded selectors
+            const prepTimeSelectors = [
+                '[class*="prep-time"]',
+                '[class*="preptime"]',
+                '[itemprop="prepTime"]',
+                '[class*="prep_time"]',
+                'time[class*="prep"]'
+            ].join(', ');
+
+            const cookTimeSelectors = [
+                '[class*="cook-time"]',
+                '[class*="cooktime"]',
+                '[itemprop="cookTime"]',
+                '[class*="cook_time"]',
+                'time[class*="cook"]'
+            ].join(', ');
+
+            const prepTime = $(prepTimeSelectors).first().text().trim();
+            const cookTime = $(cookTimeSelectors).first().text().trim();
 
             recipeData = {
                 name,
