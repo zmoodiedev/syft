@@ -9,6 +9,7 @@ export default function RecipeList() {
                     <Image 
                         src="/sticky-toffee-pudding.jpg"
                         alt="Sticky Toffee Pudding"
+                        height={0}
                         fill
                         className="object-cover rounded-[.5rem]"
                     />

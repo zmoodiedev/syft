@@ -3,11 +3,12 @@ import Link from "next/link";
 
 interface ButtonProps {
     text: string;
+    onClick?: () => void;
     href?: string;
     className?: string;
 }
 
-export default function Button({ text, href, className = '' }: ButtonProps) {
+export default function Button({ text, href, className = '', onClick }: ButtonProps) {
     return href ? (
         <Link
             className={`btn ${className} `}
@@ -18,6 +19,7 @@ export default function Button({ text, href, className = '' }: ButtonProps) {
     ) : (
         <button 
             className={`btn ${className} `}
+            onClick={onClick}
         >
             {text}
         </button>

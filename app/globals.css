@@ -44,7 +44,7 @@
   --color-medium-grey: #848484;
   --color-light-grey: #F6F6F6;
   --font-sans: var(--font-reddit-sans);
-  --header-height: 104px;
+  --header-height: 80px;
 }
 
 @layer components {
