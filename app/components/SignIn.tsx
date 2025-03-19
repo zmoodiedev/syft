@@ -17,6 +17,7 @@ export default function SignIn() {
             await signIn(email, password);
             setError('');
             router.push('/recipes');
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (_) {
             setError('Failed to sign in. Please check your credentials.');
         }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { useAuth } from '@/app/context/AuthContext';
 import { db } from '@/app/lib/firebase';
@@ -13,11 +13,11 @@ export const RECIPE_CATEGORIES = [
   // Dietary Preferences
   'Vegetarian', 'Vegan',
   // Protein Types
-  'Chicken', 'Beef', 'Fish', 'Seafood', 'Turkey',
+  'Chicken', 'Beef', 'Fish', 'Seafood',
   // Cooking Methods
-  'Baking',
+  'Air Fryer', 'Grilling', 'Baking',
   // Course Types
-  'Dessert', 'Salad', 'Soup', 'Sandwich', 'Pizza', 'Pasta', 'Rice'
+  'Main Course', 'Dessert', 'Salad', 'Soup', 'Sandwich', 'Pizza', 'Pasta', 'Rice',
 ];
 
 interface Ingredient {
@@ -27,26 +27,63 @@ interface Ingredient {
   id: string;
 }
 
-interface RecipeFormData {
+export interface Recipe {
+  id?: string;
   name: string;
-  servings: string;
+  servings?: string;
   prepTime: string;
   cookTime: string;
-  imageUrl?: string;
+  ingredients: Ingredient[];
+  instructions: string[];
+  categories?: string[];
+  imageUrl?: string | null;
+  userId?: string;
 }
 
-export default function RecipeForm() {
+interface RecipeFormProps {
+  initialData?: Recipe;
+  onSubmit?: (data: Recipe) => Promise<void>;
+  submitButtonText?: string;
+}
+
+export default function RecipeForm({ initialData, onSubmit, submitButtonText = 'Save Recipe' }: RecipeFormProps) {
   const { user } = useAuth();
   const router = useRouter();
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [imageUrl, setImageUrl] = useState('');
-  const [isPreviewingImage, setIsPreviewingImage] = useState(false);
-  const [ingredients, setIngredients] = useState<Ingredient[]>([
-    { amount: '', unit: '', item: '', id: '1' }
-  ]);
-  const [instructions, setInstructions] = useState<string[]>(['']);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(initialData?.categories || []);
+  const [imageUrl, setImageUrl] = useState(initialData?.imageUrl || '');
+  const [isPreviewingImage, setIsPreviewingImage] = useState(!!initialData?.imageUrl);
+  const [ingredients, setIngredients] = useState<Ingredient[]>(
+    initialData?.ingredients && initialData.ingredients.length > 0 
+      ? initialData.ingredients.map(ing => ({ ...ing, id: ing.id || String(Date.now() + Math.random()) }))
+      : [{ amount: '', unit: '', item: '', id: '1' }]
+  );
+  const [instructions, setInstructions] = useState<string[]>(
+    initialData?.instructions && initialData.instructions.length > 0
+      ? initialData.instructions
+      : ['']
+  );
 
-  const { register, handleSubmit, formState: { errors } } = useForm<RecipeFormData>();
+  const { register, handleSubmit, formState: { errors }, setValue } = useForm<Recipe>({
+    defaultValues: {
+      name: initialData?.name || '',
+      servings: initialData?.servings || '',
+      prepTime: initialData?.prepTime || '',
+      cookTime: initialData?.cookTime || '',
+    }
+  });
+
+  // Set form values when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      setValue('name', initialData.name);
+      setValue('servings', initialData.servings || '');
+      setValue('prepTime', initialData.prepTime);
+      setValue('cookTime', initialData.cookTime);
+      setSelectedCategories(initialData.categories || []);
+      setImageUrl(initialData.imageUrl || '');
+      setIsPreviewingImage(!!initialData.imageUrl);
+    }
+  }, [initialData, setValue]);
 
   const addIngredient = () => {
     setIngredients([
@@ -79,15 +116,6 @@ export default function RecipeForm() {
     setInstructions(updatedInstructions);
   };
 
-  const handleCategoryChange = (category: string) => {
-    setSelectedCategories(prev => {
-      if (prev.includes(category)) {
-        return prev.filter(c => c !== category);
-      }
-      return [...prev, category];
-    });
-  };
-
   // Handle image URL input and validation
   const handleImageUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setImageUrl(e.target.value);
@@ -110,7 +138,16 @@ export default function RecipeForm() {
     setIsPreviewingImage(true);
   };
 
-  const onSubmit: SubmitHandler<RecipeFormData> = async (data) => {
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategories(prev => {
+      if (prev.includes(category)) {
+        return prev.filter(c => c !== category);
+      }
+      return [...prev, category];
+    });
+  };
+
+  const handleFormSubmit: SubmitHandler<Recipe> = async (data) => {
     if (!user) {
       toast.error('Please sign in to submit a recipe');
       return;
@@ -132,13 +169,23 @@ export default function RecipeForm() {
         ...data,
         ingredients,
         instructions,
-        categories: selectedCategories || [],
+        categories: selectedCategories,
         userId: user.uid,
-        createdAt: serverTimestamp(),
         imageUrl: imageUrl || null,
+        ...(initialData?.id ? { id: initialData.id } : {})
       };
 
-      await addDoc(collection(db, 'recipes'), recipeData);
+      // If a custom onSubmit function is provided, use it
+      if (onSubmit) {
+        await onSubmit(recipeData);
+        return;
+      }
+
+      // Otherwise, perform the default create operation
+      await addDoc(collection(db, 'recipes'), {
+        ...recipeData,
+        createdAt: serverTimestamp(),
+      });
       toast.success('Recipe submitted successfully!');
       router.push('/recipes');
     } catch (error) {
@@ -148,7 +195,7 @@ export default function RecipeForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       {/* Basic Info Section */}
       <div className="space-y-4">
         <div>
@@ -314,7 +361,7 @@ export default function RecipeForm() {
                 onChange={(e) => updateInstruction(index, e.target.value)}
                 placeholder="Instruction step"
                 required
-                className="flex-1 border border-medium-grey rounded w-full py-2 px-3 text-gray-700 leading-tight focus:shadow-outline"
+                className="border border-medium-grey rounded w-full py-2 px-3 text-gray-700 leading-tight focus:shadow-outline"
               />
               {index > 0 && (
                 <button
@@ -363,7 +410,7 @@ export default function RecipeForm() {
           type="submit"
           className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
         >
-          Save Recipe
+          {submitButtonText}
         </button>
       </div>
     </form>
