@@ -2,14 +2,14 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import RecipeForm from './RecipeForm';
-import UrlInput from './UrlInput';
+import RecipeForm from '@/app/components/RecipeForm';
+import UrlInput from '@/app/components/UrlInput';
 
 export default function AddRecipe() {
     const [selectedOption, setSelectedOption] = useState<'url' | 'manual' | null>(null);
 
     return (
-        <div className="w-full max-w-4xl mx-auto py-8 px-4 min-h-[calc(575px+var(--header-height))]">
+        <div className="w-full max-w-4xl mx-auto py-20 px-4">
             <h1 className="text-4xl font-bold mb-8">Add a Recipe</h1>
             
             {/* Option Selection */}

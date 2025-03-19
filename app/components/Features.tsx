@@ -3,7 +3,7 @@ import FeatureCard from "./FeatureCard";
 export default function Features() {
     return (
         <div className="w-full min-h-20 bg-white py-18 relative z-1">
-            <section id="features" className="brand-max-w flex gap-20 flex-col md:flex-row">
+            <section id="features" className="container mx-auto flex gap-20 flex-col md:flex-row">
                 <FeatureCard
                     image="./icon_import.svg"
                     title="Import Recipes"

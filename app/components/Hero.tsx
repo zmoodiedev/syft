@@ -56,7 +56,7 @@ export default function Hero() {
 
     return (
         <section ref={sectionRef} id="hero" className="w-full min-h-[calc(600px+var(--header-height))] -mt-[var(--header-height)] flex items-stretch isolate overflow-hidden relative">
-            <div className='hero-text w-full brand-max-w relative flex flex-col justify-center z-10'>
+            <div className='hero-text w-full container mx-auto relative flex flex-col justify-center z-10'>
                 <span className="block text-[1.7rem] leading-none font-light">Your favorite</span>
                 <span className="block text-[96px] font-bold tracking-tight leading-none mb-[2rem] highlight">Recipes</span>
                 <span className="block text-[1.7rem] leading-none pb-[2rem] font-light">No distractions.</span>

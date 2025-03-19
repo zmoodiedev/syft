@@ -23,7 +23,7 @@ export default function Header() {
 
     return (
         <header className={`py-6 h-[var(--header-height)] relative z-2 ${!isHomePage ? 'bg-white' : ''}`}>
-            <div className="w-full brand-max-w flex flex-row justify-between items-center">
+            <div className="w-full container mx-auto flex flex-row justify-between items-center">
                 <Link href="/">
                     <Image
                         src="/logo_whiisk.svg"

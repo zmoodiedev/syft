@@ -4,7 +4,7 @@ import Button from "./Button";
 export default function Callout() {
     return (
         <div className="w-full min-h-20 py-30 relative z-1">
-            <section id="importCallout" className="brand-max-w flex gap-10 flex-col md:flex-row">
+            <section id="importCallout" className="container mx-auto flex gap-10 flex-col md:flex-row">
                 <div className="callout-img w-1/2">
                     <Image
                         src="/hero_meal.png"

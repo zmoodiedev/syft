@@ -3,7 +3,7 @@ import Image from "next/image";
 export default function Footer() {
     return (
         <footer className="bg-dark-blue text-white pt-16 pb-8 mt-auto">
-            <div id="megaFooter" className="brand-max-w mb-16 flex justify-between">
+            <div id="megaFooter" className="container mx-auto mb-16 flex justify-between">
                 <div className="w-1/3">
                     <Image
                         src="/logo_whiisk.svg"
@@ -19,7 +19,7 @@ export default function Footer() {
                     Socials
                 </div>
             </div>
-            <div id="copyright" className="brand-max-w text-sm font-thin">© {new Date().getFullYear()} Whiisk Co. All rights reserved.</div>
+            <div id="copyright" className="container mx-auto text-sm font-thin">© {new Date().getFullYear()} Whiisk Co. All rights reserved.</div>
         </footer>
     )
 }

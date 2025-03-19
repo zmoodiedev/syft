@@ -14,6 +14,8 @@ interface Recipe {
     cookTime: string;
     ingredients: RecipeIngredient[];
     instructions: string[];
+    imageUrl?: string;
+    categories: string[];
 }
 
 interface JsonLdRecipe {
@@ -24,6 +26,8 @@ interface JsonLdRecipe {
     cookTime?: string;
     recipeIngredient: string[];
     recipeInstructions: Array<string | { '@type': string; text: string }>;
+    image?: string | { url: string };
+    recipeCategory?: string | string[];
 }
 
 export async function POST(request: Request) {
@@ -81,11 +85,16 @@ export async function POST(request: Request) {
                 cookTime: recipe.cookTime || '',
                 ingredients,
                 instructions,
+                imageUrl: typeof recipe.image === 'string' ? recipe.image : recipe.image?.url,
+                categories: Array.isArray(recipe.recipeCategory) 
+                    ? recipe.recipeCategory 
+                    : recipe.recipeCategory ? [recipe.recipeCategory] : [],
             };
         } else {
             // Fallback to HTML parsing if JSON-LD is not available
             const ingredients: RecipeIngredient[] = [];
             const instructions: string[] = [];
+            const categories: string[] = [];
 
             // Common selectors for recipe ingredients
             $('li[class*="ingredient"], .ingredient-item, .ingredients li, [class*="ingredients__item"], .mntl-structured-ingredients__list-item').each((_, el) => {
@@ -161,6 +170,22 @@ export async function POST(request: Request) {
             const prepTime = $(prepTimeSelectors).first().text().trim();
             const cookTime = $(cookTimeSelectors).first().text().trim();
 
+            // Try to find recipe image
+            const imageUrl = $('[itemprop="image"]').attr('src') ||
+                           $('[class*="recipe-image"] img').attr('src') ||
+                           $('[class*="recipe__image"] img').attr('src') ||
+                           $('[class*="recipe-photo"] img').attr('src') ||
+                           $('[class*="recipe-header"] img').attr('src') ||
+                           $('meta[property="og:image"]').attr('content');
+
+            // Try to find recipe categories
+            $('[class*="category"], [class*="tag"], [itemprop="recipeCategory"], [class*="recipe-category"]').each((_, el) => {
+                const text = $(el).text().trim();
+                if (text) {
+                    categories.push(text);
+                }
+            });
+
             recipeData = {
                 name,
                 servings,
@@ -168,6 +193,8 @@ export async function POST(request: Request) {
                 cookTime,
                 ingredients,
                 instructions,
+                imageUrl,
+                categories,
             };
         }
 
