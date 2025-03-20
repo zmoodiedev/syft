@@ -30,6 +30,13 @@
     font-weight: 600;
     font-family: var(--reddit-sans);
   }
+
+  a,
+  button {
+    &:hover {
+      cursor: pointer;
+    }
+  }
 }
 
 @theme inline {

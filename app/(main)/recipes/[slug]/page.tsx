@@ -44,6 +44,7 @@ export default function RecipeDetail() {
       if (!user || !recipeId) return;
 
       try {
+        setLoading(true);
         const recipeRef = doc(db, 'recipes', recipeId);
         const recipeSnap = await getDoc(recipeRef);
 
@@ -56,11 +57,11 @@ export default function RecipeDetail() {
           // Check if the recipe belongs to the current user
           if (recipeData.userId !== user.uid) {
             setError('You do not have permission to view this recipe');
-            setLoading(false);
             return;
           }
 
           setRecipe(recipeData);
+          setError('');
         } else {
           setError('Recipe not found');
         }
@@ -72,7 +73,9 @@ export default function RecipeDetail() {
       }
     };
 
-    fetchRecipe();
+    if (user && recipeId) {
+      fetchRecipe();
+    }
   }, [recipeId, user]);
 
   return (
@@ -134,14 +137,18 @@ export default function RecipeDetail() {
               </div>
             </div>
 
-            {/* Recipe Image */}
+            {/* Recipe Image with optimized loading */}
             {recipe.imageUrl && (
               <div className="relative h-64 md:h-96 w-full rounded-lg overflow-hidden mb-8">
                 <Image
                   src={recipe.imageUrl}
                   alt={recipe.name}
                   fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
+                  priority
                   className="object-cover"
+                  placeholder="blur"
+                  blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAEggJ4jD2jMQAAAABJRU5ErkJggg=="
                 />
               </div>
             )}

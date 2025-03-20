@@ -89,7 +89,7 @@ export default function UrlInput() {
                 <button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-light-blue text-white py-2 px-4 rounded hover:bg-blue-600 disabled:opacity-50"
+                    className="block text-sm bg-light-blue px-6 py-2 rounded-lg hover:bg-primary-600 transition-colors btn"
                 >
                     {loading ? 'Scraping Recipe...' : 'Import Recipe'}
                 </button>

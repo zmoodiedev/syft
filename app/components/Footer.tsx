@@ -16,7 +16,7 @@ export default function Footer() {
                     <p className="font-thin text-base">Store and sort all of your favorite recipes—whether from cookbooks, websites, or handwritten cards. No ads, no distractions—just the recipes you love.</p>
                 </div>
                 <div className="w-1/3 text-right">
-                    Socials
+                    
                 </div>
             </div>
             <div id="copyright" className="container mx-auto text-sm font-thin">© {new Date().getFullYear()} Whiisk Co. All rights reserved.</div>

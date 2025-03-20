@@ -87,15 +87,15 @@ export default function RecipesPage() {
                 {/* Category Filter */}
                 <div className="mb-8">
                     <h2 className="text-lg font-semibold mb-4">Filter by Category</h2>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-3 p-4 bg-white">
                         {RECIPE_CATEGORIES.map((category: string) => (
                             <button
                                 key={category}
                                 onClick={() => handleCategoryToggle(category)}
                                 className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
                                     selectedCategories.includes(category)
-                                        ? 'bg-primary-500 text-white'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                        ? 'bg-light-blue'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 cursor-pointer'
                                 }`}
                             >
                                 {category}
@@ -122,15 +122,19 @@ export default function RecipesPage() {
                         </p>
                         <Link
                             href="/add-recipe"
-                            className="inline-block bg-primary-500 text-white px-6 py-2 rounded-lg hover:bg-primary-600 transition-colors"
+                            className="block mx-auto bg-light-blue text-white px-6 py-2 rounded-lg hover:bg-primary-600 transition-colors btn"
                         >
                             Add Recipe
                         </Link>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {filteredRecipes.map((recipe) => (
-                            <RecipeCard key={recipe.id} recipe={recipe} />
+                        {filteredRecipes.map((recipe, index) => (
+                            <RecipeCard 
+                                key={recipe.id} 
+                                recipe={recipe} 
+                                priority={index < 2}
+                            />
                         ))}
                     </div>
                 )}

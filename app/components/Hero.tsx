@@ -7,9 +7,9 @@ import { useRef } from 'react';
 
 const foodItems = [
     {
-        src: '/images/food/pasta.png',
+        src: '/images/food/pasta_float.png',
         alt: 'Pasta dish',
-        initialX: '50%', // percentage from the right edge
+        initialX: '30%', // percentage from the right edge
         initialY: 100,
         speed: 0.3,
         scale: 0.8,
@@ -62,9 +62,8 @@ export default function Hero() {
                 <span className="block text-[1.7rem] leading-none pb-[2rem] font-light">No distractions.</span>
                 <Button
                     href="/recipes"
-                    text="Get Whiisking!"
                     className="bg-light-blue"
-                />
+                >Get Whiisking</Button>
             </div>
 
             {/* Container for food items */}
@@ -113,8 +112,8 @@ export default function Hero() {
                             <Image
                                 src={item.src}
                                 alt={item.alt}
-                                width={200}
-                                height={200}
+                                width={500}
+                                height={0}
                                 className="select-none"
                                 priority={index === 0}
                             />

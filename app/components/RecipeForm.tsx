@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { useAuth } from '@/app/context/AuthContext';
 import { db } from '@/app/lib/firebase';
@@ -6,6 +6,7 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import Image from 'next/image';
+import { uploadImage } from '@/lib/cloudinary';
 
 export const RECIPE_CATEGORIES = [
   // Main Meal Types
@@ -52,6 +53,8 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
   const [selectedCategories, setSelectedCategories] = useState<string[]>(initialData?.categories || []);
   const [imageUrl, setImageUrl] = useState(initialData?.imageUrl || '');
   const [isPreviewingImage, setIsPreviewingImage] = useState(!!initialData?.imageUrl);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [ingredients, setIngredients] = useState<Ingredient[]>(
     initialData?.ingredients && initialData.ingredients.length > 0 
       ? initialData.ingredients.map(ing => ({ ...ing, id: ing.id || String(Date.now() + Math.random()) }))
@@ -136,6 +139,49 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
     }
     
     setIsPreviewingImage(true);
+  };
+
+  // Handle file selection
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast.error('Please select a valid image file (JPEG, PNG, GIF, WEBP)');
+      return;
+    }
+    
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size must be less than 5MB');
+      return;
+    }
+    
+    try {
+      setIsUploading(true);
+      
+      // Upload directly using optimized Cloudinary client utility
+      const imageUrl = await uploadImage(file, {
+        width: 1200,
+        quality: 80
+      });
+      
+      setImageUrl(imageUrl);
+      setIsPreviewingImage(true);
+      toast.success('Image uploaded successfully');
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast.error('Failed to upload image');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+  
+  // Trigger file input click
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
   };
 
   const handleCategoryChange = (category: string) => {
@@ -252,50 +298,76 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
           </div>
         </div>
 
-        {/* Image URL Section */}
+        {/* Image Upload Section */}
         <div>
-          <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700">
-            Recipe Image URL (optional)
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Recipe Image
           </label>
-          <div className="flex mt-1">
-            <input
-              id="imageUrl"
-              type="text"
-              value={imageUrl}
-              onChange={handleImageUrlChange}
-              placeholder="https://example.com/image.jpg"
-              className="border border-medium-grey rounded w-full py-2 px-3 text-gray-700 leading-tight focus:shadow-outline"
-            />
-            <button
-              type="button"
-              onClick={validateAndPreviewImage}
-              className="px-4 bg-primary-500 text-white rounded-r-md hover:bg-primary-600 transition-colors"
-            >
-              Preview
-            </button>
-          </div>
-          <p className="mt-1 text-xs text-gray-500">
-            Enter a URL pointing to an image (.jpg, .png, .gif, etc.)
-          </p>
           
-          {/* Image Preview */}
-          {isPreviewingImage && imageUrl && (
-            <div className="mt-3">
-              <p className="text-sm font-medium text-gray-700 mb-2">Image Preview:</p>
-              <div className="relative h-48 w-full rounded-lg overflow-hidden border border-gray-200">
-                <Image 
-                  src={imageUrl} 
-                  alt="Recipe preview" 
-                  fill
-                  className="object-cover"
-                  onError={() => {
-                    toast.error("Failed to load image");
-                    setIsPreviewingImage(false);
-                  }}
+          <div className="flex flex-col space-y-3">
+            {/* File Upload */}
+            <div className="flex items-center gap-3">
+              <input
+                type="file"
+                accept="image/*"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={handleUploadClick}
+                disabled={isUploading}
+                className="px-4 py-2 bg-light-blue text-white rounded hover:bg-blue-600 transition-colors disabled:bg-gray-400"
+              >
+                {isUploading ? 'Uploading...' : 'Upload Image'}
+              </button>
+              
+              <span className="text-sm text-gray-500">or</span>
+              
+              {/* URL Input */}
+              <div className="flex-1 flex">
+                <input
+                  id="imageUrl"
+                  type="text"
+                  value={imageUrl}
+                  onChange={handleImageUrlChange}
+                  placeholder="https://example.com/image.jpg"
+                  className="border border-medium-grey rounded-l w-full py-2 px-3 text-gray-700 leading-tight focus:shadow-outline"
                 />
+                <button
+                  type="button"
+                  onClick={validateAndPreviewImage}
+                  className="px-4 bg-light-blue text-white rounded-r hover:bg-blue-600 transition-colors"
+                >
+                  Preview
+                </button>
               </div>
             </div>
-          )}
+            
+            <p className="text-xs text-gray-500">
+              Upload an image file or enter a URL. Maximum file size: 5MB.
+            </p>
+            
+            {/* Image Preview */}
+            {isPreviewingImage && imageUrl && (
+              <div className="mt-3">
+                <p className="text-sm font-medium text-gray-700 mb-2">Image Preview:</p>
+                <div className="relative h-48 w-full rounded-lg overflow-hidden border border-gray-200">
+                  <Image 
+                    src={imageUrl} 
+                    alt="Recipe preview" 
+                    fill
+                    className="object-cover"
+                    onError={() => {
+                      toast.error("Failed to load image");
+                      setIsPreviewingImage(false);
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -341,7 +413,7 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
         <button
           type="button"
           onClick={addIngredient}
-          className="mt-2 inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-primary-700 bg-primary-100 hover:bg-primary-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+          className="mt-2 inline-flex text-sm items-center block mx-auto bg-light-blue px-6 py-2 rounded-lg hover:bg-primary-600 transition-colors btn"
         >
           + Add Ingredient
         </button>
@@ -378,7 +450,7 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
         <button
           type="button"
           onClick={addInstruction}
-          className="mt-2 inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-primary-700 bg-primary-100 hover:bg-primary-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+          className="mt-2 text-sm inline-flex items-center mx-auto bg-light-blue px-6 py-2 rounded-lg hover:bg-primary-600 transition-colors btn"
         >
           + Add Step
         </button>
@@ -408,7 +480,7 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
       <div className="flex justify-end">
         <button
           type="submit"
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+          className="inline-flex block mx-auto bg-light-blue px-6 py-2 rounded-lg hover:bg-primary-600 transition-colors btn"
         >
           {submitButtonText}
         </button>

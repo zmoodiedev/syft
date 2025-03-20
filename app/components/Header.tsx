@@ -6,7 +6,8 @@ import Button from "./Button";
 import { useAuth } from "../context/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 
 export default function Header() {
     const { user, logout } = useAuth();
@@ -37,7 +38,7 @@ export default function Header() {
                     />
                 </Link>
                 {user && (
-                    <ul className="flex flex-row gap-6 text-base font-medium">
+                    <ul className="flex flex-row gap-8 text-base font-medium">
                         <li>
                             <Link
                                 href="/recipes">Your Recipes</Link></li>
@@ -95,14 +96,17 @@ export default function Header() {
                     ) : (
                         <>
                             <Button
-                                text="Login"
-                                href="/login"
-                            />
+                                variant="outline"
+                                onClick={() => router.push('/login')}
+                            >
+                                Login
+                            </Button>
                             <Button
-                                text="Sign Up"
-                                href="/signup"
+                                onClick={() => router.push('/signup')}
                                 className="bg-accent"
-                            />
+                            >
+                                Sign Up
+                            </Button>
                         </>
                     )}
                 </nav>
