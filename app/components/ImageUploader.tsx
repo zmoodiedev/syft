@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import Image from 'next/image';
 import { uploadImage } from '@/lib/cloudinary';
+import Button from './Button';
 
 interface ImageUploaderProps {
   initialImageUrl?: string | null;
@@ -101,15 +102,14 @@ export default function ImageUploader({
               className="object-cover"
             />
           </div>
-          <button
+          <Button
             type="button"
             onClick={resetImage}
-            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
             </svg>
-          </button>
+          </Button>
         </div>
       ) : (
         <div className="space-y-3">
@@ -121,11 +121,10 @@ export default function ImageUploader({
               ref={fileInputRef}
               className="hidden"
             />
-            <button
+            <Button
               type="button"
               onClick={handleUploadClick}
               disabled={isUploading}
-              className="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
             >
               {isUploading ? (
                 <span className="flex items-center justify-center">
@@ -136,7 +135,7 @@ export default function ImageUploader({
                   Uploading...
                 </span>
               ) : 'Upload Image'}
-            </button>
+            </Button>
           </div>
           
           <div className="flex items-center">
@@ -153,13 +152,13 @@ export default function ImageUploader({
               onChange={handleImageUrlChange}
               className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-light-blue focus:border-light-blue sm:text-sm"
             />
-            <button
+            <Button
               type="button"
               onClick={validateAndPreviewImage}
               className="py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
             >
               Use URL
-            </button>
+            </Button>
           </div>
         </div>
       )}

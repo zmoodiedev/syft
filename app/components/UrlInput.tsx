@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import RecipeForm from './RecipeForm';
+import Button from './Button';
 
 interface ScrapedRecipe {
     name: string;
@@ -86,13 +87,13 @@ export default function UrlInput() {
                 {error && (
                     <p className="text-red-500 text-sm">{error}</p>
                 )}
-                <button
+                <Button
                     type="submit"
                     disabled={loading}
                     className="block text-sm bg-light-blue px-6 py-2 rounded-lg hover:bg-primary-600 transition-colors btn"
                 >
                     {loading ? 'Scraping Recipe...' : 'Import Recipe'}
-                </button>
+                </Button>
             </form>
 
             <div className="border-t pt-6">

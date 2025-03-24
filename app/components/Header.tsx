@@ -26,15 +26,16 @@ export default function Header() {
     };
 
     return (
-        <header className={`py-4 min-h-[var(--header-height)] relative z-2 ${!isHomePage ? 'bg-white' : ''}`}>
+        <header className={`p-4 min-h-[var(--header-height)] relative z-2 ${!isHomePage ? 'bg-white' : ''}`}>
             <div className="w-full container mx-auto flex flex-row justify-between items-center">
                 <Link href="/">
                     <Image
                         src="/logo_whiisk.svg"
                         alt="Whiisk logo"
                         width={100}
-                        height={0}
+                        height={27}
                         priority
+                        className="h-auto"
                     />
                 </Link>
                 {user && (
@@ -96,17 +97,18 @@ export default function Header() {
                     ) : (
                         <>
                             <Button
-                                variant="outline"
+                                variant="ghost"
                                 onClick={() => router.push('/login')}
                             >
                                 Login
                             </Button>
-                            <Button
+                            {/*<Button
+                                variant="secondary"
                                 onClick={() => router.push('/signup')}
                                 className="bg-accent"
                             >
                                 Sign Up
-                            </Button>
+                            </Button>*/}
                         </>
                     )}
                 </nav>

@@ -84,9 +84,8 @@ export default function SignUp() {
                     />
                 </div>
                 <Button
-                    text="Sign Up"
-                    className="w-full bg-light-blue text-foreground py-2 px-4 rounded focus:outline-none focus:shadow-outline cursor-pointer"
-                />
+                    variant='primary'
+                >Sign Up</Button>
             </form>
             <div className="mt-6">
                 <div className="relative">

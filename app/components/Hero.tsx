@@ -55,7 +55,7 @@ export default function Hero() {
     const transforms = [springPastaY, springSaladY, springDessertY];
 
     return (
-        <section ref={sectionRef} id="hero" className="w-full min-h-[calc(600px+var(--header-height))] -mt-[var(--header-height)] flex items-stretch isolate overflow-hidden relative">
+        <section ref={sectionRef} id="hero" className="w-full p-4 min-h-[calc(40vh+var(--header-height))] md:min-h-[calc(600px+var(--header-height))] -mt-[var(--header-height)] flex items-stretch isolate overflow-hidden relative">
             <div className='hero-text w-full container mx-auto relative flex flex-col justify-center z-10'>
                 <span className="block text-[1.7rem] leading-none font-light">Your favorite</span>
                 <span className="block text-[96px] font-bold tracking-tight leading-none mb-[2rem] highlight">Recipes</span>
@@ -67,7 +67,7 @@ export default function Hero() {
             </div>
 
             {/* Container for food items */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
                 {/* Floating food items */}
                 {foodItems.map((item, index) => (
                     <motion.div
@@ -113,8 +113,8 @@ export default function Hero() {
                                 src={item.src}
                                 alt={item.alt}
                                 width={500}
-                                height={0}
-                                className="select-none"
+                                height={400}
+                                className="select-none h-auto"
                                 priority={index === 0}
                             />
                         </motion.div>

@@ -1,14 +1,13 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import CategoryTags from './CategoryTags';
 import RecipeStats from './RecipeStats';
+import Button from './Button';
 
 interface Recipe {
   id: string;
   name: string;
   imageUrl?: string;
-  categories?: string[];
   prepTime: string;
   cookTime: string;
   servings?: string;
@@ -52,16 +51,6 @@ export default function RecipeCard({ recipe, priority = false }: RecipeCardProps
           <div>
             <h3 className="text-xl font-bold text-gray-900 mb-2">{recipe.name}</h3>
             
-            {/* Categories */}
-            {recipe.categories && recipe.categories.length > 0 && (
-              <CategoryTags 
-                categories={recipe.categories} 
-                maxDisplay={3} 
-                size="sm" 
-                className="mb-2" 
-              />
-            )}
-            
             {/* Recipe Stats */}
             <RecipeStats
               prepTime={recipe.prepTime}
@@ -74,9 +63,11 @@ export default function RecipeCard({ recipe, priority = false }: RecipeCardProps
 
           {/* View Recipe Button */}
           <div className="mt-auto">
-            <span className="inline-block block mx-auto bg-light-blue text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors btn">
+            <Button
+              className=""
+            >
               View Recipe
-            </span>
+            </Button>
           </div>
         </div>
       </Link>

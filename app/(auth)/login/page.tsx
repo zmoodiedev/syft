@@ -1,4 +1,3 @@
-
 import Link from 'next/link';
 import Image from 'next/image';
 import SignIn from '@/app/components/SignIn';
@@ -13,9 +12,9 @@ export default function LoginPage() {
                     src="/logo_whiisk.svg"
                     alt="Whiisk logo"
                     width={160}
-                    height={0}
+                    height={43}
                     priority
-                    className="mx-auto mb-6"
+                    className="mx-auto mb-6 h-auto"
                 />
             </Link>
             <SignIn />

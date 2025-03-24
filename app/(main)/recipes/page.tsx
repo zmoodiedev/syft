@@ -8,6 +8,7 @@ import RecipeCard from '@/app/components/RecipeCard';
 import { RECIPE_CATEGORIES } from '@/app/components/RecipeForm';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import Link from 'next/link';
+import Button from '@/app/components/Button';
 
 interface Recipe {
     id: string;
@@ -120,12 +121,12 @@ export default function RecipesPage() {
                                 ? 'Try selecting different categories or clear the filters'
                                 : 'Start by adding your first recipe!'}
                         </p>
-                        <Link
-                            href="/add-recipe"
-                            className="block mx-auto bg-light-blue text-white px-6 py-2 rounded-lg hover:bg-primary-600 transition-colors btn"
+                        <Button
+                            href="/add-recipe" 
+                            className="mx-auto" 
                         >
                             Add Recipe
-                        </Link>
+                        </Button>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

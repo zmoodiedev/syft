@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import Image from 'next/image';
 import { uploadImage } from '@/lib/cloudinary';
+import Button from './Button';
 
 export const RECIPE_CATEGORIES = [
   // Main Meal Types
@@ -314,14 +315,13 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
                 onChange={handleFileChange}
                 className="hidden"
               />
-              <button
+              <Button
                 type="button"
                 onClick={handleUploadClick}
                 disabled={isUploading}
-                className="px-4 py-2 bg-light-blue text-white rounded hover:bg-blue-600 transition-colors disabled:bg-gray-400"
               >
                 {isUploading ? 'Uploading...' : 'Upload Image'}
-              </button>
+              </Button>
               
               <span className="text-sm text-gray-500">or</span>
               
@@ -335,13 +335,13 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
                   placeholder="https://example.com/image.jpg"
                   className="border border-medium-grey rounded-l w-full py-2 px-3 text-gray-700 leading-tight focus:shadow-outline"
                 />
-                <button
+                <Button
                   type="button"
                   onClick={validateAndPreviewImage}
-                  className="px-4 bg-light-blue text-white rounded-r hover:bg-blue-600 transition-colors"
+                  className="rounded-r rounded-l-none"
                 >
                   Preview
-                </button>
+                </Button>
               </div>
             </div>
             
@@ -376,6 +376,11 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
         <label className="block text-sm font-medium text-gray-700">
           Ingredients
         </label>
+        <div className="flex">
+          <div className="flex-1/3"><h5>Amount</h5></div>
+          <div className="flex-1/3"><h5>Unit</h5></div>
+          <div className="flex-1/3"><h5>Ingredient</h5></div>
+        </div>
         <div className="space-y-3">
           {ingredients.map((ingredient, index) => (
             <div key={ingredient.id} className="flex items-center space-x-2">
@@ -398,7 +403,7 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
                 required
                 className="border border-medium-grey rounded w-full py-2 px-3 text-gray-700 leading-tight focus:shadow-outline"
               />
-              {index > 0 && (
+              {index >= 0 && (
                 <button
                   type="button"
                   onClick={() => removeIngredient(index)}
@@ -410,13 +415,12 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
             </div>
           ))}
         </div>
-        <button
+        <Button
           type="button"
           onClick={addIngredient}
-          className="mt-2 inline-flex text-sm items-center block mx-auto bg-light-blue px-6 py-2 rounded-lg hover:bg-primary-600 transition-colors btn"
         >
           + Add Ingredient
-        </button>
+        </Button>
       </div>
 
       {/* Instructions Section */}
@@ -426,9 +430,9 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
         </label>
         <div className="space-y-3">
           {instructions.map((instruction, index) => (
-            <div key={index} className="flex items-center space-x-2">
+            <div key={index} className="flex items-start space-x-2">
               <span className="text-sm font-medium w-8">{index + 1}.</span>
-              <input
+              <textarea
                 value={instruction}
                 onChange={(e) => updateInstruction(index, e.target.value)}
                 placeholder="Instruction step"
@@ -447,13 +451,12 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
             </div>
           ))}
         </div>
-        <button
+        <Button
           type="button"
           onClick={addInstruction}
-          className="mt-2 text-sm inline-flex items-center mx-auto bg-light-blue px-6 py-2 rounded-lg hover:bg-primary-600 transition-colors btn"
         >
           + Add Step
-        </button>
+        </Button>
       </div>
 
       {/* Categories Section */}
@@ -478,12 +481,12 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
 
       {/* Submit Button */}
       <div className="flex justify-end">
-        <button
+        <Button
           type="submit"
-          className="inline-flex block mx-auto bg-light-blue px-6 py-2 rounded-lg hover:bg-primary-600 transition-colors btn"
+          className="mx-auto"
         >
           {submitButtonText}
-        </button>
+        </Button>
       </div>
     </form>
   );

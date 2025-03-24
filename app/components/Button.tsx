@@ -36,10 +36,10 @@ export default function Button({
   
   // Variant styles
   const variantStyles = {
-    primary: "bg-light-blue text-dark-grey hover:bg-blue-600",
-    secondary: "bg-orange text-gray-800 hover:bg-gray-300",
+    primary: "bg-light-blue text-dark-grey hover:bg-white",
+    secondary: "bg-highlight text-gray-800 hover:bg-white",
     outline: "border border-light-blue text-light-blue hover:bg-blue-50",
-    ghost: "text-light-blue hover:bg-blue-50"
+    ghost: "text-dark-grey hover:bg-dark-grey hover:text-white"
   };
   
   

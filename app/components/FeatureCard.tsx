@@ -13,9 +13,9 @@ export default function FeatureCard({ title, image, description }: FeatureProps)
                 src={image}
                 alt={title}
                 width={85}
-                height={0}
+                height={85}
                 priority
-                className="mx-auto mb-4"
+                className="mx-auto mb-4 h-auto"
             />
             <h3>{title}</h3>
             <p>{description}</p>

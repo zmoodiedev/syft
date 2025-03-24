@@ -1,6 +1,7 @@
 import { Reddit_Sans } from "next/font/google";
 import "@/app/globals.css";
 import { AuthProvider } from "./context/AuthContext";
+import DevIndicator from "./components/DevIndicator";
 
 const redditSans = Reddit_Sans({
   variable: "--font-reddit-sans",
@@ -19,6 +20,7 @@ export default function RootLayout({
       >
         <AuthProvider>
           {children}
+          <DevIndicator />
         </AuthProvider>
       </body>
     </html>
