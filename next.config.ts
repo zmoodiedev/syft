@@ -48,7 +48,7 @@ const nextConfig: NextConfig = {
           test: (path: string) => {
             return devOnlyPages.some(pattern => pattern.test(path));
           },
-          loader: 'null-loader',
+
         });
       }
 
