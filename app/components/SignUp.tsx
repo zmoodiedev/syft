@@ -23,6 +23,7 @@ export default function SignUp() {
             await signUp(email, password);
             setError('');
             router.push('/recipes');
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (_) {
             setError('Failed to create an account.');
         }
@@ -98,10 +99,8 @@ export default function SignUp() {
                 </div>
                 <div className="mt-6">
                     <Button
-                        text="Sign up with Google"
-                        className="w-full bg-light-grey text-foreground py-2 px-4 rounded focus:outline-none focus:shadow-outline cursor-pointer"
                         onClick={handleGoogleSignIn}
-                    />
+                    >Sign up with Google</Button>
                 </div>
             </div>
         </div>
