@@ -9,7 +9,7 @@ interface ScrapedRecipe {
     servings: string;
     prepTime: string;
     cookTime: string;
-    ingredients: { item: string; amount: string; unit: string; }[];
+    ingredients: { id: string; item: string; amount: string; unit: string }[];
     instructions: string[];
 }
 
