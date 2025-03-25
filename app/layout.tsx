@@ -1,4 +1,3 @@
-'use client';
 import { Reddit_Sans } from "next/font/google";
 import "@/app/globals.css";
 import { AuthProvider } from "./context/AuthContext";
