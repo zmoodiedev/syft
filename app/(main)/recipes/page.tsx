@@ -7,7 +7,6 @@ import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import RecipeCard from '@/app/components/RecipeCard';
 import { RECIPE_CATEGORIES } from '@/app/components/RecipeForm';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
-import Link from 'next/link';
 import Button from '@/app/components/Button';
 
 interface Recipe {
