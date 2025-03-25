@@ -39,10 +39,10 @@ export default function Header() {
                     />
                 </Link>
                 {user && (
-                    <ul className="flex flex-row gap-8 text-base font-medium">
+                    <ul className="flex-row gap-8 text-base font-medium hidden md:flex">
                         <li>
                             <Link
-                                href="/recipes">Your Recipes</Link></li>
+                                href="/recipes">My Recipes</Link></li>
                         <li>
                             <Link
                                 href="/add-recipe">Add a Recipe</Link></li>
@@ -59,7 +59,7 @@ export default function Header() {
                                 <div className="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-800">
                                     {user.email?.charAt(0).toUpperCase() || "U"}
                                 </div>
-                                <span className="text-sm font-medium">{user.email}</span>
+                                <span className="text-sm font-medium hidden md:block">{user.email}</span>
                                 <svg 
                                     xmlns="http://www.w3.org/2000/svg" 
                                     className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${showDropdown ? 'rotate-180' : ''}`} 
@@ -72,13 +72,26 @@ export default function Header() {
                             <AnimatePresence>
                                 {showDropdown && (
                                     <motion.div 
-                                        className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg overflow-hidden z-10"
+                                        className="absolute right-0 mt-0 w-48 bg-white rounded-md shadow-lg overflow-hidden z-10"
                                         initial={{ opacity: 0, y: -10, scale: 0.95 }}
                                         animate={{ opacity: 1, y: 0, scale: 1 }}
                                         exit={{ opacity: 0, y: -10, scale: 0.95 }}
                                         transition={{ duration: 0.2, ease: "easeOut" }}
                                     >
-                                        <div className="py-1">
+                                        
+                                        <div className="p-2">
+                                            <Link 
+                                                href="/recipes"
+                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 flex items-center gap-2 transition-colors md:hidden"
+                                            >
+                                                My Recipes
+                                            </Link>
+                                            <Link 
+                                                href="/add-recipe"
+                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 flex items-center gap-2 transition-colors md:hidden"
+                                            >
+                                                Add Recipe
+                                            </Link>
                                             <button 
                                                 onClick={handleLogout}
                                                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 flex items-center gap-2 transition-colors"

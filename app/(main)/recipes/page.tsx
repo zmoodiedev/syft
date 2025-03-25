@@ -74,15 +74,14 @@ export default function RecipesPage() {
 
     return (
         <ProtectedRoute>
-            <div className="container mx-auto py-20">
+            <div className="container mx-auto px-4 py-20">
                 <div className="flex justify-between items-center mb-8">
                     <h1 className="text-4xl font-bold">Your Recipes</h1>
-                    <Link
+                    <Button
                         href="/add-recipe"
-                        className="bg-primary-500 text-white px-6 py-2 rounded-lg hover:bg-primary-600 transition-colors"
                     >
                         Add New Recipe
-                    </Link>
+                    </Button>
                 </div>
 
                 {/* Category Filter */}
