@@ -2,127 +2,49 @@
 
 import Button from './Button';
 import Image from 'next/image';
-import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import { useRef } from 'react';
 
-const foodItems = [
-    {
-        src: '/images/food/pasta_float.png',
-        alt: 'Pasta dish',
-        initialX: '30%', // percentage from the right edge
-        initialY: 100,
-        speed: 0.3,
-        scale: 0.8,
-        rotate: -15,
-        floatOffset: 20,
-    },
-    {
-        src: '/images/food/salad.png',
-        alt: 'Fresh salad',
-        initialX: '65%', // percentage from the right edge
-        initialY: 350,
-        speed: 0.5,
-        scale: 0.6,
-        rotate: 10,
-        floatOffset: 15,
-    },
-    {
-        src: '/images/food/dessert.png',
-        alt: 'Dessert',
-        initialX: '75%', // percentage from the right edge
-        initialY: 200,
-        speed: 0.7,
-        scale: 0.5,
-        rotate: -5,
-        floatOffset: 25,
-    }
-];
-
 export default function Hero() {
-    const sectionRef = useRef<HTMLElement>(null);
-    const { scrollY } = useScroll();
-    const springConfig = { stiffness: 100, damping: 30, mass: 0.5 };
-    
-    // Create smooth spring-based transforms for each food item
-    const pastaY = useTransform(scrollY, [0, 600], [foodItems[0].initialY, foodItems[0].initialY + (foodItems[0].speed * 600)]);
-    const saladY = useTransform(scrollY, [0, 500], [foodItems[1].initialY, foodItems[1].initialY + (foodItems[1].speed * -200)]);
-    const dessertY = useTransform(scrollY, [0, 500], [foodItems[2].initialY, foodItems[2].initialY + (foodItems[2].speed * -200)]);
-    
-    const springPastaY = useSpring(pastaY, springConfig);
-    const springSaladY = useSpring(saladY, springConfig);
-    const springDessertY = useSpring(dessertY, springConfig);
-    
-    const transforms = [springPastaY, springSaladY, springDessertY];
+    const logoRef = useRef<HTMLObjectElement>(null);
 
     return (
-        <section ref={sectionRef} id="hero" className="w-full p-4 min-h-[calc(40vh+var(--header-height))] md:min-h-[calc(600px+var(--header-height))] -mt-[var(--header-height)] flex items-stretch isolate overflow-hidden relative">
-            <div className='hero-text w-full container mx-auto relative flex flex-col justify-center z-10'>
-                <span className="block text-[1.7rem] leading-none font-light">Your favorite</span>
-                <span className="block text-[96px] font-bold tracking-tight leading-none mb-[2rem] highlight">Recipes</span>
-                <span className="block text-[1.7rem] leading-none pb-[2rem] font-light">No distractions.</span>
-                <Button
-                    href="/recipes"
-                    className="bg-light-blue"
-                >Get Whiisking</Button>
-            </div>
+        <section id="hero" className="w-full p-10  md:min-h-[calc(600px+var(--header-height))] -mt-[var(--header-height)] flex items-stretch isolate relative mt-10 mb-20 z-10">
+            <div className='w-full container mx-auto flex justify-end lg:justify-between lg:syft-max-w flex-col-reverse lg:flex-row'>
+                <div className="hero-text lg:w-4/5 flex flex-col justify-center py-10 text-center lg:text-left">
+                <span className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-rose-500 font-semibold mb-2 uppercase">Your Own Personal</span>
+                    <span className="block text-6xl md:text-7xl lg:text-8xl xl:text-[120px] font-extrabold tracking-tight leading-none mb-4 sm:mb-6 md:mb-8 lg:mb-[2rem]">Recipe Vault</span>
+                    <span className="block text-lg md:text-lg lg:text-[1.4rem] mb-6 sm:mb-8 md:mb-10 lg:mb-[3rem] lg:pr-[4rem] lg:max-w-[500px] font-light text-steel">&mdash; Save, organize, and enjoy your favorite recipes, all in one place.</span>
+                    <Button
+                        variant='secondary'
+                        href="/recipes"
+                        className="mx-auto text-center lg:mx-0"
+                    >Get Started</Button>
+                </div>
 
-            {/* Container for food items */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
-                {/* Floating food items */}
-                {foodItems.map((item, index) => (
-                    <motion.div
-                        key={index}
-                        className="absolute pointer-events-none right-0"
-                        style={{
-                            left: item.initialX,
-                            y: transforms[index],
-                            scale: item.scale,
-                            rotate: item.rotate,
-                        }}
-                        initial={{ opacity: 0 }}
-                        animate={{
-                            opacity: 1,
-                            transition: {
-                                duration: 1,
-                                delay: index * 0.2,
-                            }
-                        }}
-                        transition={{
-                            default: {
-                                type: "spring",
-                                stiffness: 100,
-                                damping: 30,
-                                mass: 0.5,
-                            }
-                        }}
-                    >
-                        <motion.div
-                            animate={{
-                                y: [0, item.floatOffset, 0],
-                            }}
-                            transition={{
-                                y: {
-                                    duration: 4 + index,
-                                    repeat: Infinity,
-                                    repeatType: "reverse",
-                                    ease: "easeInOut",
-                                }
-                            }}
-                        >
-                            <Image
-                                src={item.src}
-                                alt={item.alt}
-                                width={500}
-                                height={400}
-                                className="select-none h-auto"
-                                priority={index === 0}
-                            />
-                        </motion.div>
-                    </motion.div>
-                ))}
+                <div className="w-full flex flex-col justify-center">
+                    {/* Background blob */}
+                    <div className='absolute top-40 left-60 lg:top-1/4 lg:left-3/4 xl:left-2/3 transform -translate-x-1/4  -translate-y-2/3 lg:-translate-y-2/3 w-[180vw] max-w-[1800px] -z-10'>
+                        <Image
+                            src="./images/hero_blob.svg"
+                            alt="Blob"
+                            width={1500}
+                            height={1500}
+                            className="select-none w-full h-auto"
+                        />
+                    </div>
+                    
+                    {/* Logo positioned on top of the blob */}
+                    <div className="z-10">
+                        <object
+                            ref={logoRef}
+                            data="./logo_syft_v.svg"
+                            type="image/svg+xml"
+                            className="select-none h-auto w-full max-w-[800px]"
+                            aria-label="Syft Logo"
+                        />
+                    </div>
+                </div>
             </div>
-
-            <span id="heroLine" className="block bg-light-blue w-96 h-[calc(100%+var(--header-height))] bottom-0 right-10 absolute -skew-x-24 -z-1"></span>
         </section>
     );
 }

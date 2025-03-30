@@ -25,6 +25,7 @@ export default function RecipesPage() {
     const [recipes, setRecipes] = useState<Recipe[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+    const [availableCategories, setAvailableCategories] = useState<string[]>([]);
 
     useEffect(() => {
         const fetchRecipes = async () => {
@@ -45,6 +46,20 @@ export default function RecipesPage() {
                 })) as Recipe[];
 
                 setRecipes(recipesData);
+                
+                // Extract unique categories from user's recipes
+                const categories = new Set<string>();
+                recipesData.forEach(recipe => {
+                    if (recipe.categories && Array.isArray(recipe.categories)) {
+                        recipe.categories.forEach(category => {
+                            if (RECIPE_CATEGORIES.includes(category)) {
+                                categories.add(category);
+                            }
+                        });
+                    }
+                });
+                
+                setAvailableCategories(Array.from(categories).sort());
             } catch (error) {
                 console.error('Error fetching recipes:', error);
             } finally {
@@ -84,24 +99,26 @@ export default function RecipesPage() {
                 </div>
 
                 {/* Category Filter */}
-                <div className="mb-8">
-                    <h2 className="text-lg font-semibold mb-4">Filter by Category</h2>
-                    <div className="flex flex-wrap gap-3 p-4 bg-white">
-                        {RECIPE_CATEGORIES.map((category: string) => (
-                            <button
-                                key={category}
-                                onClick={() => handleCategoryToggle(category)}
-                                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                                    selectedCategories.includes(category)
-                                        ? 'bg-light-blue'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 cursor-pointer'
-                                }`}
-                            >
-                                {category}
-                            </button>
-                        ))}
+                {availableCategories.length > 0 && (
+                    <div className="mb-8">
+                        <h2 className="text-lg font-semibold mb-4">Filter by Category</h2>
+                        <div className="flex flex-wrap gap-3 p-4 bg-white">
+                            {availableCategories.map((category: string) => (
+                                <button
+                                    key={category}
+                                    onClick={() => handleCategoryToggle(category)}
+                                    className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                                        selectedCategories.includes(category)
+                                            ? 'bg-green-apple text-white'
+                                            : 'bg-light-grey text-steel hover:bg-gray-200 cursor-pointer'
+                                    }`}
+                                >
+                                    {category}
+                                </button>
+                            ))}
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {loading ? (
                     <div className="flex justify-center">

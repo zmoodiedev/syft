@@ -26,7 +26,7 @@ const nextConfig: NextConfig = {
   experimental: {
     largePageDataBytes: 128 * 1000, // 128KB
     serverActions: {
-      allowedOrigins: ['localhost:3000', 'whiisk.app'],
+      allowedOrigins: ['localhost:3000', 'syft.app', 'syft.cooking'],
     },
   },
 

@@ -23,6 +23,15 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
+// Get allowed emails from environment variables
+const getAllowedEmails = (): string[] => {
+    const allowedEmailsStr = process.env.NEXT_PUBLIC_ALLOWED_EMAILS;
+    if (!allowedEmailsStr) return [];
+    
+    // Split by comma and trim whitespace
+    return allowedEmailsStr.split(',').map(email => email.trim());
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
@@ -46,7 +55,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const signInWithGoogle = async () => {
         const provider = new GoogleAuthProvider();
-        await signInWithPopup(auth, provider);
+        
+        try {
+            const result = await signInWithPopup(auth, provider);
+            const userEmail = result.user.email;
+            const allowedEmails = getAllowedEmails();
+            
+            // Check if the user's email is in the allowed list
+            if (!userEmail || (allowedEmails.length > 0 && !allowedEmails.includes(userEmail))) {
+                // If not allowed, sign them out and throw an error
+                await signOut(auth);
+                throw new Error('Access denied. Syft is currently in beta and only open to selected users.');
+            }
+            
+            // If allowed, they stay signed in
+        } catch (error) {
+            console.error('Authentication error:', error);
+            throw error;
+        }
     };
 
     const logout = async () => {

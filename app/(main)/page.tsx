@@ -4,8 +4,8 @@ import Features from '@/app/components/Features';
 import Callout from '@/app/components/Callout';
 
 export const metadata: Metadata = {
-  title: "Whiisk - Recipe Manager",
-  description: "No life stories, no ads, just recipies",
+  title: "Syft - Recipe Manager",
+  description: "Save, organize, and enjoy your favorite recipes, all in one place.",
 };
 
 export default function Home() {

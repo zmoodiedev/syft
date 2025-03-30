@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
 
     // Upload to Cloudinary with optimizations
     const transformationOptions = {
-      folder: 'whiisk_recipes',
+      folder: 'syft_recipes',
       resource_type: 'image' as ResourceType,
       format: 'webp', // Convert to WebP for better compression
       quality: 80, // Good quality-size balance

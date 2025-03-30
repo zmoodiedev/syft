@@ -1,4 +1,4 @@
-# 📖 Whiisk
+# 📖 Syft
 
 An online recipe app where you can store and organize your favorite recipes — all in one place, without the clutter of blog posts or ads.
 

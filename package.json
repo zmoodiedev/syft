@@ -1,5 +1,5 @@
 {
-  "name": "whiisk",
+  "name": "Syft",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@emotion/is-prop-valid": "^1.3.1",
+    "@fortawesome/fontawesome-svg-core": "^6.7.2",
     "cheerio": "^1.0.0",
     "cloudinary": "^2.6.0",
     "firebase": "^11.4.0",

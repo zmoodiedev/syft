@@ -25,7 +25,7 @@ export default function Button({
 }: ButtonProps) {
   
   // Base styles
-  const baseStyles = "block font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-light-blue rounded-md w-[max-content]";
+  const baseStyles = "block text-sm px-6 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-light-blue rounded-full w-[max-content] after:ease-in-out";
   
   // Size styles
   const sizeStyles = {
@@ -36,8 +36,8 @@ export default function Button({
   
   // Variant styles
   const variantStyles = {
-    primary: "bg-light-blue text-dark-grey hover:bg-white",
-    secondary: "bg-highlight text-gray-800 hover:bg-white",
+    primary: "bg-tomato text-eggshell",
+    secondary: "bg-tomato text-eggshell rounded-tl-full rounded-br-full rounded-tr-none rounded-bl-none uppercase text-xs px-8 py-3 relative inline-block after:absolute after:block after:bg-transparent after:-z-1 after:rounded-tl-full after:rounded-br-full after:rounded-tr-none after:rounded-bl-none after:w-full after:h-full after:-right-1 after:-bottom-[5px] after:border-2 after:border-tomato hover:after:bottom-0 hover:after:right-0 after:transition-all after:duration-300 after:ease-in-out",
     outline: "border border-light-blue text-light-blue hover:bg-blue-50",
     ghost: "text-dark-grey hover:bg-dark-grey hover:text-white"
   };

@@ -8,27 +8,29 @@
 
   body {
     font-size: 18px;
+    font-family: var(--font-montserrat);
   }
 
   h1 {
     font-size: var(--text-4xl);
     font-weight: 700;
+    font-family: var(--font-montserrat);
   }
   h2 {
     font-size: var(--text-3xl);
     font-weight: 700;
-    font-family: var(--reddit-sans);
+    font-family: var(--font-montserrat);
   }
   h3 {
     font-size: var(--text-2xl);
     font-weight: 700;
-    font-family: var(--reddit-sans);
+    font-family: var(--font-montserrat);
   }
 
   h4 {
     font-size: var(--text-xl);
     font-weight: 600;
-    font-family: var(--reddit-sans);
+    font-family: var(--font-montserrat);
   }
 
   a,
@@ -40,24 +42,26 @@
 }
 
 @theme inline {
-  --color-background: #F6F6F6;
-  --color-foreground: #353535;
-  --color-dark-blue: #31515C;
-  --color-light-blue: #B3DEE5;
-  --color-accent: #FFA101;
-  --color-yellow: #FAE6B1;
+  --color-background: #FFF;
+  --color-foreground: #181a24;
+  --color-cast-iron: #181a24;
+  --color-steel: #848484;
+  --color-basil: #3E9D61;
+  --color-green-apple: #99CA41;
+  --color-tomato: #EE4534;
+  --color-blue-sky: #C3DAE3;
+  --color-eggshell: #FAFBF7;
 
   --color-dark-grey: #353535;
   --color-medium-grey: #848484;
   --color-light-grey: #F6F6F6;
-  --font-sans: var(--font-reddit-sans);
-  --header-height: 80px;
+
 }
 
 @layer components {
 
-  .brand-max-w {
-    max-width: 1200px;
+  .syft-max-w {
+    max-width: 1440px;
     margin: 0 auto;
     padding-left: 2rem;
     padding-right: 2rem;
@@ -88,4 +92,28 @@
     --foreground: var(--white);
   }
 }*/
+
+/* Feature card grid pattern */
+.bg-grid-pattern {
+  background-image: 
+    linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Slide up animation for feature cards */
+@keyframes slideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slideUp {
+  animation: slideUp 0.6s ease-out forwards;
+}
 
