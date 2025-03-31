@@ -4,8 +4,8 @@ import Button from "./Button";
 export default function Callout() {
 
     return (
-        <div className="w-full min-h-20 px-4 py-20 md:py-50 relative z-1">
-            <section id="callout" className="container mx-auto flex gap-20 md:gap-30 flex-col md:flex-row relative overflow-visible">
+        <div className="w-full min-h-20 px-4 py-20 md:py-50 relative z-1 overflow-hidden">
+            <section id="callout" className="container mx-auto flex md:gap-30 flex-col md:flex-row relative overflow-visible">
                 {/* Background blob */}
                 <div className='absolute -top-40 -left-80 w-[800px] h-[800px] -z-10 opacity-10'>
                     <Image
