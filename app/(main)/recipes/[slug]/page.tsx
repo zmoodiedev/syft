@@ -99,7 +99,7 @@ export default function RecipeDetail() {
         ) : recipe ? (
           <div>
             {/* Header Section */}
-            <div className="flex justify-between items-start mb-6">
+            <div className="flex justify-between items-start mb-6 flex-col md:flex-row">
               <div>
                 <h1 className="text-3xl md:text-4xl font-bold mb-2">{recipe.name}</h1>
 

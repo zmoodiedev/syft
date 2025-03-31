@@ -93,7 +93,7 @@ export default function EditRecipe() {
             </div>
           ) : error ? (
             <div className="text-center py-12">
-              <h2 className="text-2xl font-semibold text-red-600 mb-4">{error}</h2>
+              <h2 className="text-2xl font-semibold text-red-600 mb-6">{error}</h2>
               <Link
                 href="/recipes"
                 className="inline-block bg-primary-500 text-white px-6 py-2 rounded-lg hover:bg-primary-600 transition-colors"
