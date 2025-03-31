@@ -5,13 +5,14 @@ import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'next/navigation';
 
 export default function SignIn() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    {/*const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');*/}
     const [error, setError] = useState('');
-    const { signIn, signInWithGoogle } = useAuth();
+    {/*const { signIn, signInWithGoogle } = useAuth();*/}
+    const { signInWithGoogle } = useAuth();
     const router = useRouter();
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    {/*const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             await signIn(email, password);
@@ -21,7 +22,7 @@ export default function SignIn() {
         } catch (_) {
             setError('Failed to sign in. Please check your credentials.');
         }
-    };
+    };*/}
 
     const handleGoogleSignIn = async () => {
         try {
