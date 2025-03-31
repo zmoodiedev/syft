@@ -28,7 +28,7 @@ export default function SignIn() {
         try {
             await signInWithGoogle();
             setError('');
-            router.push('/recipes');
+            router.push('/');
         } catch (error) {
             console.error('Google sign-in error:', error);
             // Show a specific error if it's an access denied error
