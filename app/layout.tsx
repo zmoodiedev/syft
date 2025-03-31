@@ -1,6 +1,7 @@
 import { Montserrat } from "next/font/google";
 import "@/app/globals.css";
 import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 import DevIndicator from "./components/DevIndicator";
 import Script from "next/script";
 
@@ -28,7 +29,9 @@ export default function RootLayout({
         className={`${montserrat.variable} antialiased min-h-screen flex flex-col bg-background text-foreground overflow-x-hidden`}
       >
         <AuthProvider>
-          {children}
+          <ProtectedRoute>
+            {children}
+          </ProtectedRoute>
           <DevIndicator />
         </AuthProvider>
       </body>

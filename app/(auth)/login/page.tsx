@@ -24,7 +24,14 @@ export default function LoginPage() {
             <div className="z-10 w-full max-w-md">
                 <div className="text-center mb-8">
                     <Link href="/" className="inline-block">
-                        <Image src="/logo_syft_h.svg" alt="Syft Logo" width={200} height={200} />
+                        <Image 
+                            src="/logo_syft_h.svg" 
+                            alt="Syft Logo" 
+                            width={160} 
+                            height={43}
+                            priority
+                            className="h-auto" 
+                        />
                     </Link>
                 </div>
                 

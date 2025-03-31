@@ -8,7 +8,7 @@ export default function Hero() {
     const logoRef = useRef<HTMLObjectElement>(null);
 
     return (
-        <section id="hero" className="w-full p-10  md:min-h-[calc(600px+var(--header-height))] -mt-[var(--header-height)] flex items-stretch isolate relative mt-10 mb-20 z-10">
+        <section id="hero" className="w-full p-10  md:min-h-[calc(600px+var(--header-height))] -mt-[var(--header-height)] flex items-stretch isolate relative mt-10 mb-20 z-10 overflow-hidden">
             <div className='w-full container mx-auto flex justify-end lg:justify-between lg:syft-max-w flex-col-reverse lg:flex-row'>
                 <div className="hero-text lg:w-4/5 flex flex-col justify-center py-10 text-center lg:text-left">
                 <span className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-rose-500 font-semibold mb-2 uppercase">Your Own Personal</span>
