@@ -9,7 +9,8 @@ import {
     GoogleAuthProvider,
     signOut,
     onAuthStateChanged,
-    signInWithRedirect
+    signInWithRedirect,
+    getRedirectResult
 } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 
@@ -43,6 +44,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setLoading(false);
         });
 
+        // Handle redirect result when the component mounts
+        getRedirectResult(auth).then((result) => {
+            if (result) {
+                const userEmail = result.user.email;
+                const allowedEmails = getAllowedEmails();
+                
+                // Check if the user's email is in the allowed list
+                if (!userEmail || (allowedEmails.length > 0 && !allowedEmails.includes(userEmail))) {
+                    // If not allowed, sign them out
+                    signOut(auth);
+                }
+            }
+        }).catch((error) => {
+            console.error('Redirect result error:', error);
+        });
+
         return unsubscribe;
     }, []);
 
@@ -58,7 +75,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const provider = new GoogleAuthProvider();
         
         try {
-            // Try to use signInWithPopup first
+            // Check if the browser is Safari
+            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+            
+            if (isSafari) {
+                // Use redirect for Safari browsers
+                await signInWithRedirect(auth, provider);
+                return;
+            }
+
+            // For other browsers, try popup first
             try {
                 const result = await signInWithPopup(auth, provider);
                 const userEmail = result.user.email;
