@@ -28,7 +28,10 @@ export default function SignIn() {
         try {
             await signInWithGoogle();
             setError('');
-            router.push('/');
+            // Add a small delay to ensure auth state is updated
+            setTimeout(() => {
+                router.push('/');
+            }, 100);
         } catch (error) {
             console.error('Google sign-in error:', error);
             // Show a specific error if it's an access denied error
