@@ -64,12 +64,6 @@ export default function FeatureCard({ title, icon, description, index = 0 }: Fea
         >
 
             <div className="p-8 h-full bg-white rounded-xl flex flex-col items-center text-center transform transition-all duration-300 hover:-translate-y-1 relative">
-                {/* Decorative dots pattern */}
-                <div className="absolute top-6 right-6 grid grid-cols-3 gap-1">
-                    {[...Array(6)].map((_, i) => (
-                        <div key={i} className="w-1 h-1 bg-gray-500 rounded-full"></div>
-                    ))}
-                </div>
                 
                 {/* Icon with blob background */}
                 <div className="relative mb-8 mt-4 w-24 h-24 flex items-center justify-center">

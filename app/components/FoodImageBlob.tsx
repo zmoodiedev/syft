@@ -41,18 +41,6 @@ export default function FoodImageBlob({
           className="w-full h-full object-cover"
         />
       </div>
-      
-      {/* Decorative dots pattern similar to feature cards */}
-      <div className="absolute top-6 right-6 grid grid-cols-3 gap-1 z-20">
-        {[...Array(6)].map((_, i) => (
-          <div key={i} className="w-1 h-1 bg-gray-500 rounded-full"></div>
-        ))}
-      </div>
-      
-      {/* Decorative corner shape */}
-      <div className="absolute top-0 right-0 z-20">
-        <div className="w-16 h-16 border-t-2 border-r-2 border-tomato opacity-80"></div>
-      </div>
     </div>
   );
 } 
