@@ -241,6 +241,20 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
     }
   };
 
+  // Add this new function at the component level
+  const adjustTextareaHeight = (element: HTMLTextAreaElement) => {
+    element.style.height = 'auto';
+    element.style.height = `${element.scrollHeight}px`;
+  };
+
+  // Add this new useEffect
+  useEffect(() => {
+    const textareas = document.querySelectorAll('textarea');
+    textareas.forEach((textarea) => {
+      adjustTextareaHeight(textarea as HTMLTextAreaElement);
+    });
+  }, [instructions]); // Re-run when instructions change
+
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       {/* Basic Info Section */}
@@ -253,7 +267,7 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
             id="name"
             type="text"
             {...register("name", { required: "Recipe name is required" })}
-            className="mt-1 border border-medium-grey rounded w-full py-2 px-3 text-gray-700 leading-tight focus:shadow-outline"
+            className="mt-1 border border-steel rounded w-full py-2 px-3 text-gray-700 leading-tight focus:shadow-outline"
           />
           {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>}
         </div>
@@ -268,7 +282,7 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
               type="text"
               {...register("servings")}
               placeholder="e.g., 4"
-              className="mt-1 border border-medium-grey rounded w-full py-2 px-3 text-gray-700 leading-tight focus:shadow-outline"
+              className="mt-1 border border-steel rounded w-full py-2 px-3 text-gray-700 leading-tight focus:shadow-outline"
             />
           </div>
 
@@ -281,7 +295,7 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
               type="text"
               {...register("prepTime")}
               placeholder="e.g., 15 mins"
-              className="mt-1 border border-medium-grey rounded w-full py-2 px-3 text-gray-700 leading-tight focus:shadow-outline"
+              className="mt-1 border border-steel rounded w-full py-2 px-3 text-gray-700 leading-tight focus:shadow-outline"
             />
           </div>
 
@@ -294,7 +308,7 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
               type="text"
               {...register("cookTime")}
               placeholder="e.g., 30 mins"
-              className="mt-1 border border-medium-grey rounded w-full py-2 px-3 text-gray-700 leading-tight focus:shadow-outline"
+              className="mt-1 border border-steel rounded w-full py-2 px-3 text-gray-700 leading-tight focus:shadow-outline"
             />
           </div>
         </div>
@@ -307,7 +321,7 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
           
           <div className="flex flex-col space-y-3">
             {/* File Upload */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-col md:flex-row">
               <input
                 type="file"
                 accept="image/*"
@@ -319,6 +333,7 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
                 type="button"
                 onClick={handleUploadClick}
                 disabled={isUploading}
+                variant='outline'
               >
                 {isUploading ? 'Uploading...' : 'Upload Image'}
               </Button>
@@ -333,7 +348,7 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
                   value={imageUrl}
                   onChange={handleImageUrlChange}
                   placeholder="https://example.com/image.jpg"
-                  className="border border-medium-grey rounded-l w-full py-2 px-3 text-gray-700 leading-tight focus:shadow-outline"
+                  className="border border-steel rounded-l w-full py-2 px-3 text-gray-700 leading-tight focus:shadow-outline"
                 />
                 <Button
                   type="button"
@@ -376,48 +391,53 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
         <label className="block text-sm font-medium text-gray-700">
           Ingredients
         </label>
-        <div className="flex">
-          <div className="flex-1/3"><h5>Amount</h5></div>
-          <div className="flex-1/3"><h5>Unit</h5></div>
-          <div className="flex-1/3"><h5>Ingredient</h5></div>
+        <div className="gap-2 mb-2 hidden md:flex md:flex-row">
+          <div className="w-1/4"><h5>Amount</h5></div>
+          <div className="w-1/4"><h5>Unit</h5></div>
+          <div className="w-full md:w-1/2"><h5>Ingredient</h5></div>
         </div>
         <div className="space-y-3">
           {ingredients.map((ingredient, index) => (
-            <div key={ingredient.id} className="flex items-center space-x-2">
-              <input
-                value={ingredient.amount}
-                onChange={(e) => updateIngredient(index, 'amount', e.target.value)}
-                placeholder="Amount"
-                className="w-1/5 border border-medium-grey rounded w-full py-2 px-3 text-gray-700 leading-tight focus:shadow-outline"
-              />
-              <input
-                value={ingredient.unit}
-                onChange={(e) => updateIngredient(index, 'unit', e.target.value)}
-                placeholder="Unit"
-                className="w-1/5 border border-medium-grey rounded w-full py-2 px-3 text-gray-700 leading-tight focus:shadow-outline"
-              />
-              <input
-                value={ingredient.item}
-                onChange={(e) => updateIngredient(index, 'item', e.target.value)}
-                placeholder="Ingredient"
-                required
-                className="border border-medium-grey rounded w-full py-2 px-3 text-gray-700 leading-tight focus:shadow-outline"
-              />
-              {index >= 0 && (
-                <button
-                  type="button"
-                  onClick={() => removeIngredient(index)}
-                  className="p-1 text-red-500 hover:text-red-700"
-                >
-                  ✕
-                </button>
-              )}
+            <div key={ingredient.id} className="flex flex-col md:flex-row gap-2 mb-6">
+              <div className="flex gap-2 w-full md:w-1/2">
+                <input
+                  value={ingredient.amount}
+                  onChange={(e) => updateIngredient(index, 'amount', e.target.value)}
+                  placeholder="Amount"
+                  className="w-1/2 border border-steel rounded py-2 px-3 text-gray-700 leading-tight focus:shadow-outline"
+                />
+                <input
+                  value={ingredient.unit}
+                  onChange={(e) => updateIngredient(index, 'unit', e.target.value)}
+                  placeholder="Unit"
+                  className="w-1/2 border border-steel rounded py-2 px-3 text-gray-700 leading-tight focus:shadow-outline"
+                />
+              </div>
+              <div className="flex gap-2 w-full md:w-1/2">
+                <input
+                  value={ingredient.item}
+                  onChange={(e) => updateIngredient(index, 'item', e.target.value)}
+                  placeholder="Ingredient"
+                  required
+                  className="flex-1 border border-steel rounded py-2 px-3 text-gray-700 leading-tight focus:shadow-outline"
+                />
+                {index >= 0 && (
+                  <button
+                    type="button"
+                    onClick={() => removeIngredient(index)}
+                    className="p-1 text-red-500 hover:text-red-700"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>
         <Button
           type="button"
           onClick={addIngredient}
+          variant='outline'
         >
           + Add Ingredient
         </Button>
@@ -428,7 +448,7 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
         <label className="block text-sm font-medium text-gray-700">
           Instructions
         </label>
-        <div className="space-y-3">
+        <div className="space-y-3 mb-6">
           {instructions.map((instruction, index) => (
             <div key={index} className="flex items-start space-x-2">
               <span className="text-sm font-medium w-8">{index + 1}.</span>
@@ -437,7 +457,9 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
                 onChange={(e) => updateInstruction(index, e.target.value)}
                 placeholder="Instruction step"
                 required
-                className="border border-medium-grey rounded w-full py-2 px-3 text-gray-700 leading-tight focus:shadow-outline"
+                rows={1}
+                onInput={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
+                className="border border-steel rounded w-full py-2 px-3 text-gray-700 leading-tight focus:shadow-outline resize-none overflow-hidden"
               />
               {index > 0 && (
                 <button
@@ -454,13 +476,14 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
         <Button
           type="button"
           onClick={addInstruction}
+          variant='outline'
         >
           + Add Step
         </Button>
       </div>
 
       {/* Categories Section */}
-      <div className="space-y-2">
+      <div className="space-y-2 mb-6">
         <label className="block text-sm font-medium text-gray-700">
           Categories
         </label>

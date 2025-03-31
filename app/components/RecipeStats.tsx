@@ -35,7 +35,7 @@ export default function RecipeStats({
   const textClass = `${sizeClasses[size].split(' ').pop()} text-gray-600`;
   
   return (
-    <div className={`flex flex-col md:flex-row space-x-4 ${className}`}>
+    <div className={`flex flex-row space-x-4 ${className}`}>
       {/* Servings Stat */}
       {servings && (
         <div className="flex items-center mb-2 md:mb-0">

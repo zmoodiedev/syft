@@ -150,16 +150,16 @@ export default function RecipeDetail() {
 
             {/* Recipe Info */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h2 className="font-semibold text-gray-700 mb-2">Prep Time</h2>
+              <div className="bg-eggshell p-4 rounded-lg">
+                <h3 className="font-semibold mb-2">Prep Time</h3>
                 <p className="text-xl font-medium">{recipe.prepTime || 'Not specified'}</p>
               </div>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h2 className="font-semibold text-gray-700 mb-2">Cook Time</h2>
+              <div className="bg-eggshell p-4 rounded-lg">
+                <h3 className="font-semibold mb-2">Cook Time</h3>
                 <p className="text-xl font-medium">{recipe.cookTime || 'Not specified'}</p>
               </div>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h2 className="font-semibold text-gray-700 mb-2">Servings</h2>
+              <div className="bg-eggshell p-4 rounded-lg">
+                <h3 className="font-semibold mb-2">Servings</h3>
                 <p className="text-xl font-medium">{recipe.servings || 'Not specified'}</p>
               </div>
             </div>
@@ -167,7 +167,7 @@ export default function RecipeDetail() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
               {/* Ingredients Section */}
               <div className="lg:col-span-1">
-                <h2 className="text-2xl font-bold mb-4 border-b pb-2">Ingredients</h2>
+                <h2 className="text-2xl font-semibold mb-4 border-b pb-2">Ingredients</h2>
                 <ul className="space-y-3">
                   {recipe.ingredients.map((ingredient, index) => (
                     <li key={ingredient.id || index} className="flex items-start">
@@ -183,7 +183,7 @@ export default function RecipeDetail() {
 
               {/* Instructions Section */}
               <div className="lg:col-span-2">
-                <h2 className="text-2xl font-bold mb-4 border-b pb-2">Instructions</h2>
+                <h2 className="text-2xl font-semibold mb-4 border-b pb-2">Instructions</h2>
                 <ol className="space-y-6">
                   {recipe.instructions.map((instruction, index) => (
                     <li key={index} className="flex">

@@ -41,20 +41,7 @@ export default function SignIn() {
 
     return (
         <div className="relative bg-white shadow-xl rounded-xl px-10 pt-12 pb-10 max-w-md w-full z-10">
-            {/* Decorative corner shapes */}
-            <div className="absolute top-0 right-0">
-                <div className="w-16 h-16 border-t-2 border-r-2 border-red-500 opacity-80"></div>
-            </div>
-            <div className="absolute bottom-0 left-0">
-                <div className="w-16 h-16 border-b-2 border-l-2 border-red-500 opacity-80"></div>
-            </div>
-            
-            {/* Decorative dots pattern */}
-            <div className="absolute top-6 right-6 grid grid-cols-3 gap-1">
-                {[...Array(6)].map((_, i) => (
-                    <div key={i} className="w-1 h-1 bg-gray-500 rounded-full"></div>
-                ))}
-            </div>
+
             
             {/* Decorative floating blobs */}
             <div className="absolute -bottom-5 -left-10 w-20 h-20 rounded-full bg-red-500/5"></div>
@@ -69,7 +56,7 @@ export default function SignIn() {
                 </div>
             )}
             
-            <form onSubmit={handleSubmit} className="space-y-5">
+            {/*<form onSubmit={handleSubmit} className="space-y-5">
                 <div>
                     <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                         Email
@@ -102,17 +89,17 @@ export default function SignIn() {
                 >
                     Sign In
                 </button>
-            </form>
+            </form>*/}
             
             <div className="mt-8">
-                <div className="relative">
+                {/*<div className="relative">
                     <div className="absolute inset-0 flex items-center">
                         <div className="w-full border-t border-gray-300"></div>
                     </div>
                     <div className="relative flex justify-center text-sm">
                         <span className="px-3 bg-white text-gray-500">Or continue with</span>
                     </div>
-                </div>
+                </div>*/}
                 <div className="mt-6">
                     <button
                         onClick={handleGoogleSignIn}

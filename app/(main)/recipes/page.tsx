@@ -88,8 +88,8 @@ export default function RecipesPage() {
 
     return (
         <ProtectedRoute>
-            <div className="container mx-auto px-4 py-20">
-                <div className="flex flex-col md:flex-row justify-between items-center mb-8">
+            <div className="container mx-auto px-4 py-12 md:py-20">
+                <div className="flex flex-col md:flex-row justify-between md:items-center mb-8">
                     <h1 className="text-4xl font-bold mb-6">Your Recipes</h1>
                     <Button
                         href="/add-recipe"

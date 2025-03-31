@@ -26,9 +26,8 @@ export default function RecipeCard({ recipe, priority = false }: RecipeCardProps
       transition={{ duration: 0.3 }}
       className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
     >
-      <Link href={`/recipes/${recipe.id}`} className="flex h-full">
-        {/* Left side - Image */}
-        <div className="relative w-2/5 h-[180px]">
+      <Link href={`/recipes/${recipe.id}`} className="flex h-full flex-col sm:flex-row">
+        <div className="relative w-full sm:w-2/5 h-[180px]">
           {recipe.imageUrl ? (
             <Image
               src={recipe.imageUrl}
@@ -46,8 +45,7 @@ export default function RecipeCard({ recipe, priority = false }: RecipeCardProps
           )}
         </div>
         
-        {/* Right side - Content */}
-        <div className="w-3/5 p-4 flex flex-col justify-between">
+        <div className="w-full sm:w-3/5 p-4 flex flex-col justify-between">
           <div>
             <h3 className="text-xl font-bold text-gray-900 mb-2">{recipe.name}</h3>
             
@@ -65,6 +63,7 @@ export default function RecipeCard({ recipe, priority = false }: RecipeCardProps
           <div className="mt-auto">
             <Button
               className=""
+              variant='outline'
             >
               View Recipe
             </Button>

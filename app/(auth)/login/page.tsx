@@ -1,8 +1,22 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import SignIn from '@/app/components/SignIn';
+import { useAuth } from '@/app/context/AuthContext';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
+    const { user } = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (user) {
+            router.push('/recipes');
+        }
+    }, [user, router]);
+
     return (
         <div className="flex flex-col items-center min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-gray-50 relative overflow-hidden">
             {/* Decorative elements */}
@@ -37,14 +51,14 @@ export default function LoginPage() {
                 
                 <SignIn />
                 
-                <div className="text-center mt-8">
+                {/*<div className="text-center mt-8">
                     <p className="text-sm text-gray-600">
                         Don&apos;t have an account?{' '}
                         <Link href="/signup" className="font-medium text-red-500 hover:text-red-600 transition-colors">
                             Sign up
                         </Link>
                     </p>
-                </div>
+                </div>*/}
             </div>
         </div>
     );

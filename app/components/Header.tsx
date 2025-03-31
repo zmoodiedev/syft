@@ -57,8 +57,8 @@ export default function Header() {
             <div className="w-full container mx-auto flex flex-row justify-between items-center">
                 <Link href="/">
                     <Image
-                        src="./logo_syft_h.svg"
-                        alt="Whiisk logo"
+                        src="/logo_syft_h.svg"
+                        alt="Syft Logo"
                         width={100}
                         height={27}
                         priority
