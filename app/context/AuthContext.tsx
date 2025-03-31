@@ -8,7 +8,8 @@ import {
     signInWithPopup,
     GoogleAuthProvider,
     signOut,
-    onAuthStateChanged
+    onAuthStateChanged,
+    signInWithRedirect
 } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 
@@ -57,18 +58,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const provider = new GoogleAuthProvider();
         
         try {
-            const result = await signInWithPopup(auth, provider);
-            const userEmail = result.user.email;
-            const allowedEmails = getAllowedEmails();
-            
-            // Check if the user's email is in the allowed list
-            if (!userEmail || (allowedEmails.length > 0 && !allowedEmails.includes(userEmail))) {
-                // If not allowed, sign them out and throw an error
-                await signOut(auth);
-                throw new Error('Access denied. Syft is currently in beta and only open to selected users.');
+            // Try to use signInWithPopup first
+            try {
+                const result = await signInWithPopup(auth, provider);
+                const userEmail = result.user.email;
+                const allowedEmails = getAllowedEmails();
+                
+                // Check if the user's email is in the allowed list
+                if (!userEmail || (allowedEmails.length > 0 && !allowedEmails.includes(userEmail))) {
+                    // If not allowed, sign them out and throw an error
+                    await signOut(auth);
+                    throw new Error('Access denied. Syft is currently in beta and only open to selected users.');
+                }
+            } catch (popupError: unknown) {
+                // If popup fails due to storage issues, try redirect method
+                if (popupError instanceof Error && 
+                    (popupError.message.includes('missing initial state') || 
+                    popupError.message.includes('storage-partitioned'))) {
+                    await signInWithRedirect(auth, provider);
+                    return; // The redirect will handle the rest
+                }
+                throw popupError; // Re-throw if it's a different error
             }
-            
-            // If allowed, they stay signed in
         } catch (error) {
             console.error('Authentication error:', error);
             throw error;
