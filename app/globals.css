@@ -32,6 +32,15 @@
     font-weight: 600;
     font-family: var(--font-montserrat);
   }
+  
+  a {
+    color: var(--color-basil);
+    text-decoration: underline;
+
+    &:hover {
+      color: var(--color-green-apple);
+    }
+  }
 
   a,
   button {

@@ -27,7 +27,7 @@ export default function RecipeCard({ recipe, priority = false }: RecipeCardProps
       className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
     >
       <Link href={`/recipes/${recipe.id}`} className="flex h-full flex-col sm:flex-row">
-        <div className="relative w-full sm:w-2/5 h-[180px]">
+        <div className="relative w-full sm:w-2/5 min-h-[180px]">
           {recipe.imageUrl ? (
             <Image
               src={recipe.imageUrl}

@@ -127,9 +127,38 @@ export async function POST(request: Request) {
                 [id*="recipe_steps"] li,
                 [id*="recipesteps"] li
             `).each((_, el) => {
-                const text = $(el).text().trim();
-                // Remove any advertisement text or other common unwanted content
-                const cleanText = text.replace(/advertisement|sponsored|ad/gi, '').trim();
+                // Clone the element to avoid modifying the original
+                const $el = $(el).clone();
+                
+                // Remove image captions and other non-instruction content
+                $el.find('figcaption, .image-caption, .caption, [class*="caption"], [class*="image-description"], [class*="figure-article-caption-owner"]').remove();
+                $el.find('img, figure, .image-container, [class*="image-container"]').remove();
+                
+                // Get the text content after removing unwanted elements
+                const text = $el.text().trim();
+                
+                // Split the text into lines to handle multi-line content
+                const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+                
+                // Process each line and combine valid instruction parts
+                const validLines = lines.filter(line => {
+                    // Skip lines that are just image credits or captions
+                    if (line.match(/^[A-Z\s]+$/) || // All caps
+                        line.match(/^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\s+(?:Food\s+Studios|Photography|Media|Group|Inc\.?|LLC|Ltd\.?)$/) || // Company names
+                        line.match(/^(click|tap|view|see|image|photo|picture)/i) || // Caption starts
+                        line.length <= 5) { // Too short
+                        return false;
+                    }
+                    return true;
+                });
+
+                // Combine valid lines into a single instruction
+                const cleanText = validLines.join(' ')
+                    .replace(/advertisement|sponsored|ad/gi, '')
+                    .replace(/^step\s*\d+[.:]?\s*/i, '') // Remove "Step X:" prefix
+                    .replace(/^\d+[.:]?\s*/i, '') // Remove number prefix
+                    .trim();
+                
                 if (cleanText) {
                     instructions.push(cleanText);
                 }

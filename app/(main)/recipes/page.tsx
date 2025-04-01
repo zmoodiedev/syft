@@ -9,6 +9,7 @@ import { RECIPE_CATEGORIES } from '@/app/components/RecipeForm';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import Button from '@/app/components/Button';
 
+
 interface Recipe {
     id: string;
     name: string;
@@ -26,6 +27,7 @@ export default function RecipesPage() {
     const [loading, setLoading] = useState(true);
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         const fetchRecipes = async () => {
@@ -78,31 +80,59 @@ export default function RecipesPage() {
         );
     };
 
-    const filteredRecipes = selectedCategories.length > 0
-        ? recipes.filter(recipe => 
+    const filteredRecipes = recipes.filter(recipe => {
+        // First apply category filter
+        const matchesCategory = selectedCategories.length === 0 || 
             selectedCategories.some(category => 
                 recipe.categories && recipe.categories.includes(category)
-            )
-        )
-        : recipes;
+            );
+
+        // Then apply search filter
+        const searchLower = searchQuery.toLowerCase();
+        const matchesSearch = searchQuery === '' || 
+            recipe.name.toLowerCase().includes(searchLower) ||
+            (recipe.categories && recipe.categories.some(cat => 
+                cat.toLowerCase().includes(searchLower)
+            ));
+
+        return matchesCategory && matchesSearch;
+    });
 
     return (
         <ProtectedRoute>
             <div className="container mx-auto px-4 py-12 md:py-20">
-                <div className="flex flex-col md:flex-row justify-between md:items-center mb-8">
-                    <h1 className="text-4xl font-bold mb-6">Your Recipes</h1>
-                    <Button
-                        href="/add-recipe"
-                    >
+                <div className="flex flex-col md:flex-row justify-between md:items-center mb-8 flex-wrap lg:flex-nowrap">
+                    <div className="flex flex-row gap-4 w-full mb-6 lg:mb-0">
+                        <h1 className="text-4xl font-bold">Your Recipes</h1>
+                        <Button
+                                href="/add-recipe"
+                            >
                         Add New Recipe
-                    </Button>
+                        </Button>
+                    </div>
+                    {/* Search Bar */}
+                    <div className="relative min-w-[500px] w-full">
+                        <input
+                            type="text"
+                            placeholder="Search recipes..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-apple/50 focus:border-green-apple"
+                        />
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+                    </div>
                 </div>
+
 
                 {/* Category Filter */}
                 {availableCategories.length > 0 && (
                     <div className="mb-8">
                         <h2 className="text-lg font-semibold mb-4">Filter by Category</h2>
-                        <div className="flex flex-wrap gap-3 p-4 bg-white">
+                        <div className="flex flex-wrap gap-3 p-4 bg-eggshell">
                             {availableCategories.map((category: string) => (
                                 <button
                                     key={category}
@@ -110,7 +140,7 @@ export default function RecipesPage() {
                                     className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
                                         selectedCategories.includes(category)
                                             ? 'bg-green-apple text-white'
-                                            : 'bg-light-grey text-steel hover:bg-gray-200 cursor-pointer'
+                                            : 'bg-white text-steel hover:bg-gray-200 cursor-pointer'
                                     }`}
                                 >
                                     {category}
@@ -127,14 +157,18 @@ export default function RecipesPage() {
                 ) : filteredRecipes.length === 0 ? (
                     <div className="text-center py-12">
                         <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                            {selectedCategories.length > 0
-                                ? 'No recipes match the selected categories'
-                                : 'No recipes yet'}
+                            {searchQuery
+                                ? 'No recipes match your search'
+                                : selectedCategories.length > 0
+                                    ? 'No recipes match the selected categories'
+                                    : 'No recipes yet'}
                         </h3>
                         <p className="text-gray-600 mb-4">
-                            {selectedCategories.length > 0
-                                ? 'Try selecting different categories or clear the filters'
-                                : 'Start by adding your first recipe!'}
+                            {searchQuery
+                                ? 'Try adjusting your search terms'
+                                : selectedCategories.length > 0
+                                    ? 'Try selecting different categories or clear the filters'
+                                    : 'Start by adding your first recipe!'}
                         </p>
                         <Button
                             href="/add-recipe" 

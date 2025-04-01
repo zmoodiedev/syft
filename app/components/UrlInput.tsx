@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import RecipeForm from './RecipeForm';
 import Button from './Button';
-
+import Link from 'next/link';
 interface ScrapedRecipe {
     name: string;
     servings: string;
@@ -97,11 +97,12 @@ export default function UrlInput() {
             </form>
 
             <div className="border-t pt-6">
-                <h3 className="text-lg font-medium mb-2">Supported Websites</h3>
-                <p className="text-gray-600">
-                    We currently support recipe imports from popular websites like AllRecipes, Food Network, 
-                    BBC Good Food, and many more. Simply copy and paste the URL of the recipe you&apos;d like to import.
-                </p>
+                <h3 className="text-lg font-medium mb-2">Recipe Extraction Notice</h3>
+                <p className="mb-4">Our app does its best to extract recipe details from the webpage you provide. However, results may not always be perfect, and some websites may not be fully supported yet.</p>
+
+                <p className="mb-4">If you notice missing or incorrect information, or if a recipe isn&apos;t being extracted properly, please let us know! Your feedback helps us improve support for more websites in the future.</p>
+
+                <p>Contact us at: <Link href="mailto:support@syft.cooking">support@syft.cooking</Link></p>
             </div>
         </div>
     );
