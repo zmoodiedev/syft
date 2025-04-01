@@ -4,7 +4,7 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import DevIndicator from "./components/DevIndicator";
 import Script from "next/script";
-import { Metadata } from 'next';
+import { Metadata, Viewport } from 'next';
 
 const montserrat = Montserrat({
   variable: "--font-montserrat",
@@ -13,6 +13,14 @@ const montserrat = Montserrat({
 });
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_ID || '';
+
+// Viewport configuration
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
 
 // Metadata for the entire site
 export const metadata: Metadata = {
@@ -62,12 +70,6 @@ export const metadata: Metadata = {
     description: 'Save, organize, and enjoy your favorite recipes, all in one place. No ads, no distractions—just the recipes you love.',
     images: ['/twitter-image.jpg'],
     creator: '@syft_app',
-  },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
   },
   robots: {
     index: true,

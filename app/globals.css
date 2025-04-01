@@ -9,39 +9,40 @@
   body {
     font-size: 18px;
     font-family: var(--font-montserrat);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h1 {
     font-size: var(--text-4xl);
     font-weight: 700;
     font-family: var(--font-montserrat);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   h2 {
     font-size: var(--text-3xl);
     font-weight: 700;
     font-family: var(--font-montserrat);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   h3 {
     font-size: var(--text-2xl);
     font-weight: 700;
     font-family: var(--font-montserrat);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h4 {
     font-size: var(--text-xl);
     font-weight: 600;
     font-family: var(--font-montserrat);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   
-  a {
-    color: var(--color-basil);
-    text-decoration: underline;
-
-    &:hover {
-      color: var(--color-green-apple);
-    }
-  }
-
   a,
   button {
     &:hover {
@@ -74,25 +75,10 @@
     margin: 0 auto;
     padding-left: 2rem;
     padding-right: 2rem;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
   }
-
-  .highlight {
-    width: max-content;
-    position: relative;
-    
-    &::after {
-      content: "";
-      display: block;
-      height: .7rem;
-      background: var(--orange);
-      position: absolute;
-      bottom: 0.1rem;
-      width: 100%;
-      z-index: -1;
-      transform: skew(15deg, 358deg);
-    }
-  }
-
 }
 
 /*@media (prefers-color-scheme: dark) {
@@ -105,24 +91,44 @@
 /* Feature card grid pattern */
 .bg-grid-pattern {
   background-image: 
+    -webkit-linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+    -webkit-linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+  background-image: 
     linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
   background-size: 20px 20px;
+  -webkit-background-size: 20px 20px;
 }
 
 /* Slide up animation for feature cards */
-@keyframes slideUp {
+@-webkit-keyframes slideUp {
   0% {
     opacity: 0;
+    -webkit-transform: translateY(50px);
     transform: translateY(50px);
   }
   100% {
     opacity: 1;
+    -webkit-transform: translateY(0);
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  0% {
+    opacity: 0;
+    -webkit-transform: translateY(50px);
+    transform: translateY(50px);
+  }
+  100% {
+    opacity: 1;
+    -webkit-transform: translateY(0);
     transform: translateY(0);
   }
 }
 
 .animate-slideUp {
+  -webkit-animation: slideUp 0.6s ease-out forwards;
   animation: slideUp 0.6s ease-out forwards;
 }
 

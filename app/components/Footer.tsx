@@ -5,14 +5,16 @@ export default function Footer() {
         <footer className="bg-cast-iron text-white px-4 pt-16 pb-8 mt-auto">
             <div id="megaFooter" className="container mx-auto mb-16 flex justify-between flex-col md:flex-row">
                 <div className="w-full md:w-1/3 mb-10 md:mb-0">
-                    <Image
-                        src="/logo_syft_h.svg"
-                        alt="Syft logo"
-                        width={150}
-                        height={27}
-                        priority
-                        className="mb-6 h-auto"
-                    />
+                    <div className="mb-6">
+                        <Image
+                            src="/logo_syft_h.svg"
+                            alt="Syft logo"
+                            width={0}
+                            height={0}
+                            priority
+                            className="h-[50px] w-auto"
+                        />
+                    </div>
                     <p className="font-thin text-base">— Save, organize, and enjoy your favorite recipes, all in one place. No ads, no distractions—just the recipes you love.</p>
                 </div>
                 <div className="w-full md:w-1/3">
@@ -23,7 +25,7 @@ export default function Footer() {
                     </div>
                 </div>
             </div>
-            <div id="copyright" className="container mx-auto text-sm font-thin">© {new Date().getFullYear()} Syft. All rights reserved.</div>
+            <div id="copyright" className="container mx-auto text-sm font-thin py-4">© {new Date().getFullYear()} Syft. All rights reserved.</div>
         </footer>
     )
 }

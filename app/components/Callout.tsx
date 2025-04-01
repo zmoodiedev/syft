@@ -20,9 +20,9 @@ export default function Callout() {
                     <Image
                         src="/images/tom_spaghetti.svg"
                         alt="Tom Spaghetti" 
-                        width={600}
-                        height={600}
-                        className="relative z-10"
+                        width={0}
+                        height={0}
+                        className="relative z-10 w-auto h-auto"
                     />
                 </div>
                 <div className="callout-txt w-full lg:w-3/4 flex flex-col justify-center text-left">

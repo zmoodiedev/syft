@@ -314,7 +314,7 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
         </div>
 
         {/* Image Upload Section */}
-        <div>
+        <div className="rounded-lg p-4 border-steel border">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Recipe Image
           </label>

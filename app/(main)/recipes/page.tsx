@@ -111,7 +111,7 @@ export default function RecipesPage() {
                         </Button>
                     </div>
                     {/* Search Bar */}
-                    <div className="relative min-w-[500px] w-full">
+                    <div className="relative w-full">
                         <input
                             type="text"
                             placeholder="Search recipes..."
