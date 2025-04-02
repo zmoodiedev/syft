@@ -32,16 +32,13 @@ export default function SignUpPage() {
         <div className="z-10 w-full max-w-md">
           <div className="text-center mb-8">
             <Link href="/" className="inline-block">
-              <div className="h-[43px]">
-                <Image 
-                  src="/logo_syft_h.svg" 
-                  alt="Syft Logo" 
-                  width={160} 
-                  height={43}
-                  priority
-                  className="w-auto h-auto"
-                />
-              </div>
+              <Image 
+                src="/logo_syft_h.svg" 
+                alt="Syft Logo" 
+                width={160} 
+                height={43}
+                priority
+              />
             </Link>
           </div>
           

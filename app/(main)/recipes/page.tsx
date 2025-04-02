@@ -102,10 +102,11 @@ export default function RecipesPage() {
         <ProtectedRoute>
             <div className="container mx-auto px-4 py-12 md:py-20">
                 <div className="flex flex-col md:flex-row justify-between md:items-center mb-8 flex-wrap lg:flex-nowrap">
-                    <div className="flex flex-row gap-4 w-full mb-6 lg:mb-0">
+                    <div className="flex flex-row gap-4 w-full mb-6 lg:mb-0 flex-wrap md:nowrap justify-between md:justify-start">
                         <h1 className="text-4xl font-bold">Your Recipes</h1>
                         <Button
                                 href="/add-recipe"
+                                className="w-auto"
                             >
                         Add New Recipe
                         </Button>

@@ -98,7 +98,7 @@ export default function UrlInput() {
 
             <div className="border-t pt-6">
                 <h3 className="text-lg font-medium mb-2">Recipe Extraction Notice</h3>
-                <p className="mb-4">Our app does its best to extract recipe details from the webpage you provide. However, results may not always be perfect, and some websites may not be fully supported yet.</p>
+                <p className="mb-4">Our app does its best to extract recipe details from the webpage you provide. However, results may not always be perfect, and some websites may specifically request that we do not extracttheir content.</p>
 
                 <p className="mb-4">If you notice missing or incorrect information, or if a recipe isn&apos;t being extracted properly, please let us know! Your feedback helps us improve support for more websites in the future.</p>
 

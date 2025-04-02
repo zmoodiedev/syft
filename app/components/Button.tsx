@@ -25,7 +25,7 @@ export default function Button({
 }: ButtonProps) {
   
   // Base styles
-  const baseStyles = "block text-sm px-6 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-light-blue rounded-full w-[max-content] after:ease-in-out";
+  const baseStyles = "flex items-center justify-center text-sm px-6 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-light-blue rounded-full w-[max-content] after:ease-in-out";
   
   // Size styles
   const sizeStyles = {

@@ -75,16 +75,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const provider = new GoogleAuthProvider();
         
         try {
-            // Check if the browser is mobile
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            // Check if the browser is Safari
+            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
             
-            if (isMobile) {
-                // Use redirect for all mobile browsers
+            if (isSafari) {
+                // Use redirect for Safari browsers
                 await signInWithRedirect(auth, provider);
                 return;
             }
 
-            // For desktop browsers, try popup first
+            // For other browsers, try popup first
             try {
                 const result = await signInWithPopup(auth, provider);
                 const userEmail = result.user.email;
