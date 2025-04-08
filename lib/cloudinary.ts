@@ -48,4 +48,26 @@ export const uploadImage = async (file: File, options?: { width?: number; height
     console.error('Error uploading image:', error);
     throw new Error('Failed to upload image');
   }
-}; 
+};
+
+export async function deleteImage(imageUrl: string) {
+    try {
+        // Make a DELETE request to our API route
+        const response = await fetch('/api/delete-image', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ imageUrl }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to delete image: ${response.statusText}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error deleting image from Cloudinary:', error);
+        throw error;
+    }
+} 

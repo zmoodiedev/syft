@@ -3,13 +3,15 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { db } from '@/app/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '@/app/context/AuthContext';
 import Image from 'next/image';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Button from '@/app/components/Button';
+import { toast } from 'react-hot-toast';
+import { deleteImage } from '@/lib/cloudinary';
 
 interface Ingredient {
   amount: string;
@@ -32,21 +34,22 @@ interface Recipe {
 }
 
 export default function RecipeDetail() {
-  const { slug } = useParams();
-  const recipeId = Array.isArray(slug) ? slug[0] : slug;
+  const params = useParams();
+  const slug = typeof params.slug === 'string' ? params.slug : params.slug?.[0];
   const { user } = useAuth();
+  const router = useRouter();
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const router = useRouter();
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const fetchRecipe = async () => {
-      if (!user || !recipeId) return;
+      if (!user || !slug) return;
 
       try {
         setLoading(true);
-        const recipeRef = doc(db, 'recipes', recipeId);
+        const recipeRef = doc(db, 'recipes', slug);
         const recipeSnap = await getDoc(recipeRef);
 
         if (recipeSnap.exists()) {
@@ -74,10 +77,45 @@ export default function RecipeDetail() {
       }
     };
 
-    if (user && recipeId) {
+    if (user && slug) {
       fetchRecipe();
     }
-  }, [recipeId, user]);
+  }, [slug, user]);
+
+  const handleDelete = async () => {
+    if (!user || !recipe || !slug) return;
+
+    // Show confirmation dialog
+    if (!window.confirm('Are you sure you want to delete this recipe? This action cannot be undone.')) {
+      return;
+    }
+
+    setIsDeleting(true);
+
+    try {
+      // First try to delete the image if it exists
+      if (recipe.imageUrl) {
+        try {
+          await deleteImage(recipe.imageUrl);
+        } catch (error) {
+          console.error('Error deleting image:', error);
+          // Continue with recipe deletion even if image deletion fails
+        }
+      }
+
+      // Then delete the recipe document
+      const recipeRef = doc(db, 'recipes', slug);
+      await deleteDoc(recipeRef);
+
+      toast.success('Recipe deleted successfully');
+      router.push('/recipes');
+    } catch (error) {
+      console.error('Error deleting recipe:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to delete recipe');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <ProtectedRoute>
@@ -121,14 +159,22 @@ export default function RecipeDetail() {
               <div className="flex space-x-3">
                 <Button
                   onClick={() => router.push(`/recipes/edit/${recipe.id}`)}
-                  
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                   </svg>
                   Edit Recipe
                 </Button>
-                
+                <Button
+                  onClick={handleDelete}
+                  variant="danger"
+                  disabled={isDeleting}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  {isDeleting ? 'Deleting...' : 'Delete Recipe'}
+                </Button>
               </div>
             </div>
 
