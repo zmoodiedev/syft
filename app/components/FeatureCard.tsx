@@ -58,7 +58,7 @@ export default function FeatureCard({ title, icon, description, index = 0 }: Fea
         <div 
             className="feature-card relative group animate-slideUp opacity-0"
             style={{
-                animationDelay,
+                animationDelay: animationDelay || '0s',
                 animationFillMode: 'forwards'
             }}
         >

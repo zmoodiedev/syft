@@ -1,17 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { db } from '@/app/lib/firebase';
 import { doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '@/app/context/AuthContext';
 import Image from 'next/image';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import Button from '@/app/components/Button';
 import { toast } from 'react-hot-toast';
 import { deleteImage } from '@/lib/cloudinary';
+import { useFriends } from '@/app/context/FriendsContext';
+import { FiEdit } from 'react-icons/fi';
 
 interface Ingredient {
   amount: string;
@@ -37,11 +38,13 @@ export default function RecipeDetail() {
   const params = useParams();
   const slug = typeof params.slug === 'string' ? params.slug : params.slug?.[0];
   const { user } = useAuth();
+  const { friends, shareRecipeWithFriend } = useFriends();
   const router = useRouter();
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchRecipe = async () => {
@@ -117,6 +120,43 @@ export default function RecipeDetail() {
     }
   };
 
+  const isOwner = user && recipe && user.uid === recipe.userId;
+
+  const handleShareRecipe = async (friendId: string) => {
+    if (!recipe) return;
+    
+    try {
+      console.log('Attempting to share recipe', recipe.id, 'with friend', friendId);
+      
+      await shareRecipeWithFriend(
+        recipe.id,
+        recipe.name,
+        recipe.imageUrl,
+        friendId
+      );
+      
+      toast.success('Recipe shared successfully!');
+      setIsShareModalOpen(false);
+    } catch (error: unknown) {
+      console.error('Error sharing recipe in component:', error);
+      
+      // Detailed error information
+      const errorMessage = error instanceof Error 
+        ? error.message
+        : 'Unknown error occurred';
+        
+      // Log additional context
+      console.error('Error context:', { 
+        recipeId: recipe.id,
+        recipeName: recipe.name,
+        friendId,
+        errorDetails: error
+      });
+      
+      toast.error(`Failed to share recipe: ${errorMessage}`);
+    }
+  };
+
   return (
     <ProtectedRoute>
       <div className="container mx-auto py-20 px-4">
@@ -157,23 +197,32 @@ export default function RecipeDetail() {
               </div>
 
               <div className="flex space-x-3">
-                <Button
-                  onClick={() => router.push(`/recipes/edit/${recipe.id}`)}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                  </svg>
-                  Edit Recipe
-                </Button>
+                {isOwner && (
+                  <Button
+                    onClick={() => router.push(`/recipes/edit/${recipe.id}`)}
+                  >
+                    <FiEdit />
+                    Edit Recipe
+                  </Button>
+                )}
+                {/* Share Recipe Button */}
+                {user && friends.length > 0 && (
+                  <Button
+                    variant="primary"
+                    onClick={() => setIsShareModalOpen(true)}
+                  >
+                    Share Recipe
+                  </Button>
+                )}
                 <Button
                   onClick={handleDelete}
-                  variant="danger"
+                  variant="ghost"
                   disabled={isDeleting}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
-                  {isDeleting ? 'Deleting...' : 'Delete Recipe'}
+                  {isDeleting ? 'Deleting...' : ''}
                 </Button>
               </div>
             </div>
@@ -242,6 +291,8 @@ export default function RecipeDetail() {
                 </ol>
               </div>
             </div>
+
+            
           </div>
         ) : (
           <div className="text-center py-12">
@@ -252,6 +303,65 @@ export default function RecipeDetail() {
             >
               Back to Recipes
             </Link>
+          </div>
+        )}
+
+        {/* Share Recipe Modal */}
+        {isShareModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full">
+              <h2 className="text-xl font-bold mb-4">Share with Friends</h2>
+              
+              <div className="max-h-60 overflow-y-auto mb-4">
+                {friends.length === 0 ? (
+                  <p className="text-gray-500">You don&apos;t have any friends to share with yet.</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {friends.map((friend) => (
+                      <li 
+                        key={friend.id}
+                        className="p-3 bg-gray-50 rounded-lg flex items-center justify-between"
+                      >
+                        <div className="flex items-center space-x-3">
+                          {friend.photoURL ? (
+                            <Image
+                              src={friend.photoURL}
+                              alt={friend.displayName || 'Friend'}
+                              width={32}
+                              height={32}
+                              className="rounded-full"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                              <span className="text-gray-500">
+                                {(friend.displayName || friend.email || '?')[0].toUpperCase()}
+                              </span>
+                            </div>
+                          )}
+                          <span>{friend.displayName || friend.email || 'Unknown'}</span>
+                        </div>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => handleShareRecipe(friend.id)}
+                        >
+                          Share
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              
+              <div className="flex justify-end">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsShareModalOpen(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
           </div>
         )}
       </div>

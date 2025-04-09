@@ -12,7 +12,8 @@ import {
     signInWithRedirect,
     getRedirectResult
 } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { auth, db } from '../lib/firebase';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 
 interface AuthContextType {
     user: User | null;
@@ -25,6 +26,10 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
+export function useAuth() {
+    return useContext(AuthContext);
+}
+
 // Get allowed emails from environment variables
 const getAllowedEmails = (): string[] => {
     const allowedEmailsStr = process.env.NEXT_PUBLIC_ALLOWED_EMAILS;
@@ -34,18 +39,35 @@ const getAllowedEmails = (): string[] => {
     return allowedEmailsStr.split(',').map(email => email.trim());
 };
 
+const createUserProfile = async (user: User) => {
+    const userRef = doc(db, 'users', user.uid);
+    const userDoc = await getDoc(userRef);
+
+    if (!userDoc.exists()) {
+        await setDoc(userRef, {
+            displayName: user.displayName,
+            email: user.email,
+            photoURL: user.photoURL,
+            createdAt: serverTimestamp()
+        });
+    }
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                await createUserProfile(user);
+            }
             setUser(user);
             setLoading(false);
         });
 
         // Handle redirect result when the component mounts
-        getRedirectResult(auth).then((result) => {
+        getRedirectResult(auth).then(async (result) => {
             if (result) {
                 const userEmail = result.user.email;
                 const allowedEmails = getAllowedEmails();
@@ -53,7 +75,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 // Check if the user's email is in the allowed list
                 if (!userEmail || (allowedEmails.length > 0 && !allowedEmails.includes(userEmail))) {
                     // If not allowed, sign them out
-                    signOut(auth);
+                    await signOut(auth);
+                } else {
+                    await createUserProfile(result.user);
                 }
             }
         }).catch((error) => {
@@ -64,11 +88,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     const signUp = async (email: string, password: string) => {
-        await createUserWithEmailAndPassword(auth, email, password);
+        const result = await createUserWithEmailAndPassword(auth, email, password);
+        await createUserProfile(result.user);
     };
 
     const signIn = async (email: string, password: string) => {
-        await signInWithEmailAndPassword(auth, email, password);
+        const result = await signInWithEmailAndPassword(auth, email, password);
+        await createUserProfile(result.user);
     };
 
     const signInWithGoogle = async () => {
@@ -96,6 +122,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     await signOut(auth);
                     throw new Error('Access denied. Syft is currently in beta and only open to selected users.');
                 }
+
+                await createUserProfile(result.user);
             } catch (popupError: unknown) {
                 // If popup fails due to storage issues, try redirect method
                 if (popupError instanceof Error && 
@@ -130,8 +158,4 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             {!loading && children}
         </AuthContext.Provider>
     );
-}
-
-export function useAuth() {
-    return useContext(AuthContext);
 } 

@@ -1,10 +1,9 @@
 import { Montserrat } from "next/font/google";
 import "@/app/globals.css";
-import { AuthProvider } from "./context/AuthContext";
-import ProtectedRoute from "./components/ProtectedRoute";
-import DevIndicator from "./components/DevIndicator";
 import Script from "next/script";
 import { Metadata, Viewport } from 'next';
+import ClientLayout from './components/ClientLayout';
+import { FontAwesomeScript } from '@/app/components/FontAwesome';
 
 const montserrat = Montserrat({
   variable: "--font-montserrat",
@@ -25,11 +24,8 @@ export const viewport: Viewport = {
 // Metadata for the entire site
 export const metadata: Metadata = {
   metadataBase: new URL('https://syft.cooking'),
-  title: {
-    template: '%s | Syft',
-    default: 'Syft - Your Personal Recipe Vault'
-  },
-  description: 'Save, organize, and enjoy your favorite recipes, all in one place. No ads, no distractions—just the recipes you love.',
+  title: 'Syft - Recipe Manager',
+  description: 'Syft helps you organize your recipes and plan your meals.',
   keywords: ['recipe manager', 'recipe organizer', 'cooking', 'recipes', 'food', 'meal planning'],
   authors: [{ name: 'Syft' }],
   creator: 'Syft',
@@ -117,16 +113,14 @@ export default function RootLayout({
             gtag('config', '${GA_MEASUREMENT_ID}');
           `}
         </Script>
+        <FontAwesomeScript />
       </head>
       <body
         className={`${montserrat.variable} antialiased min-h-screen flex flex-col bg-background text-foreground overflow-x-hidden`}
       >
-        <AuthProvider>
-          <ProtectedRoute>
-            {children}
-          </ProtectedRoute>
-          <DevIndicator />
-        </AuthProvider>
+        <ClientLayout>
+          {children}
+        </ClientLayout>
       </body>
     </html>
   );

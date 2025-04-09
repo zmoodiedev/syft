@@ -1,0 +1,497 @@
+'use client';
+
+import { createContext, useContext, useEffect, useState } from 'react';
+import { useAuth } from './AuthContext';
+import { db } from '../lib/firebase';
+import {
+    collection,
+    query,
+    where,
+    getDocs,
+    addDoc,
+    deleteDoc,
+    doc,
+    getDoc,
+    setDoc,
+    onSnapshot,
+    serverTimestamp,
+    DocumentData,
+    updateDoc
+} from 'firebase/firestore';
+
+interface FriendRequest {
+    id: string;
+    senderId: string;
+    receiverId: string;
+    senderName: string;
+    senderEmail: string;
+    senderPhotoURL: string | null;
+    status: 'pending' | 'accepted' | 'rejected';
+    createdAt: Date;
+}
+
+interface Friend {
+    id: string;
+    displayName: string | null;
+    email: string | null;
+    photoURL: string | null;
+}
+
+interface SharedRecipe {
+    id: string;
+    recipeId: string;
+    recipeName: string;
+    recipeImageUrl?: string;
+    senderId: string;
+    senderName: string | null;
+    receiverId: string;
+    status: 'pending' | 'accepted' | 'rejected';
+    createdAt: Date;
+}
+
+interface FriendsContextType {
+    friends: Friend[];
+    incomingRequests: FriendRequest[];
+    outgoingRequests: FriendRequest[];
+    sharedRecipes: SharedRecipe[];
+    sendFriendRequest: (userId: string) => Promise<void>;
+    acceptFriendRequest: (requestId: string) => Promise<void>;
+    rejectFriendRequest: (requestId: string) => Promise<void>;
+    removeFriend: (friendId: string) => Promise<void>;
+    shareRecipeWithFriend: (recipeId: string, recipeName: string, recipeImageUrl: string | undefined, friendId: string) => Promise<void>;
+    acceptSharedRecipe: (sharedRecipeId: string) => Promise<void>;
+    rejectSharedRecipe: (sharedRecipeId: string) => Promise<void>;
+    loading: boolean;
+}
+
+const FriendsContext = createContext<FriendsContextType>({} as FriendsContextType);
+
+export function useFriends() {
+    return useContext(FriendsContext);
+}
+
+export function FriendsProvider({ children }: { children: React.ReactNode }) {
+    const { user } = useAuth();
+    const [friends, setFriends] = useState<Friend[]>([]);
+    const [incomingRequests, setIncomingRequests] = useState<FriendRequest[]>([]);
+    const [outgoingRequests, setOutgoingRequests] = useState<FriendRequest[]>([]);
+    const [sharedRecipes, setSharedRecipes] = useState<SharedRecipe[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    // Listen to friend requests and shared recipes
+    useEffect(() => {
+        if (!user) {
+            setFriends([]);
+            setIncomingRequests([]);
+            setOutgoingRequests([]);
+            setSharedRecipes([]);
+            setLoading(false);
+            return;
+        }
+
+        // Listen to incoming friend requests
+        const incomingRequestsQuery = query(
+            collection(db, 'friendRequests'),
+            where('receiverId', '==', user.uid),
+            where('status', '==', 'pending')
+        );
+
+        const outgoingRequestsQuery = query(
+            collection(db, 'friendRequests'),
+            where('senderId', '==', user.uid),
+            where('status', '==', 'pending')
+        );
+
+        // Listen to friendships
+        const friendshipsQuery = query(
+            collection(db, 'friendships'),
+            where('userIds', 'array-contains', user.uid)
+        );
+
+        const unsubscribeIncoming = onSnapshot(incomingRequestsQuery, (snapshot) => {
+            const requests = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                createdAt: doc.data().createdAt?.toDate()
+            })) as FriendRequest[];
+            setIncomingRequests(requests);
+        });
+
+        const unsubscribeOutgoing = onSnapshot(outgoingRequestsQuery, (snapshot) => {
+            const requests = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                createdAt: doc.data().createdAt?.toDate()
+            })) as FriendRequest[];
+            setOutgoingRequests(requests);
+        });
+
+        const unsubscribeFriends = onSnapshot(friendshipsQuery, async (snapshot) => {
+            const friendPromises = snapshot.docs.map(async (docSnapshot) => {
+                const friendshipData = docSnapshot.data();
+                const friendId = friendshipData.userIds.find((id: string) => id !== user.uid);
+                
+                if (!friendId) return null;
+
+                const userDocRef = doc(db, 'users', friendId);
+                const friendDoc = await getDoc(userDocRef);
+                if (!friendDoc.exists()) return null;
+
+                const friendData = friendDoc.data() as DocumentData;
+                return {
+                    id: friendId,
+                    displayName: friendData.displayName as string | null,
+                    email: friendData.email as string | null,
+                    photoURL: friendData.photoURL as string | null
+                } as Friend;
+            });
+
+            const friendsList = (await Promise.all(friendPromises)).filter((friend): friend is Friend => friend !== null);
+            setFriends(friendsList);
+            setLoading(false);
+        });
+
+        // Set up a separate effect for shared recipes
+        let unsubscribeSharedRecipes = () => {};
+        
+        // Separate try-catch only for shared recipes to handle permissions issues gracefully
+        try {
+            console.log('Setting up shared recipes listener for user:', user.uid);
+            const sharedRecipesRef = collection(db, 'sharedRecipes');
+            
+            const listener = onSnapshot(
+                sharedRecipesRef,
+                (snapshot) => {
+                    console.log('Shared recipes snapshot received:', snapshot.size, 'total documents');
+                    const recipes = snapshot.docs
+                        .filter(doc => {
+                            const data = doc.data();
+                            return data.receiverId === user.uid && data.status === 'pending';
+                        })
+                        .map(doc => {
+                            const data = doc.data();
+                            // Handle createdAt safely
+                            let createdAtDate = new Date();
+                            if (data.createdAt?.toDate) {
+                                try {
+                                    createdAtDate = data.createdAt.toDate();
+                                } catch {
+                                    // Use default date
+                                }
+                            }
+                            
+                            return {
+                                id: doc.id,
+                                recipeId: data.recipeId || '',
+                                recipeName: data.recipeName || '',
+                                recipeImageUrl: data.recipeImageUrl,
+                                senderId: data.senderId || '',
+                                senderName: data.senderName || null,
+                                receiverId: data.receiverId || '',
+                                status: (data.status as 'pending' | 'accepted' | 'rejected') || 'pending',
+                                createdAt: createdAtDate
+                            };
+                        });
+                        
+                    console.log('Filtered shared recipes for current user:', recipes.length);
+                    setSharedRecipes(recipes);
+                },
+                (error) => {
+                    console.error('Error in shared recipes listener:', error);
+                    setSharedRecipes([]);
+                }
+            );
+            
+            unsubscribeSharedRecipes = listener;
+        } catch (error) {
+            console.error('Error setting up shared recipes listener:', error);
+        }
+
+        return () => {
+            unsubscribeIncoming();
+            unsubscribeOutgoing();
+            unsubscribeFriends();
+            unsubscribeSharedRecipes();
+        };
+    }, [user]);
+
+    // Manually fetch shared recipes periodically as a fallback
+    useEffect(() => {
+        if (!user) return;
+        
+        const fetchSharedRecipes = async () => {
+            try {
+                const recipesRef = collection(db, 'sharedRecipes');
+                const recipesSnapshot = await getDocs(recipesRef);
+                
+                const recipes = recipesSnapshot.docs
+                    .filter(doc => {
+                        const data = doc.data();
+                        return data.receiverId === user.uid && data.status === 'pending';
+                    })
+                    .map(doc => {
+                        const data = doc.data();
+                        // Handle createdAt safely
+                        let createdAtDate = new Date();
+                        if (data.createdAt?.toDate) {
+                            try {
+                                createdAtDate = data.createdAt.toDate();
+                            } catch {
+                                // Use default date
+                            }
+                        }
+                        
+                        return {
+                            id: doc.id,
+                            recipeId: data.recipeId || '',
+                            recipeName: data.recipeName || '',
+                            recipeImageUrl: data.recipeImageUrl,
+                            senderId: data.senderId || '',
+                            senderName: data.senderName || null,
+                            receiverId: data.receiverId || '',
+                            status: (data.status as 'pending' | 'accepted' | 'rejected') || 'pending',
+                            createdAt: createdAtDate
+                        };
+                    });
+                
+                setSharedRecipes(recipes);
+            } catch (error) {
+                console.error('Error in manual shared recipes fetch:', error);
+            }
+        };
+        
+        // Fetch immediately
+        fetchSharedRecipes();
+        
+        // Then fetch every 30 seconds as a backup
+        const interval = setInterval(fetchSharedRecipes, 30000);
+        
+        return () => clearInterval(interval);
+    }, [user]);
+
+    const sendFriendRequest = async (receiverId: string) => {
+        if (!user) throw new Error('Must be logged in to send friend requests');
+
+        console.log('Sending friend request to:', receiverId);
+        
+        try {
+            // Check if a friend request already exists
+            const existingRequestsQuery = query(
+                collection(db, 'friendRequests'),
+                where('senderId', '==', user.uid),
+                where('receiverId', '==', receiverId),
+                where('status', '==', 'pending')
+            );
+
+            const existingRequestsSnapshot = await getDocs(existingRequestsQuery);
+            if (!existingRequestsSnapshot.empty) {
+                throw new Error('Friend request already sent');
+            }
+
+            // Check if they're already friends
+            const existingFriendshipId = `${user.uid}_${receiverId}`;
+            const friendshipDocRef = doc(db, 'friendships', existingFriendshipId);
+            const existingFriendshipDoc = await getDoc(friendshipDocRef);
+            if (existingFriendshipDoc.exists()) {
+                throw new Error('Already friends with this user');
+            }
+
+            console.log('Creating friend request with data:', {
+                senderId: user.uid,
+                receiverId,
+                senderName: user.displayName || 'Unknown User',
+                senderEmail: user.email,
+                status: 'pending'
+            });
+
+            // Create the friend request
+            await addDoc(collection(db, 'friendRequests'), {
+                senderId: user.uid,
+                receiverId,
+                senderName: user.displayName || 'Unknown User',
+                senderEmail: user.email,
+                senderPhotoURL: user.photoURL,
+                status: 'pending',
+                createdAt: serverTimestamp()
+            });
+            
+            console.log('Friend request sent successfully');
+        } catch (error) {
+            console.error('Error in sendFriendRequest:', error);
+            throw error;
+        }
+    };
+
+    const acceptFriendRequest = async (requestId: string) => {
+        if (!user) throw new Error('Must be logged in to accept friend requests');
+
+        const requestDoc = await getDoc(doc(db, 'friendRequests', requestId));
+        if (!requestDoc.exists()) throw new Error('Friend request not found');
+
+        const requestData = requestDoc.data() as DocumentData;
+        if (requestData.receiverId !== user.uid) throw new Error('Not authorized to accept this request');
+
+        // Create friendship document
+        const friendshipId = `${requestData.senderId}_${user.uid}`;
+        await setDoc(doc(db, 'friendships', friendshipId), {
+            userIds: [requestData.senderId, user.uid],
+            createdAt: serverTimestamp()
+        });
+
+        // Update request status
+        await deleteDoc(doc(db, 'friendRequests', requestId));
+    };
+
+    const rejectFriendRequest = async (requestId: string) => {
+        if (!user) throw new Error('Must be logged in to reject friend requests');
+
+        const requestDoc = await getDoc(doc(db, 'friendRequests', requestId));
+        if (!requestDoc.exists()) throw new Error('Friend request not found');
+
+        const requestData = requestDoc.data() as DocumentData;
+        if (requestData.receiverId !== user.uid) throw new Error('Not authorized to reject this request');
+
+        // Delete the request
+        await deleteDoc(doc(db, 'friendRequests', requestId));
+    };
+
+    const removeFriend = async (friendId: string) => {
+        if (!user) throw new Error('Must be logged in to remove friends');
+
+        // Delete friendship document (try both possible IDs)
+        const friendshipId1 = `${user.uid}_${friendId}`;
+        const friendshipId2 = `${friendId}_${user.uid}`;
+
+        const doc1 = doc(db, 'friendships', friendshipId1);
+        const doc2 = doc(db, 'friendships', friendshipId2);
+
+        const [snapshot1, snapshot2] = await Promise.all([
+            getDoc(doc1),
+            getDoc(doc2)
+        ]);
+
+        if (snapshot1.exists()) {
+            await deleteDoc(doc1);
+        } else if (snapshot2.exists()) {
+            await deleteDoc(doc2);
+        }
+    };
+
+    const shareRecipeWithFriend = async (recipeId: string, recipeName: string, recipeImageUrl: string | undefined, friendId: string) => {
+        if (!user) throw new Error('Must be logged in to share recipes');
+
+        try {
+            // Create a simplified recipe share document
+            const sharedRecipeData = {
+                recipeId,
+                recipeName,
+                recipeImageUrl,
+                senderId: user.uid,
+                senderName: user.displayName || 'A friend',
+                receiverId: friendId,
+                status: 'pending',
+                createdAt: serverTimestamp()
+            };
+            
+            // Add the document
+            await addDoc(collection(db, 'sharedRecipes'), sharedRecipeData);
+            return;
+        } catch (error) {
+            console.error('Error sharing recipe:', error);
+            
+            // Provide more specific error message
+            if (error instanceof Error) {
+                throw new Error(`Error sharing recipe: ${error.message}`);
+            } else {
+                throw new Error('Unknown error sharing recipe');
+            }
+        }
+    };
+
+    const acceptSharedRecipe = async (sharedRecipeId: string) => {
+        if (!user) throw new Error('Must be logged in to accept shared recipes');
+
+        try {
+            // Get the shared recipe document
+            const sharedRecipeDoc = await getDoc(doc(db, 'sharedRecipes', sharedRecipeId));
+            if (!sharedRecipeDoc.exists()) throw new Error('Shared recipe not found');
+
+            const sharedRecipeData = sharedRecipeDoc.data() as SharedRecipe;
+            if (sharedRecipeData.receiverId !== user.uid) throw new Error('Not authorized to accept this shared recipe');
+
+            // Get the original recipe
+            const recipeDoc = await getDoc(doc(db, 'recipes', sharedRecipeData.recipeId));
+            if (!recipeDoc.exists()) throw new Error('Original recipe not found');
+
+            const recipeData = recipeDoc.data();
+
+            // Create a copy of the recipe for the current user
+            const newRecipeData = {
+                ...recipeData,
+                userId: user.uid,
+                createdAt: serverTimestamp()
+            };
+
+            // Remove the id if it exists in the original data
+            const typedRecipeData = newRecipeData as Record<string, unknown>;
+            if (typedRecipeData.id) delete typedRecipeData.id;
+
+            // Add the recipe to the user's collection
+            await addDoc(collection(db, 'recipes'), newRecipeData);
+
+            // Update the shared recipe status
+            await updateDoc(doc(db, 'sharedRecipes', sharedRecipeId), {
+                status: 'accepted'
+            });
+
+            return;
+        } catch (error) {
+            console.error('Error accepting shared recipe:', error);
+            throw error;
+        }
+    };
+
+    const rejectSharedRecipe = async (sharedRecipeId: string) => {
+        if (!user) throw new Error('Must be logged in to reject shared recipes');
+
+        try {
+            // Get the shared recipe document
+            const sharedRecipeDoc = await getDoc(doc(db, 'sharedRecipes', sharedRecipeId));
+            if (!sharedRecipeDoc.exists()) throw new Error('Shared recipe not found');
+
+            const sharedRecipeData = sharedRecipeDoc.data() as SharedRecipe;
+            if (sharedRecipeData.receiverId !== user.uid) throw new Error('Not authorized to reject this shared recipe');
+
+            // Update the shared recipe status
+            await updateDoc(doc(db, 'sharedRecipes', sharedRecipeId), {
+                status: 'rejected'
+            });
+
+            return;
+        } catch (error) {
+            console.error('Error rejecting shared recipe:', error);
+            throw error;
+        }
+    };
+
+    const value = {
+        friends,
+        incomingRequests,
+        outgoingRequests,
+        sharedRecipes,
+        sendFriendRequest,
+        acceptFriendRequest,
+        rejectFriendRequest,
+        removeFriend,
+        shareRecipeWithFriend,
+        acceptSharedRecipe,
+        rejectSharedRecipe,
+        loading
+    };
+
+    return (
+        <FriendsContext.Provider value={value}>
+            {children}
+        </FriendsContext.Provider>
+    );
+} 
