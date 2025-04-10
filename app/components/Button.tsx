@@ -38,7 +38,7 @@ export default function Button({
   const variantStyles = {
     primary: "border-1 border-green-apple text-castiron hover:bg-green-apple",
     secondary: "bg-tomato text-eggshell rounded-tl-full rounded-br-full rounded-tr-none rounded-bl-none uppercase text-xs px-8 py-3 relative inline-block after:absolute after:block after:bg-transparent after:-z-1 after:rounded-tl-full after:rounded-br-full after:rounded-tr-none after:rounded-bl-none after:w-full after:h-full after:-right-1 after:-bottom-[5px] after:border-2 after:border-tomato hover:after:bottom-0 hover:after:right-0 after:transition-all after:duration-300 after:ease-in-out",
-    outline: "border border-tomato text-cast-iron hover:steel",
+    outline: "border-1 border-tomato text-white hover:bg-tomato",
     ghost: "",
     danger: "bg-tomato text-white hover:bg-tomato/80"
   };
