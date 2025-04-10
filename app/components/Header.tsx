@@ -140,12 +140,17 @@ export default function Header() {
                         <>
                             {/* Mobile Burger Menu Button */}
                             <button 
-                                className="block md:hidden text-[28px] z-[110]"
+                                className="block md:hidden text-[28px] z-[110] relative"
                                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                                 aria-label="Toggle menu"
                                 data-extension-ignore="true"
                             >
                                 <i className={`fa-solid ${mobileMenuOpen ? 'fa-xmark' : 'fa-burger'} ${isHomePage && !mobileMenuOpen ? 'text-white' : 'text-cast-iron'}`}></i>
+                                {sharedRecipes.length > 0 && !mobileMenuOpen && (
+                                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                        {sharedRecipes.length}
+                                    </span>
+                                )}
                             </button>
                             
                             {/* Full Screen Mobile Menu */}

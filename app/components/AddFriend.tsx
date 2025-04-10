@@ -112,7 +112,7 @@ export default function AddFriend() {
     return (
         <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4">Add Friends</h2>
-            <div className="flex gap-2 mb-6">
+            <div className="flex gap-2 mb-6 flex-wrap">
                 <input
                     type="text"
                     placeholder="Search by email"

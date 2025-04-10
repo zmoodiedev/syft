@@ -90,17 +90,16 @@ export default function UrlInput() {
                 <Button
                     type="submit"
                     disabled={loading}
-                    variant='outline'
+                    variant='primary'
                 >
                     {loading ? 'Scraping Recipe...' : 'Import Recipe'}
                 </Button>
             </form>
 
-            <div className="border-t pt-6">
+            <div className="border-t pt-6 text-sm">
                 <h3 className="text-lg font-medium mb-2">Recipe Extraction Notice</h3>
-                <p className="mb-4">Our app does its best to extract recipe details from the webpage you provide. However, results may not always be perfect, and some websites may specifically request that we do not extracttheir content.</p>
-
-                <p className="mb-4">If you notice missing or incorrect information, or if a recipe isn&apos;t being extracted properly, please let us know! Your feedback helps us improve support for more websites in the future.</p>
+                <p className="mb-4">Our app does its best to automatically grab recipe details (like the name, ingredients, and directions) when you paste in a recipe URL. However, some websites block this kind of access, so we might not always be able to fetch the info for you.</p>
+                <p className="mb-4">If that happens, no worries — you can still manually enter the recipe details using the form provided.</p>
 
                 <p>Contact us at: <Link href="mailto:support@syft.cooking">support@syft.cooking</Link></p>
             </div>

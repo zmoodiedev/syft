@@ -26,8 +26,31 @@ const nextConfig: NextConfig = {
   experimental: {
     largePageDataBytes: 128 * 1000, // 128KB
     serverActions: {
-      allowedOrigins: ['localhost:3000', 'syft.app', 'syft.cooking'],
+      allowedOrigins: ['localhost:3000', 'syft.app', 'syft.cooking', 'bs-local.com:3000', 'bs-local.com'],
     },
+  },
+
+  // Allow cross-origin requests for authentication
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET, POST, PUT, DELETE, OPTIONS',
+          },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'Content-Type, Authorization',
+          },
+        ],
+      },
+    ];
   },
 
   transpilePackages: ['framer-motion'],

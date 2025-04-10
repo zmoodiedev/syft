@@ -58,12 +58,13 @@ export default function SharedRecipesList() {
                         >
                             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                                 {/* Recipe Image */}
-                                <div className="relative w-20 h-20 flex-shrink-0">
+                                <div className="relative w-full sm:w-20 h-20 flex-shrink-0">
                                     {sharedRecipe.recipeImageUrl ? (
                                         <Image
                                             src={sharedRecipe.recipeImageUrl}
                                             alt={sharedRecipe.recipeName}
                                             fill
+                                            sizes="(max-width: 640px) 100vw, 80px"
                                             className="object-cover rounded-md"
                                         />
                                     ) : (

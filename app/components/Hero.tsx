@@ -25,7 +25,7 @@ export default function Hero() {
                     {/* Background blob */}
                     <div className='absolute top-40 left-60 lg:top-1/4 lg:left-3/4 xl:left-2/3 transform -translate-x-1/4  -translate-y-2/3 lg:-translate-y-2/3 w-[180vw] max-w-[1800px] -z-10'>
                         <Image
-                            src="./images/hero_blob.svg"
+                            src="/images/hero_blob.svg"
                             alt="Blob"
                             width={0}
                             height={0}

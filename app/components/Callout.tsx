@@ -9,7 +9,7 @@ export default function Callout() {
                 {/* Background blob */}
                 <div className='absolute -top-40 -left-80 w-[800px] h-[800px] -z-10 opacity-10'>
                     <Image
-                        src="./images/hero_blob.svg"
+                        src="/images/hero_blob.svg"
                         alt="Blob"
                         fill
                         className="select-none object-contain"

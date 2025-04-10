@@ -63,7 +63,7 @@ export default function RecipeCard({ recipe, priority = false }: RecipeCardProps
           <div className="mt-auto">
             <Button
               className=""
-              variant='outline'
+              variant='primary'
             >
               View Recipe
             </Button>

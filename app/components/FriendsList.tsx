@@ -94,9 +94,9 @@ export default function FriendsList() {
                         friends.map((friend) => (
                             <div
                                 key={friend.id}
-                                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg flex-wrap gap-2"
                             >
-                                <div className="flex items-center space-x-3">
+                                <div className="flex items-center space-x-3 flex-wrap lrg:basis-2/3">
                                     {friend.photoURL ? (
                                         <Image
                                             src={friend.photoURL}
@@ -124,6 +124,7 @@ export default function FriendsList() {
                                 <Button
                                     variant="danger"
                                     onClick={() => handleRemoveFriend(friend.id)}
+                                    className="max-w-30 basis-1/3"
                                 >
                                     Remove
                                 </Button>

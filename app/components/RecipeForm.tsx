@@ -333,7 +333,7 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
                 type="button"
                 onClick={handleUploadClick}
                 disabled={isUploading}
-                variant='outline'
+                variant='primary'
               >
                 {isUploading ? 'Uploading...' : 'Upload Image'}
               </Button>
@@ -437,7 +437,7 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
         <Button
           type="button"
           onClick={addIngredient}
-          variant='outline'
+          variant='primary'
         >
           + Add Ingredient
         </Button>
@@ -476,7 +476,7 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
         <Button
           type="button"
           onClick={addInstruction}
-          variant='outline'
+          variant='primary'
         >
           + Add Step
         </Button>
