@@ -112,7 +112,7 @@ export default function Header() {
                             <li>
                                 <Link
                                     href="/add-recipe"
-                                    className={`text-cast-iron hover:text-emerald-500 px-3 py-2 rounded-lg transition-colors ${
+                                    className={`text-cast-iron hover:text-emerald-500 px-3 py-2 transition-colors ${
                                         pathname === '/add-recipe' ? 'border-b-2 border-emerald-500' : ''
                                     }`}
                                 >
@@ -122,7 +122,7 @@ export default function Header() {
                             <li>
                                 <Link
                                     href="/friends"
-                                    className={`text-cast-iron hover:text-emerald-500 px-3 py-2 rounded-lg transition-colors ${
+                                    className={`text-cast-iron hover:text-emerald-500 px-3 py-2  transition-colors ${
                                         pathname === '/friends' ? 'border-b-2 border-emerald-500' : ''
                                     } relative`}
                                 >

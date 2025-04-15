@@ -137,7 +137,7 @@ export default function FriendsList() {
                                     </div>
                                 </div>
                                 <Button
-                                    variant="secondary"
+                                    variant="primary"
                                     onClick={() => handleRemoveFriend(friend.id)}
                                     className="max-w-30 basis-1/3"
                                 >
@@ -273,13 +273,13 @@ export default function FriendsList() {
             >
                 <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
                 <div className="fixed inset-0 flex items-center justify-center p-4">
-                    <Dialog.Panel className="mx-auto max-w-sm rounded-xl bg-white p-6 shadow-lg">
-                        <Dialog.Title className="text-lg font-medium text-gray-900">
+                    <div className="mx-auto max-w-sm rounded-xl bg-white p-6 shadow-lg">
+                        <h3 className="text-lg font-medium text-gray-900">
                             Cancel Friend Request
-                        </Dialog.Title>
-                        <Dialog.Description className="mt-2 text-sm text-gray-500">
+                        </h3>
+                        <p className="mt-2 text-sm text-gray-500">
                             Are you sure you want to cancel this friend request? This action cannot be undone.
-                        </Dialog.Description>
+                        </p>
 
                         <div className="mt-4 flex justify-end space-x-3">
                             <Button
@@ -298,7 +298,7 @@ export default function FriendsList() {
                                 Yes, cancel it
                             </Button>
                         </div>
-                    </Dialog.Panel>
+                    </div>
                 </div>
             </Dialog>
         </div>
