@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import Hero from '@/app/components/Hero';
 import Features from '@/app/components/Features';
-import Callout from '@/app/components/Callout';
+import CTA from '@/app/components/CTA';
 
 export const metadata: Metadata = {
   title: "Syft - Recipe Manager",
@@ -13,7 +13,7 @@ export default function Home() {
     <div className="home-wrap">
       <Hero />
       <Features />
-      <Callout />
+      <CTA />
     </div>
   );
 }

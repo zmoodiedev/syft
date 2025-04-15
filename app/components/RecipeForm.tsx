@@ -256,245 +256,274 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
   }, [instructions]); // Re-run when instructions change
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8 max-w-6xl mx-auto">
       {/* Basic Info Section */}
-      <div className="space-y-4">
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-            Recipe Name
-          </label>
-          <input
-            id="name"
-            type="text"
-            {...register("name", { required: "Recipe name is required" })}
-            className="mt-1 border border-steel rounded w-full py-2 px-3 text-gray-700 leading-tight focus:shadow-outline"
-          />
-          {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="space-y-6 bg-white rounded-xl p-8 shadow-sm border border-gray-100">
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
+          Recipe Details
+        </h2>
+        
+        <div className="space-y-6">
           <div>
-            <label htmlFor="servings" className="block text-sm font-medium text-gray-700">
-              Servings
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+              Recipe Name
             </label>
             <input
-              id="servings"
+              id="name"
               type="text"
-              {...register("servings")}
-              placeholder="e.g., 4"
-              className="mt-1 border border-steel rounded w-full py-2 px-3 text-gray-700 leading-tight focus:shadow-outline"
+              {...register("name", { required: "Recipe name is required" })}
+              className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base"
+              placeholder="Enter recipe name"
             />
+            {errors.name && <p className="mt-2 text-sm text-red-600">{errors.name.message}</p>}
           </div>
 
-          <div>
-            <label htmlFor="prepTime" className="block text-sm font-medium text-gray-700">
-              Prep Time
-            </label>
-            <input
-              id="prepTime"
-              type="text"
-              {...register("prepTime")}
-              placeholder="e.g., 15 mins"
-              className="mt-1 border border-steel rounded w-full py-2 px-3 text-gray-700 leading-tight focus:shadow-outline"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="cookTime" className="block text-sm font-medium text-gray-700">
-              Cook Time
-            </label>
-            <input
-              id="cookTime"
-              type="text"
-              {...register("cookTime")}
-              placeholder="e.g., 30 mins"
-              className="mt-1 border border-steel rounded w-full py-2 px-3 text-gray-700 leading-tight focus:shadow-outline"
-            />
-          </div>
-        </div>
-
-        {/* Image Upload Section */}
-        <div className="rounded-lg p-4 border-steel border">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Recipe Image
-          </label>
-          
-          <div className="flex flex-col space-y-3">
-            {/* File Upload */}
-            <div className="flex items-center gap-3 flex-col md:flex-row">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <label htmlFor="servings" className="block text-sm font-medium text-gray-700 mb-2">
+                Servings
+              </label>
               <input
-                type="file"
-                accept="image/*"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                className="hidden"
+                id="servings"
+                type="text"
+                {...register("servings")}
+                placeholder="e.g., 4"
+                className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="prepTime" className="block text-sm font-medium text-gray-700 mb-2">
+                Prep Time
+              </label>
+              <input
+                id="prepTime"
+                type="text"
+                {...register("prepTime")}
+                placeholder="e.g., 15 mins"
+                className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="cookTime" className="block text-sm font-medium text-gray-700 mb-2">
+                Cook Time
+              </label>
+              <input
+                id="cookTime"
+                type="text"
+                {...register("cookTime")}
+                placeholder="e.g., 30 mins"
+                className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Image Upload Section */}
+      <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100">
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent mb-6">
+          Recipe Image
+        </h2>
+        
+        <div className="space-y-6">
+          <div className="flex flex-col space-y-4">
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+            />
+            <Button
+              type="button"
+              onClick={handleUploadClick}
+              disabled={isUploading}
+              variant='primary'
+              className="w-full md:w-auto py-3"
+            >
+              {isUploading ? 'Uploading...' : 'Upload Image'}
+            </Button>
+            
+            <div className="flex items-center justify-center my-4">
+              <div className="h-px bg-gray-200 flex-1"></div>
+              <span className="px-4 text-sm text-gray-500">or</span>
+              <div className="h-px bg-gray-200 flex-1"></div>
+            </div>
+            
+            <div className="flex flex-col md:flex-row gap-4">
+              <input
+                id="imageUrl"
+                type="text"
+                value={imageUrl}
+                onChange={handleImageUrlChange}
+                placeholder="https://example.com/image.jpg"
+                className="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base"
               />
               <Button
                 type="button"
-                onClick={handleUploadClick}
-                disabled={isUploading}
-                variant='primary'
+                onClick={validateAndPreviewImage}
+                variant='secondary'
+                className="w-full md:w-auto py-3"
+                size="sm"
               >
-                {isUploading ? 'Uploading...' : 'Upload Image'}
+                Preview
               </Button>
-              
-              <span className="text-sm text-gray-500">or</span>
-              
-              {/* URL Input */}
-              <div className="flex-1 flex">
-                <input
-                  id="imageUrl"
-                  type="text"
-                  value={imageUrl}
-                  onChange={handleImageUrlChange}
-                  placeholder="https://example.com/image.jpg"
-                  className="border border-steel rounded-l w-full py-2 px-3 text-gray-700 leading-tight focus:shadow-outline"
+            </div>
+          </div>
+          
+          <p className="text-xs text-gray-500 text-center">
+            Upload an image file or enter a URL. Maximum file size: 5MB.
+          </p>
+          
+          {isPreviewingImage && (
+            <div className="mt-6">
+              <div className="relative h-48 w-full rounded-lg overflow-hidden border border-gray-200">
+                <Image 
+                  src={imageUrl} 
+                  alt="Recipe preview" 
+                  fill
+                  className="object-cover"
+                  onError={() => {
+                    toast.error("Failed to load image");
+                    setIsPreviewingImage(false);
+                  }}
                 />
-                <Button
-                  type="button"
-                  onClick={validateAndPreviewImage}
-                  className="rounded-r rounded-l-none"
-                >
-                  Preview
-                </Button>
               </div>
             </div>
-            
-            <p className="text-xs text-gray-500">
-              Upload an image file or enter a URL. Maximum file size: 5MB.
-            </p>
-            
-            {/* Image Preview */}
-            {isPreviewingImage && imageUrl && (
-              <div className="mt-3">
-                <p className="text-sm font-medium text-gray-700 mb-2">Image Preview:</p>
-                <div className="relative h-48 w-full rounded-lg overflow-hidden border border-gray-200">
-                  <Image 
-                    src={imageUrl} 
-                    alt="Recipe preview" 
-                    fill
-                    className="object-cover"
-                    onError={() => {
-                      toast.error("Failed to load image");
-                      setIsPreviewingImage(false);
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </div>
 
       {/* Ingredients Section */}
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-700">
+      <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100">
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent mb-6">
           Ingredients
-        </label>
-        <div className="gap-2 mb-2 hidden md:flex md:flex-row">
-          <div className="w-1/4"><h5>Amount</h5></div>
-          <div className="w-1/4"><h5>Unit</h5></div>
-          <div className="w-full md:w-1/2"><h5>Ingredient</h5></div>
-        </div>
-        <div className="space-y-3">
-          {ingredients.map((ingredient, index) => (
-            <div key={ingredient.id} className="flex flex-col md:flex-row gap-2 mb-6">
-              <div className="flex gap-2 w-full md:w-1/2">
-                <input
-                  value={ingredient.amount}
-                  onChange={(e) => updateIngredient(index, 'amount', e.target.value)}
-                  placeholder="Amount"
-                  className="w-1/2 border border-steel rounded py-2 px-3 text-gray-700 leading-tight focus:shadow-outline"
-                />
-                <input
-                  value={ingredient.unit}
-                  onChange={(e) => updateIngredient(index, 'unit', e.target.value)}
-                  placeholder="Unit"
-                  className="w-1/2 border border-steel rounded py-2 px-3 text-gray-700 leading-tight focus:shadow-outline"
-                />
+        </h2>
+        
+        <div className="space-y-6">
+          <div className="hidden md:grid grid-cols-12 gap-4 text-sm font-medium text-gray-500 border-b pb-3">
+            <div className="col-span-3">Amount</div>
+            <div className="col-span-3">Unit</div>
+            <div className="col-span-5">Ingredient</div>
+            <div className="col-span-1"></div>
+          </div>
+          
+          <div className="space-y-6">
+            {ingredients.map((ingredient, index) => (
+              <div key={ingredient.id} className="grid grid-cols-12 gap-4 items-center">
+                <div className="col-span-12 md:col-span-6 grid grid-cols-2 gap-4">
+                  <input
+                    value={ingredient.amount}
+                    onChange={(e) => updateIngredient(index, 'amount', e.target.value)}
+                    placeholder="Amount"
+                    className="rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base"
+                  />
+                  <input
+                    value={ingredient.unit}
+                    onChange={(e) => updateIngredient(index, 'unit', e.target.value)}
+                    placeholder="Unit"
+                    className="rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base"
+                  />
+                </div>
+                <div className="col-span-11 md:col-span-5">
+                  <input
+                    value={ingredient.item}
+                    onChange={(e) => updateIngredient(index, 'item', e.target.value)}
+                    placeholder="Ingredient"
+                    required
+                    className="w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base"
+                  />
+                </div>
+                <div className="col-span-1 flex justify-end">
+                  {index > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => removeIngredient(index)}
+                      className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-50"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
               </div>
-              <div className="flex gap-2 w-full md:w-1/2">
-                <input
-                  value={ingredient.item}
-                  onChange={(e) => updateIngredient(index, 'item', e.target.value)}
-                  placeholder="Ingredient"
-                  required
-                  className="flex-1 border border-steel rounded py-2 px-3 text-gray-700 leading-tight focus:shadow-outline"
-                />
-                {index >= 0 && (
-                  <button
-                    type="button"
-                    onClick={() => removeIngredient(index)}
-                    className="p-1 text-red-500 hover:text-red-700"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
+          
+          <Button
+            type="button"
+            onClick={addIngredient}
+            variant='secondary'
+            className="w-full md:w-auto py-3"
+            size="sm"
+          >
+            + Add Ingredient
+          </Button>
         </div>
-        <Button
-          type="button"
-          onClick={addIngredient}
-          variant='primary'
-        >
-          + Add Ingredient
-        </Button>
       </div>
 
       {/* Instructions Section */}
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-700">
+      <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100">
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent mb-6">
           Instructions
-        </label>
-        <div className="space-y-3 mb-6">
+        </h2>
+        
+        <div className="space-y-6">
           {instructions.map((instruction, index) => (
-            <div key={index} className="flex items-start space-x-2">
-              <span className="text-sm font-medium w-8">{index + 1}.</span>
-              <textarea
-                value={instruction}
-                onChange={(e) => updateInstruction(index, e.target.value)}
-                placeholder="Instruction step"
-                required
-                rows={1}
-                onInput={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
-                className="border border-steel rounded w-full py-2 px-3 text-gray-700 leading-tight focus:shadow-outline resize-none overflow-hidden"
-              />
+            <div key={index} className="flex items-start space-x-4">
+              <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-gradient-to-r from-red-500 to-orange-500 text-white font-medium">
+                {index + 1}
+              </div>
+              <div className="flex-1">
+                <textarea
+                  value={instruction}
+                  onChange={(e) => updateInstruction(index, e.target.value)}
+                  placeholder="Enter instruction step"
+                  required
+                  rows={1}
+                  onInput={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
+                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base resize-none overflow-hidden"
+                />
+              </div>
               {index > 0 && (
                 <button
                   type="button"
                   onClick={() => removeInstruction(index)}
-                  className="p-1 text-red-500 hover:text-red-700"
+                  className="flex-shrink-0 text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-50"
                 >
                   ✕
                 </button>
               )}
             </div>
           ))}
+          
+          <Button
+            type="button"
+            onClick={addInstruction}
+            variant='secondary'
+            className="w-full md:w-auto py-3"
+            size="sm"
+          >
+            + Add Step
+          </Button>
         </div>
-        <Button
-          type="button"
-          onClick={addInstruction}
-          variant='primary'
-        >
-          + Add Step
-        </Button>
       </div>
 
       {/* Categories Section */}
-      <div className="space-y-2 mb-6">
-        <label className="block text-sm font-medium text-gray-700">
+      <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100">
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent mb-6">
           Categories
-        </label>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+        </h2>
+        
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {RECIPE_CATEGORIES.map((category) => (
-            <label key={category} className="flex items-center space-x-2">
+            <label key={category} className="flex items-center space-x-2 p-3 rounded-lg hover:bg-gray-50 cursor-pointer">
               <input
                 type="checkbox"
                 checked={selectedCategories.includes(category)}
                 onChange={() => handleCategoryChange(category)}
-                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                className="rounded border-gray-300 text-red-500 focus:ring-red-500 h-5 w-5"
               />
               <span className="text-sm text-gray-700">{category}</span>
             </label>
@@ -506,7 +535,8 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
       <div className="flex justify-end">
         <Button
           type="submit"
-          className="mx-auto"
+          variant='primary'
+          className="w-full md:w-auto py-3 px-8"
         >
           {submitButtonText}
         </Button>

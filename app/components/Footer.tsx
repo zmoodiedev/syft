@@ -1,8 +1,9 @@
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Footer() {
     return (
-        <footer className="bg-cast-iron text-white px-4 pt-16 pb-8 mt-auto">
+        <footer className="bg-cast-iron text-white px-4 pt-16 pb-8 mt-auto z-10">
             <div id="megaFooter" className="container mx-auto mb-16 flex justify-between flex-col md:flex-row">
                 <div className="w-full md:w-1/3 mb-10 md:mb-0">
                     <div className="mb-6">
@@ -19,9 +20,8 @@ export default function Footer() {
                 </div>
                 <div className="w-full md:w-1/3">
                     <div className="flex flex-row gap-8 text-3xl md:justify-end">
-                        <i className="fa-brands fa-bluesky"></i>
-                        <i className="fa-brands fa-instagram"></i>
-                        <i className="fa-brands fa-facebook"></i>
+                        <Link href="https://bsky.app/profile/syft-cooking.bsky.social" target="_blank"><i className="fa-brands fa-bluesky"></i></Link>
+                        <Link href="https://www.instagram.com/syft.cooking" target="_blank"><i className="fa-brands fa-instagram"></i></Link>
                     </div>
                 </div>
             </div>

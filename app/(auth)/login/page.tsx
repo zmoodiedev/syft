@@ -4,61 +4,94 @@ import Link from 'next/link';
 import Image from 'next/image';
 import SignIn from '@/app/components/SignIn';
 import { useAuth } from '@/app/context/AuthContext';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 
 export default function LoginPage() {
     const { user } = useAuth();
     const router = useRouter();
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        setMounted(true);
         if (user) {
             router.push('/recipes');
         }
     }, [user, router]);
 
-    return (
-        <div className="flex flex-col items-center min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-gray-50 relative overflow-hidden">
-            {/* Decorative elements */}
-            <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-red-100 to-red-200 rounded-full -translate-y-1/2 translate-x-1/3 opacity-50"></div>
-            <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-red-100 to-red-200 rounded-full translate-y-1/3 -translate-x-1/3 opacity-50"></div>
-            
-            {/* Decorative dots pattern */}
-            <div className="absolute top-1/4 left-10 grid grid-cols-3 gap-2">
-                {[...Array(9)].map((_, i) => (
-                    <div key={i} className="w-1.5 h-1.5 bg-red-300 rounded-full"></div>
-                ))}
-            </div>
-            <div className="absolute bottom-1/4 right-10 grid grid-cols-3 gap-2">
-                {[...Array(9)].map((_, i) => (
-                    <div key={i} className="w-1.5 h-1.5 bg-red-300 rounded-full"></div>
-                ))}
-            </div>
-            
-            <div className="z-10 w-full max-w-md">
-                <div className="text-center mb-8">
-                    <Link href="/" className="inline-block">
-                        <Image 
-                            src="/logo_syft_h.svg" 
-                            alt="Syft Logo" 
-                            width={160} 
-                            height={43}
-                            priority
-                            className="" 
-                        />
-                    </Link>
+    if (!mounted) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="w-full max-w-md p-8">
+                    <div className="h-[43px] w-[160px] mx-auto mb-8 bg-gray-200 rounded animate-pulse" />
+                    <div className="h-[400px] bg-white rounded-xl shadow-lg p-8 border border-gray-200 animate-pulse" />
                 </div>
-                
-                <SignIn />
-                
-                {/*<div className="text-center mt-8">
-                    <p className="text-sm text-gray-600">
-                        Don&apos;t have an account?{' '}
-                        <Link href="/signup" className="font-medium text-red-500 hover:text-red-600 transition-colors">
-                            Sign up
+            </div>
+        );
+    }
+
+    return (
+        <div className="min-h-screen relative">
+            {/* Background Image with Overlay */}
+            <div className="absolute inset-0 bg-[url('/images/bg_ingredients.png')] bg-repeat opacity-70"></div>
+            <div className="absolute inset-0 bg-gradient-to-b from-white/80 to-white/90"></div>
+
+            {/* Content */}
+            <div className="relative min-h-screen flex items-center justify-center p-8">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="w-full max-w-md"
+                >
+                    <div className="text-center mb-8">
+                        <Link href="/" className="inline-block">
+                            <Image 
+                                src="/logo_syft_h.svg" 
+                                alt="Syft Logo" 
+                                width={300}
+                                height={80}
+                                priority
+                                className="w-full max-w-[300px] h-auto"
+                            />
                         </Link>
-                    </p>
-                </div>*/}
+                    </div>
+
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.3, duration: 0.5 }}
+                        className="bg-white rounded-xl shadow-lg p-8 border border-gray-200"
+                    >
+                        <motion.h2
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.3, duration: 0.5 }}
+                            className="text-3xl font-bold text-gray-900 mb-2 text-center"
+                        >
+                            Welcome to Syft
+                        </motion.h2>
+                        <motion.p
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.5, duration: 0.5 }}
+                            className="text-gray-600 mb-6 text-center"
+                        >
+                            Your personal recipe management system.
+                        </motion.p>
+
+                        <motion.p
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.5, duration: 0.5 }}
+                            className="text-gray-600 mb-6 text-center bg-red-500 text-white p-2 rounded-md"
+                        >
+                            Make sure to use the {"'"}Sign In with Google{"'"} button for beta access.
+                        </motion.p>
+                        <SignIn />
+                    </motion.div>
+                </motion.div>
             </div>
         </div>
     );

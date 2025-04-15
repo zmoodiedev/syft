@@ -7,12 +7,12 @@ import { doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '@/app/context/AuthContext';
 import Image from 'next/image';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
-import Link from 'next/link';
+import ScrollToTopLink from '@/app/components/ScrollToTopLink';
 import Button from '@/app/components/Button';
 import { toast } from 'react-hot-toast';
 import { deleteImage } from '@/lib/cloudinary';
 import { useFriends } from '@/app/context/FriendsContext';
-import { FiEdit } from 'react-icons/fi';
+import { FiEdit, FiClock, FiUsers, FiShare2, FiTrash2 } from 'react-icons/fi';
 
 interface Ingredient {
   amount: string;
@@ -159,206 +159,202 @@ export default function RecipeDetail() {
 
   return (
     <ProtectedRoute>
-      <div className="container mx-auto py-20 px-4">
+      <div className="min-h-screen bg-eggshell">
         {loading ? (
-          <div className="flex justify-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
+          <div className="flex justify-center items-center min-h-screen">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
           </div>
         ) : error ? (
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-semibold text-blue mb-4">{error}</h2>
-            <Button
+          <div className="container mx-auto px-4 py-20 text-center">
+            <h2 className="text-2xl font-semibold text-gray-900 mb-4">{error}</h2>
+            <ScrollToTopLink
               href="/recipes"
-              className="mx-auto"
+              className="inline-block px-6 py-3 bg-emerald-500 text-white font-semibold rounded-lg hover:bg-emerald-600 transition-colors"
             >
               Back to Recipes
-            </Button>
+            </ScrollToTopLink>
           </div>
         ) : recipe ? (
-          <div>
+          <div className="container mx-auto px-4 py-12">
             {/* Header Section */}
-            <div className="flex justify-between items-start mb-6 flex-col md:flex-row">
-              <div>
-                <h1 className="text-3xl md:text-4xl font-bold mb-4">{recipe.name}</h1>
+            <div className="max-w-6xl mx-auto">
+              <div className="flex flex-col lg:flex-row justify-between items-start gap-6 mb-8">
+                <div className="flex-1">
+                  <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">{recipe.name}</h1>
+                  
+                  {/* Categories */}
+                  {recipe.categories && recipe.categories.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-6">
+                      {recipe.categories.map(category => (
+                        <span
+                          key={category}
+                          className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-sm font-medium"
+                        >
+                          {category}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
-                {/* Categories */}
-                {recipe.categories && recipe.categories.length > 0 && (
-                  <div className="flex flex-wrap gap-8 mb-4">
-                    {recipe.categories.map(category => (
-                      <span
-                        key={category}
-                        className="text-sm font-medium bg-blue text-red rounded-full"
-                      >
-                        {category}
-                      </span>
-                    ))}
+                <div className="flex gap-3 flex-wrap">
+
+                  {user && friends.length > 0 && (
+                    <Button
+                      variant="primary"
+                      onClick={() => setIsShareModalOpen(true)}
+                      className="flex items-center gap-2"
+                      size="sm"
+                    >
+                      <FiShare2 className="w-4 h-4" />
+                      Share
+                    </Button>
+                  )}
+                  {isOwner && (
+                    <Button
+                      onClick={() => router.push(`/recipes/edit/${recipe.id}`)}
+                      variant="outline"
+                      className="flex items-center gap-2"
+                      size="sm"
+                    >
+                      <FiEdit className="w-4 h-4" />
+                      Edit
+                    </Button>
+                  )}
+                  {isOwner && (
+                    <Button
+                      onClick={handleDelete}
+                      disabled={isDeleting}
+                      className="flex items-center gap-2 text-tomato"
+                      variant="ghost"
+                      size="sm"
+                    >
+                      <FiTrash2 className="w-4 h-4" />
+                      {isDeleting ? 'Deleting' : ''}
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* Recipe Image */}
+              {recipe.imageUrl && (
+                <div className="relative w-full aspect-[16/9] rounded-2xl overflow-hidden mb-8 shadow-lg">
+                  <Image
+                    src={recipe.imageUrl}
+                    alt={recipe.name}
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
+                    priority
+                    className="object-cover"
+                  />
+                </div>
+              )}
+
+              {/* Recipe Info Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                  <div className="flex items-center gap-3 mb-2">
+                    <FiClock className="w-5 h-5 text-emerald-500" />
+                    <h3 className="font-semibold text-gray-700">Prep Time</h3>
                   </div>
-                )}
+                  <p className="text-2xl font-medium text-gray-900">{recipe.prepTime || 'Not specified'}</p>
+                </div>
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                  <div className="flex items-center gap-3 mb-2">
+                    <FiClock className="w-5 h-5 text-emerald-500" />
+                    <h3 className="font-semibold text-gray-700">Cook Time</h3>
+                  </div>
+                  <p className="text-2xl font-medium text-gray-900">{recipe.cookTime || 'Not specified'}</p>
+                </div>
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                  <div className="flex items-center gap-3 mb-2">
+                    <FiUsers className="w-5 h-5 text-emerald-500" />
+                    <h3 className="font-semibold text-gray-700">Servings</h3>
+                  </div>
+                  <p className="text-2xl font-medium text-gray-900">{recipe.servings || 'Not specified'}</p>
+                </div>
               </div>
 
-              <div className="flex space-x-3">
-                {isOwner && (
-                  <Button
-                    onClick={() => router.push(`/recipes/edit/${recipe.id}`)}
-                  >
-                    <FiEdit />
-                    Edit Recipe
-                  </Button>
-                )}
-                {/* Share Recipe Button */}
-                {user && friends.length > 0 && (
-                  <Button
-                    variant="primary"
-                    onClick={() => setIsShareModalOpen(true)}
-                  >
-                    Share Recipe
-                  </Button>
-                )}
-                <Button
-                  onClick={handleDelete}
-                  disabled={isDeleting}
-                  className="border-none text-tomato hover:bg-transparent hover:text-tomato/60"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                  {isDeleting ? 'Deleting...' : ''}
-                </Button>
+              {/* Ingredients and Instructions */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                {/* Ingredients Section */}
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b border-gray-200">Ingredients</h2>
+                  <ul className="space-y-3">
+                    {recipe.ingredients.map((ingredient, index) => (
+                      <li key={ingredient.id || index} className="flex items-start gap-2  mb-4">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2.5"></span>
+                        <span className="text-gray-700">
+                          {ingredient.amount && <span className="font-medium">{ingredient.amount} </span>}
+                          {ingredient.unit && <span>{ingredient.unit} </span>}
+                          <span>{ingredient.item}</span>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Instructions Section */}
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b border-gray-200">Instructions</h2>
+                  <ol className="space-y-6">
+                    {recipe.instructions.map((instruction, index) => (
+                      <li key={index} className="flex gap-4">
+                        <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                          <span className="font-semibold">{index + 1}</span>
+                        </div>
+                        <p className="text-gray-700 leading-relaxed">{instruction}</p>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
               </div>
             </div>
-
-            {/* Recipe Image with optimized loading */}
-            {recipe.imageUrl && (
-              <div className="relative h-64 md:h-96 w-full rounded-lg overflow-hidden mb-8">
-                <Image
-                  src={recipe.imageUrl}
-                  alt={recipe.name}
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
-                  priority
-                  className="object-cover"
-                  placeholder="blur"
-                  blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAEggJ4jD2jMQAAAABJRU5ErkJggg=="
-                />
-              </div>
-            )}
-
-            {/* Recipe Info */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-              <div className="bg-eggshell p-4 rounded-lg">
-                <h3 className="font-semibold mb-2">Prep Time</h3>
-                <p className="text-xl font-medium">{recipe.prepTime || 'Not specified'}</p>
-              </div>
-              <div className="bg-eggshell p-4 rounded-lg">
-                <h3 className="font-semibold mb-2">Cook Time</h3>
-                <p className="text-xl font-medium">{recipe.cookTime || 'Not specified'}</p>
-              </div>
-              <div className="bg-eggshell p-4 rounded-lg">
-                <h3 className="font-semibold mb-2">Servings</h3>
-                <p className="text-xl font-medium">{recipe.servings || 'Not specified'}</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-              {/* Ingredients Section */}
-              <div className="lg:col-span-1">
-                <h2 className="text-2xl font-semibold mb-4 border-b pb-2">Ingredients</h2>
-                <ul className="space-y-4 px-4">
-                  {recipe.ingredients.map((ingredient, index) => (
-                    <li key={ingredient.id || index} className="flex items-start">
-                      <span>
-                        {ingredient.amount && <span className="font-semibold pr-2">{ingredient.amount} </span>}
-                        {ingredient.unit && <span>{ingredient.unit} </span>}
-                        <span className="">{ingredient.item}</span>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Instructions Section */}
-              <div className="lg:col-span-2">
-                <h2 className="text-2xl font-semibold mb-4 border-b pb-2">Instructions</h2>
-                <ol className="space-y-6">
-                  {recipe.instructions.map((instruction, index) => (
-                    <li key={index} className="flex">
-                      <div className="w-8 rounded-full bg-primary-500 flex items-start justify-center mr-4 flex-shrink-0">
-                        <span className="font-semibold">{index + 1}</span>
-                      </div>
-                      <p className="text-gray-700">{instruction}</p>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            </div>
-
-            
           </div>
         ) : (
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-semibold mb-4">Recipe not found</h2>
-            <Link
+          <div className="container mx-auto px-4 py-20 text-center">
+            <h2 className="text-2xl font-semibold text-gray-900 mb-4">Recipe not found</h2>
+            <ScrollToTopLink
               href="/recipes"
-              className="inline-block bg-primary-500 text-white px-6 py-2 rounded-lg hover:bg-primary-600 transition-colors"
+              className="inline-block px-6 py-3 bg-emerald-500 text-white font-semibold rounded-lg hover:bg-emerald-600 transition-colors"
             >
               Back to Recipes
-            </Link>
+            </ScrollToTopLink>
           </div>
         )}
 
         {/* Share Recipe Modal */}
         {isShareModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full">
-              <h2 className="text-xl font-bold mb-4">Share with Friends</h2>
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-xl">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Share with Friends</h2>
               
-              <div className="max-h-60 overflow-y-auto mb-4">
-                {friends.length === 0 ? (
-                  <p className="text-gray-500">You don&apos;t have any friends to share with yet.</p>
-                ) : (
-                  <ul className="space-y-2">
-                    {friends.map((friend) => (
-                      <li 
-                        key={friend.id}
-                        className="p-3 bg-gray-50 rounded-lg flex items-center justify-between"
-                      >
-                        <div className="flex items-center space-x-3">
-                          {friend.photoURL ? (
-                            <Image
-                              src={friend.photoURL}
-                              alt={friend.displayName || 'Friend'}
-                              width={32}
-                              height={32}
-                              className="rounded-full"
-                            />
-                          ) : (
-                            <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                              <span className="text-gray-500">
-                                {(friend.displayName || friend.email || '?')[0].toUpperCase()}
-                              </span>
-                            </div>
-                          )}
-                          <span>{friend.displayName || friend.email || 'Unknown'}</span>
-                        </div>
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          onClick={() => handleShareRecipe(friend.id)}
-                        >
-                          Share
-                        </Button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+              <div className="max-h-60 overflow-y-auto mb-6">
+                {friends.map(friend => (
+                  <div key={friend.id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                        {friend.displayName?.charAt(0) || 'U'}
+                      </div>
+                      <span className="font-medium text-gray-900">{friend.displayName || 'Unknown User'}</span>
+                    </div>
+                    <Button
+                      variant="primary"
+                      onClick={() => handleShareRecipe(friend.id)}
+                      className="text-sm"
+                    >
+                      Share
+                    </Button>
+                  </div>
+                ))}
               </div>
-              
+
               <div className="flex justify-end">
                 <Button 
                   variant="primary" 
                   onClick={() => setIsShareModalOpen(false)}
                 >
-                  Cancel
+                  Close
                 </Button>
               </div>
             </div>

@@ -89,7 +89,7 @@ export default function SharedRecipesList() {
                                             Accept Recipe
                                         </Button>
                                         <Button
-                                            variant="danger"
+                                            variant="secondary"
                                             size="sm"
                                             onClick={() => handleRejectRecipe(sharedRecipe.id)}
                                         >

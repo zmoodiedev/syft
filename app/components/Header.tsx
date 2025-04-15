@@ -102,8 +102,8 @@ export default function Header() {
                             <li>
                                 <Link
                                     href="/recipes"
-                                    className={`${isHomePage ? 'text-white' : 'text-cast-iron'}  hover:text-tomato px-3 py-2 rounded-lg transition-colors ${
-                                        pathname === '/recipes' ? 'bg-gray-100' : ''
+                                    className={`text-cast-iron hover:text-emerald-500 px-3 py-2 transition-colors ${
+                                        pathname === '/recipes' ? 'border-b-2 border-emerald-500' : ''
                                     }`}
                                 >
                                     Your Recipes
@@ -112,8 +112,8 @@ export default function Header() {
                             <li>
                                 <Link
                                     href="/add-recipe"
-                                    className={`${isHomePage ? 'text-white' : 'text-cast-iron'} hover:text-tomato px-3 py-2 rounded-lg transition-colors ${
-                                        pathname === '/add-recipe' ? 'bg-gray-100' : ''
+                                    className={`text-cast-iron hover:text-emerald-500 px-3 py-2 rounded-lg transition-colors ${
+                                        pathname === '/add-recipe' ? 'border-b-2 border-emerald-500' : ''
                                     }`}
                                 >
                                     Add Recipe
@@ -122,8 +122,8 @@ export default function Header() {
                             <li>
                                 <Link
                                     href="/friends"
-                                    className={`${isHomePage ? 'text-white' : 'text-cast-iron'} hover:text-tomato px-3 py-2 rounded-lg transition-colors ${
-                                        pathname === '/friends' ? 'bg-gray-100' : ''
+                                    className={`text-cast-iron hover:text-emerald-500 px-3 py-2 rounded-lg transition-colors ${
+                                        pathname === '/friends' ? 'border-b-2 border-emerald-500' : ''
                                     } relative`}
                                 >
                                     Friends
@@ -145,7 +145,7 @@ export default function Header() {
                                 aria-label="Toggle menu"
                                 data-extension-ignore="true"
                             >
-                                <i className={`fa-solid ${mobileMenuOpen ? 'fa-xmark' : 'fa-burger'} ${isHomePage && !mobileMenuOpen ? 'text-white' : 'text-cast-iron'}`}></i>
+                                <i className={`fa-solid ${mobileMenuOpen ? 'fa-xmark' : 'fa-burger'}`}></i>
                                 {sharedRecipes.length > 0 && !mobileMenuOpen && (
                                     <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                                         {sharedRecipes.length}

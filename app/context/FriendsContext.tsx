@@ -5,7 +5,7 @@ import { useAuth } from './AuthContext';
 import { db } from '../lib/firebase';
 import {
     collection,
-    query,
+    query as firestoreQuery,
     where,
     getDocs,
     addDoc,
@@ -16,7 +16,8 @@ import {
     onSnapshot,
     serverTimestamp,
     DocumentData,
-    updateDoc
+    updateDoc,
+    limit
 } from 'firebase/firestore';
 
 interface FriendRequest {
@@ -26,6 +27,9 @@ interface FriendRequest {
     senderName: string;
     senderEmail: string;
     senderPhotoURL: string | null;
+    receiverName: string;
+    receiverEmail: string;
+    receiverPhotoURL: string | null;
     status: 'pending' | 'accepted' | 'rejected';
     createdAt: Date;
 }
@@ -49,6 +53,12 @@ interface SharedRecipe {
     createdAt: Date;
 }
 
+interface UserSearchResult {
+    id: string;
+    displayName: string;
+    photoURL: string | null;
+}
+
 interface FriendsContextType {
     friends: Friend[];
     incomingRequests: FriendRequest[];
@@ -62,6 +72,7 @@ interface FriendsContextType {
     acceptSharedRecipe: (sharedRecipeId: string) => Promise<void>;
     rejectSharedRecipe: (sharedRecipeId: string) => Promise<void>;
     loading: boolean;
+    searchUsers: (query: string) => Promise<UserSearchResult[]>;
 }
 
 const FriendsContext = createContext<FriendsContextType>({} as FriendsContextType);
@@ -90,39 +101,61 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
         }
 
         // Listen to incoming friend requests
-        const incomingRequestsQuery = query(
+        const incomingRequestsQuery = firestoreQuery(
             collection(db, 'friendRequests'),
             where('receiverId', '==', user.uid),
             where('status', '==', 'pending')
         );
 
-        const outgoingRequestsQuery = query(
+        const outgoingRequestsQuery = firestoreQuery(
             collection(db, 'friendRequests'),
             where('senderId', '==', user.uid),
             where('status', '==', 'pending')
         );
 
         // Listen to friendships
-        const friendshipsQuery = query(
+        const friendshipsQuery = firestoreQuery(
             collection(db, 'friendships'),
             where('userIds', 'array-contains', user.uid)
         );
 
         const unsubscribeIncoming = onSnapshot(incomingRequestsQuery, (snapshot) => {
-            const requests = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data(),
-                createdAt: doc.data().createdAt?.toDate()
-            })) as FriendRequest[];
+            const requests = snapshot.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    senderId: data.senderId,
+                    receiverId: data.receiverId,
+                    senderName: data.senderName,
+                    senderEmail: data.senderEmail,
+                    senderPhotoURL: data.senderPhotoURL,
+                    receiverName: data.receiverName,
+                    receiverEmail: data.receiverEmail,
+                    receiverPhotoURL: data.receiverPhotoURL,
+                    status: data.status,
+                    createdAt: data.createdAt?.toDate()
+                } as FriendRequest;
+            });
             setIncomingRequests(requests);
         });
 
         const unsubscribeOutgoing = onSnapshot(outgoingRequestsQuery, (snapshot) => {
-            const requests = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data(),
-                createdAt: doc.data().createdAt?.toDate()
-            })) as FriendRequest[];
+            const requests = snapshot.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    senderId: data.senderId,
+                    receiverId: data.receiverId,
+                    senderName: data.senderName,
+                    senderEmail: data.senderEmail,
+                    senderPhotoURL: data.senderPhotoURL,
+                    receiverName: data.receiverName,
+                    receiverEmail: data.receiverEmail,
+                    receiverPhotoURL: data.receiverPhotoURL,
+                    status: data.status,
+                    createdAt: data.createdAt?.toDate()
+                } as FriendRequest;
+            });
             setOutgoingRequests(requests);
         });
 
@@ -276,7 +309,7 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
         
         try {
             // Check if a friend request already exists
-            const existingRequestsQuery = query(
+            const existingRequestsQuery = firestoreQuery(
                 collection(db, 'friendRequests'),
                 where('senderId', '==', user.uid),
                 where('receiverId', '==', receiverId),
@@ -296,11 +329,22 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
                 throw new Error('Already friends with this user');
             }
 
+            // Get receiver's user data
+            const receiverDoc = await getDoc(doc(db, 'users', receiverId));
+            if (!receiverDoc.exists()) {
+                throw new Error('User not found');
+            }
+            const receiverData = receiverDoc.data();
+
             console.log('Creating friend request with data:', {
                 senderId: user.uid,
                 receiverId,
                 senderName: user.displayName || 'Unknown User',
                 senderEmail: user.email,
+                senderPhotoURL: user.photoURL,
+                receiverName: receiverData.displayName || 'Unknown User',
+                receiverEmail: receiverData.email,
+                receiverPhotoURL: receiverData.photoURL,
                 status: 'pending'
             });
 
@@ -311,6 +355,9 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
                 senderName: user.displayName || 'Unknown User',
                 senderEmail: user.email,
                 senderPhotoURL: user.photoURL,
+                receiverName: receiverData.displayName || 'Unknown User',
+                receiverEmail: receiverData.email,
+                receiverPhotoURL: receiverData.photoURL,
                 status: 'pending',
                 createdAt: serverTimestamp()
             });
@@ -349,7 +396,10 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
         if (!requestDoc.exists()) throw new Error('Friend request not found');
 
         const requestData = requestDoc.data() as DocumentData;
-        if (requestData.receiverId !== user.uid) throw new Error('Not authorized to reject this request');
+        // Allow both sender and receiver to reject/cancel the request
+        if (requestData.senderId !== user.uid && requestData.receiverId !== user.uid) {
+            throw new Error('Not authorized to reject this request');
+        }
 
         // Delete the request
         await deleteDoc(doc(db, 'friendRequests', requestId));
@@ -474,6 +524,70 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const searchUsers = async (query: string) => {
+        if (!user) throw new Error('Must be logged in to search users');
+        if (!query.trim()) return [];
+
+        const usersRef = collection(db, 'users');
+        const searchTerm = query.toLowerCase();
+
+        // Search by both email and display name simultaneously
+        const emailQuery = firestoreQuery(
+            usersRef,
+            where('email', '>=', searchTerm),
+            where('email', '<=', searchTerm + '\uf8ff'),
+            limit(10)
+        );
+
+        const nameQuery = firestoreQuery(
+            usersRef,
+            where('displayName', '>=', searchTerm),
+            where('displayName', '<=', searchTerm + '\uf8ff'),
+            limit(10)
+        );
+
+        const [emailSnapshot, nameSnapshot] = await Promise.all([
+            getDocs(emailQuery),
+            getDocs(nameQuery)
+        ]);
+
+        // Get all friend IDs and pending request IDs
+        const friendIds = new Set(friends.map(f => f.id));
+        const pendingRequestIds = new Set([
+            ...incomingRequests.map(r => r.senderId),
+            ...outgoingRequests.map(r => r.receiverId)
+        ]);
+
+        // Combine and deduplicate results
+        const results = new Map<string, UserSearchResult>();
+
+        // Process email results
+        emailSnapshot.docs.forEach(doc => {
+            const data = doc.data() as { displayName: string; email: string; photoURL: string | null };
+            if (doc.id !== user.uid && !friendIds.has(doc.id) && !pendingRequestIds.has(doc.id)) {
+                results.set(doc.id, {
+                    id: doc.id,
+                    displayName: data.displayName,
+                    photoURL: data.photoURL
+                });
+            }
+        });
+
+        // Process name results
+        nameSnapshot.docs.forEach(doc => {
+            const data = doc.data() as { displayName: string; email: string; photoURL: string | null };
+            if (doc.id !== user.uid && !friendIds.has(doc.id) && !pendingRequestIds.has(doc.id)) {
+                results.set(doc.id, {
+                    id: doc.id,
+                    displayName: data.displayName,
+                    photoURL: data.photoURL
+                });
+            }
+        });
+
+        return Array.from(results.values());
+    };
+
     const value = {
         friends,
         incomingRequests,
@@ -486,7 +600,8 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
         shareRecipeWithFriend,
         acceptSharedRecipe,
         rejectSharedRecipe,
-        loading
+        loading,
+        searchUsers
     };
 
     return (

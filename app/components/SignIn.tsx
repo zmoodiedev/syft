@@ -3,16 +3,16 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'next/navigation';
-
+import Button from './Button';
 export default function SignIn() {
-    {/*const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');*/}
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-    {/*const { signIn, signInWithGoogle } = useAuth();*/}
-    const { signInWithGoogle } = useAuth();
+    const { signIn, signInWithGoogle } = useAuth();
+
     const router = useRouter();
 
-    {/*const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             await signIn(email, password);
@@ -22,7 +22,7 @@ export default function SignIn() {
         } catch (_) {
             setError('Failed to sign in. Please check your credentials.');
         }
-    };*/}
+    };
 
     const handleGoogleSignIn = async () => {
         try {
@@ -44,23 +44,16 @@ export default function SignIn() {
     };
 
     return (
-        <div className="relative bg-white shadow-xl rounded-xl px-10 pt-12 pb-10 max-w-md w-full z-10">
+        <div className="relative px-10pb-10 max-w-md w-full z-10">
 
-            
-            {/* Decorative floating blobs */}
-            <div className="absolute -bottom-5 -left-10 w-20 h-20 rounded-full bg-red-500/5"></div>
-            <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-red-500/5"></div>
-            
-            <h2 className="text-3xl font-bold mb-2 text-center">Welcome Back</h2>
-            <div className="h-[2px] w-12 bg-gradient-to-r from-red-400 to-rose-500 mx-auto mb-6"></div>
-            
+
             {error && (
                 <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
                     {error}
                 </div>
             )}
             
-            {/*<form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
                     <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                         Email
@@ -87,23 +80,24 @@ export default function SignIn() {
                         required
                     />
                 </div>
-                <button 
+                <Button
                     type="submit"
-                    className="w-full bg-gradient-to-r from-red-500 to-rose-600 text-white py-3 px-4 rounded-lg focus:outline-none transition-transform hover:translate-y-[-2px] hover:shadow-lg"
+                    className="w-full"
+                    variant="primary"
                 >
                     Sign In
-                </button>
-            </form>*/}
+                </Button>
+            </form>
             
             <div className="mt-8">
-                {/*<div className="relative">
+                <div className="relative">
                     <div className="absolute inset-0 flex items-center">
                         <div className="w-full border-t border-gray-300"></div>
                     </div>
                     <div className="relative flex justify-center text-sm">
                         <span className="px-3 bg-white text-gray-500">Or continue with</span>
                     </div>
-                </div>*/}
+                </div>
                 <div className="mt-6">
                     <button
                         onClick={handleGoogleSignIn}

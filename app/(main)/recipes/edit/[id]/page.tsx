@@ -84,7 +84,7 @@ export default function EditRecipe() {
   return (
     <ProtectedRoute>
       <div className="container mx-auto py-12 md:py-20 px-4">
-        <div className="w-full max-w-4xl mx-auto">
+        <div className="w-full max-w-6xl mx-auto">
           <h1 className="text-3xl font-bold mb-8">Edit Recipe</h1>
           
           {loading ? (

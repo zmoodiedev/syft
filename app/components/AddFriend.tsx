@@ -1,12 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useFriends } from '../context/FriendsContext';
-import { db } from '../lib/firebase';
-import { collection, query, where, getDocs, limit } from 'firebase/firestore';
-import { useAuth } from '../context/AuthContext';
-import Image from 'next/image';
-import { toast } from 'react-hot-toast';
+import { FiSearch } from 'react-icons/fi';
 import Button from './Button';
 
 interface UserSearchResult {
@@ -17,169 +13,163 @@ interface UserSearchResult {
 }
 
 export default function AddFriend() {
+    const { sendFriendRequest } = useFriends();
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
-    const [loading, setLoading] = useState(false);
-    const { sendFriendRequest } = useFriends();
-    const { user } = useAuth();
+    const [isSearching, setIsSearching] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const popupWindowRef = useRef<Window | null>(null);
+    const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
     const handleSearch = async () => {
-        if (!searchQuery.trim() || !user) return;
+        if (!searchQuery.trim()) return;
 
-        setLoading(true);
+        setIsSearching(true);
+        setError(null);
+
         try {
-            const usersRef = collection(db, 'users');
-            
-            // Try exact match first
-            const exactQuery = query(
-                usersRef,
-                where('email', '==', searchQuery.toLowerCase()),
-                limit(10)
-            );
-            
-            let querySnapshot = await getDocs(exactQuery);
-            
-            // If no results with exact match, try prefix match
-            if (querySnapshot.empty) {
-                const prefixQuery = query(
-                    usersRef,
-                    where('email', '>=', searchQuery.toLowerCase()),
-                    where('email', '<=', searchQuery.toLowerCase() + '\uf8ff'),
-                    limit(10)
-                );
-                querySnapshot = await getDocs(prefixQuery);
-                
-                // If still no results, try case-insensitive match
-                if (querySnapshot.empty) {
-                    console.log('Trying case-insensitive search');
-                    const caseInsensitiveQuery = query(
-                        usersRef,
-                        where('email', '>=', searchQuery.toLowerCase()),
-                        where('email', '<=', searchQuery.toUpperCase() + '\uf8ff'),
-                        limit(10)
-                    );
-                    querySnapshot = await getDocs(caseInsensitiveQuery);
-                }
-            }
-            
-            const results: UserSearchResult[] = [];
-
-            querySnapshot.forEach((doc) => {
-                // Don't include the current user in search results
-                if (doc.id !== user.uid) {
-                    const data = doc.data();
-                    console.log('Found user:', data.email);
-                    results.push({
-                        id: doc.id,
-                        displayName: data.displayName,
-                        email: data.email,
-                        photoURL: data.photoURL
-                    });
-                }
-            });
-
-            setSearchResults(results);
-            
-            // Show a message if no results were found
-            if (results.length === 0) {
-                toast.error('No users found with that email address');
-            }
-        } catch (error: unknown) {
-            console.error('Error searching for users:', error);
-            toast.error('Failed to search for users. Please try again.');
+            const response = await fetch(`/api/users/search?q=${encodeURIComponent(searchQuery)}`);
+            if (!response.ok) throw new Error('Search failed');
+            const data = await response.json();
+            setSearchResults(data);
+        } catch (err) {
+            setError('Failed to search for users');
+            console.error('Search error:', err);
         } finally {
-            setLoading(false);
+            setIsSearching(false);
         }
     };
 
     const handleSendRequest = async (userId: string) => {
         try {
             await sendFriendRequest(userId);
-            toast.success('Friend request sent!');
-            // Clear search results after sending request
-            setSearchResults([]);
-            setSearchQuery('');
-        } catch (error: unknown) {
-            console.error('Error sending friend request:', error);
-            if (error instanceof Error) {
-                toast.error(error.message);
-            } else {
-                toast.error('Failed to send friend request');
-            }
+            setSearchResults(prev => prev.filter(user => user.id !== userId));
+        } catch (err) {
+            console.error('Error sending friend request:', err);
         }
     };
 
+    const handleShare = () => {
+        // Clean up any existing popup window
+        if (popupWindowRef.current && !popupWindowRef.current.closed) {
+            try {
+                popupWindowRef.current.close();
+            } catch (e) {
+                console.warn('Could not close existing popup window:', e);
+            }
+        }
+
+        // Clear any existing interval
+        if (checkIntervalRef.current) {
+            clearInterval(checkIntervalRef.current);
+            checkIntervalRef.current = null;
+        }
+
+        const url = `${window.location.origin}/share`;
+        const width = 600;
+        const height = 700;
+        const left = (window.innerWidth - width) / 2;
+        const top = (window.innerHeight - height) / 2;
+
+        const newWindow = window.open(
+            url,
+            'Share Recipe',
+            `width=${width},height=${height},left=${left},top=${top}`
+        );
+
+        if (newWindow) {
+            popupWindowRef.current = newWindow;
+            checkIntervalRef.current = setInterval(() => {
+                if (newWindow.closed) {
+                    if (checkIntervalRef.current) {
+                        clearInterval(checkIntervalRef.current);
+                        checkIntervalRef.current = null;
+                    }
+                    popupWindowRef.current = null;
+                }
+            }, 1000);
+        }
+    };
+
+    useEffect(() => {
+        return () => {
+            // Clean up interval
+            if (checkIntervalRef.current) {
+                clearInterval(checkIntervalRef.current);
+            }
+
+            // Clean up popup window
+            if (popupWindowRef.current && !popupWindowRef.current.closed) {
+                try {
+                    popupWindowRef.current.close();
+                } catch (e) {
+                    console.warn('Could not close popup window on cleanup:', e);
+                }
+            }
+        };
+    }, []);
+
     return (
         <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4">Add Friends</h2>
-            <div className="flex gap-2 mb-6 flex-wrap">
-                <input
-                    type="text"
-                    placeholder="Search by email"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                            handleSearch();
-                        }
-                    }}
-                    className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500/50"
-                />
+            <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold">Add Friends</h2>
                 <Button
                     variant="primary"
-                    onClick={handleSearch}
-                    disabled={loading}
+                    onClick={handleShare}
                 >
-                    {loading ? 'Searching...' : 'Search'}
+                    Share Recipe
                 </Button>
             </div>
 
-            {/* Search Results */}
+            <div className="relative mb-6">
+                <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                    placeholder="Search by email or name..."
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+                <button
+                    onClick={handleSearch}
+                    disabled={isSearching}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-emerald-500"
+                >
+                    <FiSearch className="w-5 h-5" />
+                </button>
+            </div>
+
+            {error && (
+                <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg">
+                    {error}
+                </div>
+            )}
+
             <div className="space-y-4">
-                {searchResults.map((result) => (
+                {searchResults.map((user) => (
                     <div
-                        key={result.id}
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                        key={user.id}
+                        className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
                     >
-                        <div className="flex items-center space-x-3">
-                            {result.photoURL ? (
-                                <Image
-                                    src={result.photoURL}
-                                    alt={result.displayName || 'User'}
-                                    width={40}
-                                    height={40}
-                                    className="rounded-full"
-                                />
-                            ) : (
-                                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                                    <span className="text-gray-500 text-lg">
-                                        {(result.displayName || result.email || '?')[0].toUpperCase()}
-                                    </span>
-                                </div>
-                            )}
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
+                                <span className="text-emerald-600 font-medium">
+                                    {user.displayName?.charAt(0) || 'U'}
+                                </span>
+                            </div>
                             <div>
-                                <h3 className="font-medium">
-                                    {result.displayName || 'Unknown User'}
-                                </h3>
-                                <p className="text-sm text-gray-500">
-                                    {result.email}
-                                </p>
+                                <h3 className="font-medium">{user.displayName}</h3>
+                                <p className="text-sm text-gray-600">{user.email}</p>
                             </div>
                         </div>
                         <Button
                             variant="primary"
-                            onClick={() => handleSendRequest(result.id)}
+                            onClick={() => handleSendRequest(user.id)}
                         >
                             Add Friend
                         </Button>
                     </div>
                 ))}
-
-                {searchQuery && searchResults.length === 0 && !loading && (
-                    <p className="text-gray-500 text-center py-4">
-                        No users found with that email.
-                    </p>
-                )}
             </div>
         </div>
     );
