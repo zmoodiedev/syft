@@ -1,34 +1,18 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { db } from '@/lib/firebase';
+import { collection, getDocs } from 'firebase/firestore';
 
 export async function GET() {
   try {
-    const recipes = await prisma.recipe.findMany({
-      include: {
-        ingredients: true,
-        instructions: {
-          orderBy: {
-            stepNumber: 'asc'
-          }
-        },
-        user: {
-          select: {
-            name: true,
-            image: true
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    });
+    const recipesRef = collection(db, 'recipes');
+    const snapshot = await getDocs(recipesRef);
+    const recipes = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
 
-    return NextResponse.json(recipes);
+    return Response.json(recipes);
   } catch (error) {
     console.error('Error fetching recipes:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch recipes' },
-      { status: 500 }
-    );
+    return Response.json({ error: 'Failed to fetch recipes' }, { status: 500 });
   }
 } 
