@@ -87,7 +87,7 @@ export default function LoginPage() {
                             transition={{ delay: 0.5, duration: 0.5 }}
                             className="text-gray-600 mb-6 text-center bg-red-500 text-white p-2 rounded-md"
                         >
-                            Make sure to use the {"'"}Sign In with Google{"'"} button for beta access.
+                            Make sure to use the &quot;Sign In with Google&quot; button for beta access.
                         </motion.p>
                         <SignIn />
                     </motion.div>
