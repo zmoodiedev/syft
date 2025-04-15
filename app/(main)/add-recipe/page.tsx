@@ -19,7 +19,7 @@ export default function AddRecipe() {
                     transition={{ duration: 0.5 }}
                 >
                     <h1 className="text-4xl font-bold text-gray-900 mb-2">Add a Recipe</h1>
-                    <p className="text-gray-600 mb-8">Choose how you'd like to add your recipe</p>
+                    <p className="text-gray-600 mb-8">Choose how you&apos;d like to add your recipe</p>
                     
                     {/* Option Selection */}
                     {!selectedOption && (
