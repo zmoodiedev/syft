@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { useFriends } from '../context/FriendsContext';
 import { FiSearch } from 'react-icons/fi';
 import Button from './Button';
@@ -18,8 +18,6 @@ export default function AddFriend() {
     const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const popupWindowRef = useRef<Window | null>(null);
-    const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
     const handleSearch = async () => {
         if (!searchQuery.trim()) return;
@@ -29,7 +27,9 @@ export default function AddFriend() {
 
         try {
             const response = await fetch(`/api/users/search?q=${encodeURIComponent(searchQuery)}`);
-            if (!response.ok) throw new Error('Search failed');
+            if (!response.ok) {
+                throw new Error('Search failed');
+            }
             const data = await response.json();
             setSearchResults(data);
         } catch (err) {
@@ -49,75 +49,15 @@ export default function AddFriend() {
         }
     };
 
-    const handleShare = () => {
-        // Clean up any existing popup window
-        if (popupWindowRef.current && !popupWindowRef.current.closed) {
-            try {
-                popupWindowRef.current.close();
-            } catch (e) {
-                console.warn('Could not close existing popup window:', e);
-            }
-        }
-
-        // Clear any existing interval
-        if (checkIntervalRef.current) {
-            clearInterval(checkIntervalRef.current);
-            checkIntervalRef.current = null;
-        }
-
-        const url = `${window.location.origin}/share`;
-        const width = 600;
-        const height = 700;
-        const left = (window.innerWidth - width) / 2;
-        const top = (window.innerHeight - height) / 2;
-
-        const newWindow = window.open(
-            url,
-            'Share Recipe',
-            `width=${width},height=${height},left=${left},top=${top}`
-        );
-
-        if (newWindow) {
-            popupWindowRef.current = newWindow;
-            checkIntervalRef.current = setInterval(() => {
-                if (newWindow.closed) {
-                    if (checkIntervalRef.current) {
-                        clearInterval(checkIntervalRef.current);
-                        checkIntervalRef.current = null;
-                    }
-                    popupWindowRef.current = null;
-                }
-            }, 1000);
-        }
-    };
-
-    useEffect(() => {
-        return () => {
-            // Clean up interval
-            if (checkIntervalRef.current) {
-                clearInterval(checkIntervalRef.current);
-            }
-
-            // Clean up popup window
-            if (popupWindowRef.current && !popupWindowRef.current.closed) {
-                try {
-                    popupWindowRef.current.close();
-                } catch (e) {
-                    console.warn('Could not close popup window on cleanup:', e);
-                }
-            }
-        };
-    }, []);
-
     return (
         <div className="bg-white rounded-lg shadow-md p-6">
             <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold">Add Friends</h2>
                 <Button
                     variant="primary"
-                    onClick={handleShare}
+                    onClick={handleSearch}
                 >
-                    Share Recipe
+                    Search
                 </Button>
             </div>
 
@@ -154,12 +94,11 @@ export default function AddFriend() {
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
                                 <span className="text-emerald-600 font-medium">
-                                    {user.displayName?.charAt(0) || 'U'}
+                                    {user.displayName?.charAt(0) || user.email?.charAt(0) || '?'}
                                 </span>
                             </div>
                             <div>
-                                <h3 className="font-medium">{user.displayName}</h3>
-                                <p className="text-sm text-gray-600">{user.email}</p>
+                                <h3 className="font-medium">{user.displayName || 'No Name'}</h3>
                             </div>
                         </div>
                         <Button
@@ -170,6 +109,10 @@ export default function AddFriend() {
                         </Button>
                     </div>
                 ))}
+                
+                {searchResults.length === 0 && searchQuery && !isSearching && (
+                    <p className="text-center text-gray-500 py-4">No users found matching &quot;{searchQuery}&quot;</p>
+                )}
             </div>
         </div>
     );
