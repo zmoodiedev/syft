@@ -76,33 +76,28 @@ export default function AddFriend() {
     }
 
     return (
-        <div className="bg-white rounded-lg p-6">
-            <div className="flex items-center justify-between mb-6">
+        <div className="py-6">
+            <div className="flex items-center justify-between mb-6 flex-col md:flex-row">
                 <h2 className="text-xl font-bold">Add Friends</h2>
-                <Button
-                    variant="primary"
-                    onClick={handleSearch}
-                >
-                    Search
-                </Button>
             </div>
 
-            <div className="relative mb-6">
+            <div className="relative mb-6 flex flex-col md:flex-row space-y-4 md:space-y-0">
                 <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                     placeholder="Search by email or name..."
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-basil"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg md:rounded-r-none md:rounded-l-lg focus:outline-none focus:ring-2 focus:ring-basil"
                 />
-                <button
-                    onClick={handleSearch}
+                <Button
+                    variant="primary"
                     disabled={isSearching}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-basil"
+                    onClick={handleSearch}
+                    className="rounded-lg md:rounded-l-none md:rounded-r-lg"
                 >
-                    <FiSearch className="w-5 h-5" />
-                </button>
+                    Search
+                </Button>
             </div>
 
             {error && (

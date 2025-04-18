@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Handle -->
+  <rect x="45" y="40" width="10" height="50" rx="5" fill="#6B7280" />
+  
+  <!-- Spatula Head -->
+  <path d="M30 10C30 6.68629 32.6863 4 36 4H64C67.3137 4 70 6.68629 70 10V30C70 33.3137 67.3137 36 64 36H36C32.6863 36 30 33.3137 30 30V10Z" fill="#22C55E" />
+  
+  <!-- Connection -->
+  <path d="M45 40V36H55V40H45Z" fill="#6B7280" />
+  
+  <!-- Details -->
+  <rect x="35" y="12" width="30" height="2" rx="1" fill="#065F46" opacity="0.5" />
+  <rect x="35" y="18" width="30" height="2" rx="1" fill="#065F46" opacity="0.5" />
+  <rect x="35" y="24" width="30" height="2" rx="1" fill="#065F46" opacity="0.5" />
+</svg> 

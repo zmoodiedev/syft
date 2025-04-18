@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Handle -->
+  <rect x="45" y="10" width="10" height="40" rx="5" fill="#6B7280" />
+  
+  <!-- Whisk Wires -->
+  <path d="M30 70C25 75 22 82 20 90C30 85 35 80 40 70C45 80 50 85 60 90C58 82 55 75 50 70C55 65 58 58 60 50C50 55 45 60 40 70C35 60 30 55 20 50C22 58 25 65 30 70Z" fill="#22C55E" stroke="#065F46" stroke-width="2" />
+  
+  <!-- Connection -->
+  <rect x="42" y="45" width="16" height="10" rx="5" fill="#6B7280" />
+  
+  <!-- Details -->
+  <circle cx="50" cy="70" r="3" fill="#065F46" />
+</svg> 

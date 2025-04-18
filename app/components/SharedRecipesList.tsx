@@ -65,6 +65,7 @@ export default function SharedRecipesList() {
                                             alt={sharedRecipe.recipeName}
                                             fill
                                             sizes="(max-width: 640px) 100vw, 80px"
+                                            quality={85}
                                             className="object-cover rounded-md"
                                         />
                                     ) : (
@@ -73,6 +74,7 @@ export default function SharedRecipesList() {
                                             alt="Default recipe background"
                                             fill
                                             sizes="(max-width: 640px) 100vw, 80px"
+                                            quality={85}
                                             className="object-cover rounded-md opacity-75"
                                         />
                                     )}

@@ -34,9 +34,10 @@ export default function RecipeCard({ recipe, priority = false }: RecipeCardProps
               src={recipe.imageUrl}
               alt={recipe.name}
               fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
               loading={priority ? "eager" : "lazy"}
               priority={priority}
+              quality={90}
               className="object-cover"
             />
           ) : (
@@ -44,9 +45,10 @@ export default function RecipeCard({ recipe, priority = false }: RecipeCardProps
               src="/images/bg_ingredients.png"
               alt="Default recipe background"
               fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
               loading={priority ? "eager" : "lazy"}
               priority={priority}
+              quality={90}
               className="object-cover opacity-75"
             />
           )}

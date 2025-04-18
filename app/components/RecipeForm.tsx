@@ -347,9 +347,9 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
   }, [instructions]); // Re-run when instructions change
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8 max-w-6xl mx-auto">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-10 max-w-8xl mx-auto">
       {/* Basic Info Section */}
-      <div className="space-y-6 bg-white rounded-xl p-8 shadow-sm border border-gray-100">
+      <div className="space-y-6 md:bg-white md:rounded-xl md:p-8 md:shadow-sm md:border md:border-gray-100">
         <h2 className="text-2xl font-bold bg-basil bg-clip-text text-transparent">
           Recipe Details
         </h2>
@@ -426,7 +426,7 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
       </div>
 
       {/* Image Upload Section */}
-      <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100">
+      <div className="md:bg-white md:rounded-xl md:p-8 md:shadow-sm md:border md:border-gray-100">
         <h2 className="text-2xl font-bold text-basil mb-6">
           Recipe Image
         </h2>
@@ -501,7 +501,7 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
       </div>
 
       {/* Ingredients Section */}
-      <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100">
+      <div className="md:bg-white md:rounded-xl md:p-8 md:shadow-sm md:border md:border-gray-100">
         <h2 className="text-2xl font-bold text-basil mb-6">
           Ingredients
         </h2>
@@ -568,7 +568,7 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
       </div>
 
       {/* Instructions Section */}
-      <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100">
+      <div className="md:bg-white md:rounded-xl md:p-8 md:shadow-sm md:border md:border-gray-100">
         <h2 className="text-2xl font-bold text-basil mb-6">
           Instructions
         </h2>
@@ -615,8 +615,11 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
       </div>
 
       {/* Categories Section */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900">Categories</h3>
+      <div className="md:bg-white md:rounded-xl md:p-8 md:shadow-sm md:border md:border-gray-100 space-y-6">
+        <h2 className="text-2xl font-bold text-basil mb-6">
+          Categories
+        </h2>
+
         <p className="text-sm text-gray-600">Select categories that apply to your recipe</p>
         
         {isLoadingCategories ? (
@@ -631,11 +634,18 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
                 <button
                   type="button"
                   onClick={() => handleCategoryChange(category)}
-                  className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                    selectedCategories.includes(category)
-                      ? 'bg-emerald-100 text-emerald-800'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                  className={`
+                    touch-action-manipulation
+                    px-3 py-1 rounded-full text-sm font-medium 
+                    transition-all duration-150 
+                    focus:outline-none 
+                    ${selectedCategories.includes(category)
+                        ? 'bg-basil text-white hover:bg-basil hover:text-white' 
+                        : 'bg-white text-steel hover:bg-gray-100'
+                    }
+                    active:shadow-inner active:scale-95
+                `}
+                aria-pressed={selectedCategories.includes(category)}
                 >
                   {category}
                 </button>
@@ -645,7 +655,7 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
           </div>
         )}
         {/* Add new category input */}
-        <div className="flex gap-2 mb-4">
+        <div className="flex gap-2 mb-4 flex-col md:flex-row">
           <input 
             type="text"
             value={newCategory}
@@ -658,7 +668,7 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
             variant="outline"
             onClick={handleAddNewCategory}
           >
-            Add
+            + Add Category
           </Button>
         </div>
       </div>

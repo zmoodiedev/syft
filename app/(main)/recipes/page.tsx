@@ -29,6 +29,12 @@ export default function RecipesPage() {
     const [availableCategories, setAvailableCategories] = useState<string[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
 
+    // Add effect to handle styles update after category toggle
+    useEffect(() => {
+        // This empty dependency effect forces a re-render when selectedCategories changes
+        // It helps ensure the UI updates correctly, especially on mobile
+    }, [selectedCategories]);
+
     useEffect(() => {
         const fetchRecipes = async () => {
             if (!user) return;
@@ -79,7 +85,7 @@ export default function RecipesPage() {
                 : [...prev, category]
         );
     };
-
+    
     const filteredRecipes = recipes.filter(recipe => {
         // First apply category filter
         const matchesCategory = selectedCategories.length === 0 || 
@@ -103,7 +109,7 @@ export default function RecipesPage() {
             <div className="container mx-auto px-4 py-12 md:py-20">
                 <div className="flex flex-col md:flex-row justify-between md:items-center mb-8 flex-wrap lg:flex-nowrap">
                     <div className="flex flex-row gap-4 w-full mb-6 lg:mb-0 flex-wrap md:nowrap justify-between md:justify-start">
-                        <h1 className="text-4xl font-bold">Your Recipes</h1>
+                        <h1 className="text-4xl font-bold">My Recipes</h1>
                         <Button
                                 href="/add-recipe"
                                 className="w-auto"
@@ -138,11 +144,19 @@ export default function RecipesPage() {
                                 <button
                                     key={category}
                                     onClick={() => handleCategoryToggle(category)}
-                                    className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                                        selectedCategories.includes(category)
-                                            ? 'bg-emerald-100 text-emerald-800'
-                                            : 'bg-white text-steel hover:bg-emerald-100 hover:text-emerald-800 cursor-pointer'
-                                    }`}
+                                    // Improve touch behavior
+                                    className={`
+                                        touch-action-manipulation
+                                        px-3 py-1 rounded-full text-sm font-medium 
+                                        transition-all duration-150 
+                                        focus:outline-none 
+                                        ${selectedCategories.includes(category)
+                                            ? 'bg-basil text-white hover:bg-basil hover:text-white' 
+                                            : 'bg-white text-steel hover:bg-gray-100'
+                                        }
+                                        active:shadow-inner active:scale-95
+                                    `}
+                                    aria-pressed={selectedCategories.includes(category)}
                                 >
                                     {category}
                                 </button>

@@ -124,7 +124,7 @@ export default function AddRecipe() {
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -20 }}
                                 transition={{ duration: 0.3 }}
-                                className="bg-white rounded-2xl shadow-md border border-gray-100 p-8"
+                                className=""
                             >
                                 <button
                                     onClick={() => setSelectedOption(null)}

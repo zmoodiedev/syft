@@ -129,7 +129,7 @@ export default function Header() {
                                         pathname === '/recipes' ? 'border-b-2 border-basil' : ''
                                     }`}
                                 >
-                                    Your Recipes
+                                    My Recipes
                                 </Link>
                             </li>
                             <li>
@@ -207,7 +207,7 @@ export default function Header() {
                                                     data-extension-ignore="true"
                                                 >
                                                     <i className="fa-solid fa-book-open mr-3 w-6 text-center"></i>
-                                                    Your Recipes
+                                                    My Recipes
                                                 </Link>
                                                 <Link 
                                                     href="/add-recipe"
@@ -229,9 +229,10 @@ export default function Header() {
                                                 </Link>
                                                 <Link 
                                                     href={`/profile/${user.uid}?tab=notifications`}
-                                                    className="py-3 border-b border-gray-100 flex items-center"
+                                                    className="py-3 border-b border-gray-100 flex items-center relative"
                                                     onClick={() => setMobileMenuOpen(false)}
                                                     data-extension-ignore="true"
+                                                    aria-label="Notifications"
                                                 >
                                                     <i className="fa-solid fa-bell mr-3 w-6 text-center"></i>
                                                     Notifications

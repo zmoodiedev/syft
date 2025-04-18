@@ -141,3 +141,8 @@
   display: none; /* Chrome, Safari, and Opera */
 }
 
+/* Improve touch behavior on mobile devices */
+.touch-action-manipulation {
+  touch-action: manipulation;
+}
+

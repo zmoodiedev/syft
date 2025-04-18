@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { FiUser, FiSettings, FiUsers, FiBookmark, FiPlusCircle, FiUserPlus, FiUserCheck, FiUserX, FiChevronDown, FiBell } from 'react-icons/fi';
@@ -41,17 +41,38 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('recipes');
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+  const [showLeftScroll, setShowLeftScroll] = useState(false);
+  const [showRightScroll, setShowRightScroll] = useState(true);
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
+  const notificationsRef = useRef<HTMLDivElement>(null);
   
   // Check if this is the current user's profile
   const isOwnProfile = user?.uid === id;
   
-  // Set active tab from URL parameter
+  // Set active tab from URL parameter and handle auto-scrolling
   useEffect(() => {
     if (tabParam && ['recipes', 'friends', 'following', 'notifications'].includes(tabParam)) {
       // Only set the tab if it's valid and (for restricted tabs) if the user is viewing their own profile
       if (tabParam === 'notifications' || tabParam === 'following') {
         if (isOwnProfile) {
           setActiveTab(tabParam);
+          
+          // Handle auto-scrolling to notifications when that tab is selected from query params
+          if (tabParam === 'notifications') {
+            // Use setTimeout to ensure the tab content is rendered before scrolling
+            setTimeout(() => {
+              if (notificationsRef.current) {
+                const headerOffset = 80; // Account for header height
+                const elementPosition = notificationsRef.current.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                
+                window.scrollTo({
+                  top: offsetPosition,
+                  behavior: "smooth"
+                });
+              }
+            }, 300);
+          }
         }
       } else {
         setActiveTab(tabParam);
@@ -282,6 +303,38 @@ export default function ProfilePage() {
     }
   };
   
+  // Add scroll handler to update indicator visibility
+  const handleTabsScroll = () => {
+    if (tabsContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = tabsContainerRef.current;
+      setShowLeftScroll(scrollLeft > 0);
+      setShowRightScroll(scrollLeft < scrollWidth - clientWidth - 5); // 5px buffer
+    }
+  };
+  
+  // Initialize scroll indicators on component mount
+  useEffect(() => {
+    const tabsContainer = tabsContainerRef.current;
+    if (tabsContainer) {
+      handleTabsScroll();
+      tabsContainer.addEventListener('scroll', handleTabsScroll);
+      
+      // Handle window resize
+      const handleResize = () => handleTabsScroll();
+      window.addEventListener('resize', handleResize);
+      
+      return () => {
+        tabsContainer.removeEventListener('scroll', handleTabsScroll);
+        window.removeEventListener('resize', handleResize);
+      };
+    }
+  }, []);
+  
+  // Update scroll indicators when tabs change
+  useEffect(() => {
+    handleTabsScroll();
+  }, [activeTab]);
+  
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -432,8 +485,15 @@ export default function ProfilePage() {
           <div className="w-full lg:w-2/3">
             <div className="bg-white rounded-xl shadow-sm overflow-hidden">
               {/* Tabs Navigation */}
-              <div className="border-b border-gray-200">
-                <nav className="flex overflow-x-auto whitespace-nowrap px-4 sm:px-6 hide-scrollbar">
+              <div className="border-b border-gray-200 relative">
+                {/* Left scroll indicator */}
+                <div className={`absolute left-0 top-1/2 -translate-y-1/2 h-10 w-8 bg-gradient-to-r from-white to-transparent z-10 flex items-center pointer-events-none md:hidden ${showLeftScroll ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200`}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                
+                <nav ref={tabsContainerRef} className="flex overflow-x-auto whitespace-nowrap px-4 sm:px-6 hide-scrollbar">
                   <button
                     onClick={() => setActiveTab('recipes')}
                     className={`py-4 px-3 border-b-2 font-medium text-sm flex-shrink-0 ${
@@ -503,6 +563,13 @@ export default function ProfilePage() {
                     </button>
                   )}
                 </nav>
+                
+                {/* Right scroll indicator */}
+                <div className={`absolute right-0 top-1/2 -translate-y-1/2 h-10 w-8 bg-gradient-to-l from-white to-transparent z-10 flex items-center justify-end pointer-events-none md:hidden ${showRightScroll ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200`}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                  </svg>
+                </div>
               </div>
               
               {/* Tab Content */}
@@ -512,15 +579,16 @@ export default function ProfilePage() {
                     {recipes.length > 0 ? (
                       <>
                         {recipes.map(recipe => (
-                          <div key={recipe.id} className="bg-white rounded-lg shadow-sm overflow-hidden transition-transform hover:scale-[1.01]">
-                            <div className="flex items-center">
-                              <div className="h-16 w-16 bg-gray-200 relative flex-shrink-0">
+                          <div key={recipe.id} className="bg-white rounded-lg shadow-sm transition-transform hover:scale-[1.01]">
+                            <div className="flex items-center flex-col md:flex-row">
+                              <div className="h-24 md:h-16 w-full md:w-16 bg-gray-200 relative flex-shrink-0">
                                 {recipe.imageUrl ? (
                                   <Image 
                                     src={recipe.imageUrl} 
                                     alt={recipe.name} 
                                     fill 
-                                    sizes="64px"
+                                    sizes="(max-width: 768px) 100px, 64px"
+                                    quality={85}
                                     className="object-cover"
                                   />
                                 ) : (
@@ -528,16 +596,17 @@ export default function ProfilePage() {
                                     src="/images/bg_ingredients.png" 
                                     alt="Default recipe background"
                                     fill 
-                                    sizes="64px"
+                                    sizes="(max-width: 768px) 100px, 64px"
+                                    quality={85}
                                     className="object-cover opacity-75"
                                   />
                                 )}
                               </div>
-                              <div className="px-4 py-3 flex-grow flex items-center justify-between">
-                                <h3 className="text-base font-medium text-gray-900 truncate">{recipe.name}</h3>
+                              <div className="w-full md:w-auto px-4 py-4 flex-grow flex items-center justify-between flex-col md:flex-row">
+                                <h3 className="text-base font-medium text-gray-900 wrap mb-2 md:mb-0">{recipe.name}</h3>
                                 <Button 
                                   variant="outline" 
-                                  className="text-sm"
+                                  className="text-sm w-full md:w-auto"
                                   href={`/recipes/${recipe.id}`}
                                 >
                                   View
@@ -549,10 +618,10 @@ export default function ProfilePage() {
                         
                         {/* Load more button */}
                         {hasMoreRecipes && (
-                          <div className="flex justify-center mt-4">
+                          <div className="w-full flex justify-center mt-4">
                             <Button 
-                              variant="outline" 
-                              className="flex items-center gap-2"
+                              variant="primary" 
+                              className="flex items-center gap-2 w-full"
                               onClick={loadMoreRecipes}
                               disabled={loadingMoreRecipes}
                             >
@@ -717,7 +786,7 @@ export default function ProfilePage() {
                 )}
                 
                 {activeTab === 'notifications' && (
-                  <div className="w-full">
+                  <div ref={notificationsRef} className="w-full">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-lg font-medium text-gray-900">Notifications</h3>
                       {notifications.length > 0 && unreadNotificationCount > 0 && (
@@ -734,7 +803,7 @@ export default function ProfilePage() {
                       )}
                     </div>
                     
-                    <div className="bg-white shadow rounded-lg divide-y divide-gray-200">
+                    <div className="bg-white rounded-lg divide-y divide-gray-200">
                       {notifications.length > 0 ? (
                         notifications.map(notification => (
                           <NotificationItem 

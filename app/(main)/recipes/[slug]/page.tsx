@@ -267,6 +267,7 @@ export default function RecipeDetail() {
                       fill
                       sizes="100vw"
                       priority
+                      quality={90}
                       className="object-cover"
                     />
                     {/* Gradient overlay for text readability */}
@@ -274,20 +275,6 @@ export default function RecipeDetail() {
                   </div>
                   <div className="container max-w-8xl mx-auto absolute bottom-0 left-0 right-0 py-6 px-4 text-white z-10">
                     <h1 className="text-4xl lg:text-5xl font-bold mb-3 drop-shadow-lg">{recipe.name}</h1>
-                    
-                    {/* Categories */}
-                    {recipe.categories && recipe.categories.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {recipe.categories.map(category => (
-                          <span
-                            key={category}
-                            className="px-3 py-1 bg-white/20 backdrop-blur-sm text-white rounded-full text-sm font-medium"
-                          >
-                            {category}
-                          </span>
-                        ))}
-                      </div>
-                    )}
                     
                     {/* Time and servings info */}
                     <div className="flex flex-wrap gap-4 text-white/90 text-sm">
@@ -337,6 +324,7 @@ export default function RecipeDetail() {
                       fill
                       sizes="100vw"
                       priority
+                      quality={90}
                       className="object-cover opacity-75"
                     />
                     {/* Gradient overlay for text readability */}
