@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useFriends } from '../context/FriendsContext';
 import { useAuth } from '../context/AuthContext';
-import { FiSearch } from 'react-icons/fi';
 import Button from './Button';
 import UserTierBadge from '@/app/components/UserTierBadge';
 import { UserTier } from '@/app/lib/tiers';
