@@ -67,6 +67,7 @@ interface FriendsContextType {
     sendFriendRequest: (userId: string) => Promise<void>;
     acceptFriendRequest: (requestId: string) => Promise<void>;
     rejectFriendRequest: (requestId: string) => Promise<void>;
+    cancelFriendRequest: (requestId: string) => Promise<void>;
     removeFriend: (friendId: string) => Promise<void>;
     shareRecipeWithFriend: (recipeId: string, recipeName: string, recipeImageUrl: string | undefined, friendId: string) => Promise<void>;
     acceptSharedRecipe: (sharedRecipeId: string) => Promise<void>;
@@ -349,7 +350,7 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
             });
 
             // Create the friend request
-            await addDoc(collection(db, 'friendRequests'), {
+            const requestRef = await addDoc(collection(db, 'friendRequests'), {
                 senderId: user.uid,
                 receiverId,
                 senderName: user.displayName || 'Unknown User',
@@ -361,6 +362,23 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
                 status: 'pending',
                 createdAt: serverTimestamp()
             });
+            
+            // Create a notification for the recipient
+            try {
+                // Import dynamically to avoid circular dependencies
+                const { createFriendRequestNotification } = await import('@/app/lib/notification');
+                
+                await createFriendRequestNotification(
+                    receiverId,
+                    user.uid,
+                    user.displayName || null,
+                    user.photoURL || null,
+                    requestRef.id // Pass the request ID
+                );
+            } catch (notificationError) {
+                console.error('Error creating friend request notification:', notificationError);
+                // Continue even if notification creation fails
+            }
             
             console.log('Friend request sent successfully');
         } catch (error) {
@@ -385,6 +403,22 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
             createdAt: serverTimestamp()
         });
 
+        // Create a notification for the request sender
+        try {
+            // Import dynamically to avoid circular dependencies
+            const { createFriendAcceptNotification } = await import('@/app/lib/notification');
+            
+            await createFriendAcceptNotification(
+                requestData.senderId,
+                user.uid,
+                user.displayName || null,
+                user.photoURL || null
+            );
+        } catch (notificationError) {
+            console.error('Error creating friend accept notification:', notificationError);
+            // Continue even if notification creation fails
+        }
+
         // Update request status
         await deleteDoc(doc(db, 'friendRequests', requestId));
     };
@@ -403,6 +437,39 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
 
         // Delete the request
         await deleteDoc(doc(db, 'friendRequests', requestId));
+    };
+
+    const cancelFriendRequest = async (requestId: string) => {
+        try {
+            // Check if user is authenticated
+            if (!user) throw new Error('User not authenticated');
+
+            // Get the request to verify it belongs to the current user
+            const requestRef = doc(db, 'friendRequests', requestId);
+            const requestDoc = await getDoc(requestRef);
+            
+            if (!requestDoc.exists()) {
+                throw new Error('Friend request not found');
+            }
+            
+            const requestData = requestDoc.data();
+            
+            // Verify this user is the sender
+            if (requestData.senderId !== user.uid) {
+                throw new Error('Not authorized to cancel this request');
+            }
+            
+            // Delete the request
+            await deleteDoc(requestRef);
+            
+            // Remove from local state
+            setOutgoingRequests(prev => prev.filter(req => req.id !== requestId));
+            
+            return;
+        } catch (error) {
+            console.error('Error canceling friend request:', error);
+            throw error;
+        }
     };
 
     const removeFriend = async (friendId: string) => {
@@ -444,7 +511,27 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
             };
             
             // Add the document
-            await addDoc(collection(db, 'sharedRecipes'), sharedRecipeData);
+            const sharedRecipeRef = await addDoc(collection(db, 'sharedRecipes'), sharedRecipeData);
+            
+            // Create a notification for the recipient
+            try {
+                // Import dynamically to avoid circular dependencies
+                const { createRecipeShareNotification } = await import('@/app/lib/notification');
+                
+                await createRecipeShareNotification(
+                    friendId,
+                    user.uid,
+                    user.displayName || null,
+                    user.photoURL || null,
+                    recipeId,
+                    recipeName,
+                    sharedRecipeRef.id // Pass the shared recipe ID
+                );
+            } catch (notificationError) {
+                console.error('Error creating recipe share notification:', notificationError);
+                // Continue even if notification creation fails
+            }
+            
             return;
         } catch (error) {
             console.error('Error sharing recipe:', error);
@@ -596,6 +683,7 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
         sendFriendRequest,
         acceptFriendRequest,
         rejectFriendRequest,
+        cancelFriendRequest,
         removeFriend,
         shareRecipeWithFriend,
         acceptSharedRecipe,

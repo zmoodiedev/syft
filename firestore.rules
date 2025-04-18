@@ -13,6 +13,12 @@ service cloud.firestore {
     }
     
     // PRODUCTION RULES - Uncomment these for production
+    
+    // Allow users to read and write their own profile
+    match /users/{userId} {
+      allow read: if true; // Profiles are publicly readable
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
 
     // Users collection
     match /users/{userId} {
@@ -28,6 +34,31 @@ service cloud.firestore {
     // Friendships
     match /friendships/{friendshipId} {
       allow read, write: if isAuthenticated();
+    }
+    
+        // Following functionality
+    match /userFollowing/{userId} {
+      // Users can read any following list
+      allow read: if true;
+      // Users can only write to their own following list
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Notifications
+    match /notifications/{notificationId} {
+      // Users can only read their own notifications
+      allow read: if request.auth != null && 
+                  resource.data.userId == request.auth.uid;
+      
+      // Allow creating notifications for any authenticated user
+      allow create: if request.auth != null;
+      
+      // But users can only mark their own notifications as read/delete them
+      allow update: if request.auth != null && 
+                     resource.data.userId == request.auth.uid &&
+                     request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']);
+      allow delete: if request.auth != null && 
+                     resource.data.userId == request.auth.uid;
     }
     
     // Recipes collection - Allow all authenticated users to read

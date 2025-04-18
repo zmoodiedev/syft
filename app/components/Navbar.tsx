@@ -23,24 +23,24 @@ export default function Navbar() {
                     <div className="hidden md:flex items-center space-x-8">
                         <Link
                             href="/recipes"
-                            className="text-gray-700 hover:text-emerald-600 transition-colors duration-200 relative group"
+                            className="text-gray-700 hover:text-basil transition-colors duration-200 relative group"
                         >
                             Recipes
-                            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-emerald-500 group-hover:w-full transition-all duration-300"></span>
+                            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-basil group-hover:w-full transition-all duration-300"></span>
                         </Link>
                         <Link
                             href="/friends"
-                            className="text-gray-700 hover:text-emerald-600 transition-colors duration-200 relative group"
+                            className="text-gray-700 hover:text-basil transition-colors duration-200 relative group"
                         >
                             Friends
-                            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-emerald-500 group-hover:w-full transition-all duration-300"></span>
+                            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-basil group-hover:w-full transition-all duration-300"></span>
                         </Link>
                         <Link
                             href="/profile"
-                            className="text-gray-700 hover:text-emerald-600 transition-colors duration-200 relative group"
+                            className="text-gray-700 hover:text-basil transition-colors duration-200 relative group"
                         >
                             Profile
-                            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-emerald-500 group-hover:w-full transition-all duration-300"></span>
+                            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-basil group-hover:w-full transition-all duration-300"></span>
                         </Link>
                         <Button
                             variant="primary"

@@ -2,28 +2,36 @@
 
 import { useState } from 'react';
 import { useFriends } from '../context/FriendsContext';
+import { useAuth } from '../context/AuthContext';
 import { FiSearch } from 'react-icons/fi';
 import Button from './Button';
+import UserTierBadge from '@/app/components/UserTierBadge';
+import { UserTier } from '@/app/lib/tiers';
+import { toast } from 'react-hot-toast';
 
 interface UserSearchResult {
     id: string;
     displayName: string | null;
     email: string | null;
     photoURL: string | null;
+    tier: string | null;
 }
 
 export default function AddFriend() {
     const { sendFriendRequest } = useFriends();
+    const { user } = useAuth();
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [hasSearched, setHasSearched] = useState(false);
 
     const handleSearch = async () => {
         if (!searchQuery.trim()) return;
 
         setIsSearching(true);
         setError(null);
+        setHasSearched(true);
 
         try {
             const response = await fetch(`/api/users/search?q=${encodeURIComponent(searchQuery)}`);
@@ -43,14 +51,32 @@ export default function AddFriend() {
     const handleSendRequest = async (userId: string) => {
         try {
             await sendFriendRequest(userId);
+            toast.success('Friend request sent successfully');
             setSearchResults(prev => prev.filter(user => user.id !== userId));
         } catch (err) {
             console.error('Error sending friend request:', err);
+            // Show error message to user
+            if (err instanceof Error) {
+                if (err.message === 'Friend request already sent') {
+                    toast.error('Friend request already sent');
+                } else if (err.message === 'Already friends with this user') {
+                    toast.error('Already friends with this user');
+                } else {
+                    toast.error(err.message || 'Failed to send friend request');
+                }
+            } else {
+                toast.error('Failed to send friend request');
+            }
         }
     };
 
+    // Don't render the component if user is not logged in
+    if (!user) {
+        return null;
+    }
+
     return (
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="bg-white rounded-lg p-6">
             <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold">Add Friends</h2>
                 <Button
@@ -68,12 +94,12 @@ export default function AddFriend() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                     placeholder="Search by email or name..."
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-basil"
                 />
                 <button
                     onClick={handleSearch}
                     disabled={isSearching}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-emerald-500"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-basil"
                 >
                     <FiSearch className="w-5 h-5" />
                 </button>
@@ -86,31 +112,32 @@ export default function AddFriend() {
             )}
 
             <div className="space-y-4">
-                {searchResults.map((user) => (
+                {searchResults.map((result) => (
                     <div
-                        key={user.id}
+                        key={result.id}
                         className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
                     >
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
-                                <span className="text-emerald-600 font-medium">
-                                    {user.displayName?.charAt(0) || user.email?.charAt(0) || '?'}
+                            <div className="w-10 h-10 bg-basil rounded-full flex items-center justify-center">
+                                <span className="text-basil font-medium">
+                                    {result.displayName?.charAt(0) || result.email?.charAt(0) || '?'}
                                 </span>
                             </div>
                             <div>
-                                <h3 className="font-medium">{user.displayName || 'No Name'}</h3>
+                                <h3 className="font-medium">{result.displayName || 'No Name'}</h3>
                             </div>
+                            <UserTierBadge tier={(result.tier || 'Free') as UserTier} />
                         </div>
                         <Button
                             variant="primary"
-                            onClick={() => handleSendRequest(user.id)}
+                            onClick={() => handleSendRequest(result.id)}
                         >
                             Add Friend
                         </Button>
                     </div>
                 ))}
                 
-                {searchResults.length === 0 && searchQuery && !isSearching && (
+                {searchResults.length === 0 && searchQuery && !isSearching && hasSearched && (
                     <p className="text-center text-gray-500 py-4">No users found matching &quot;{searchQuery}&quot;</p>
                 )}
             </div>

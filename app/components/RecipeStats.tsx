@@ -31,8 +31,8 @@ export default function RecipeStats({
     lg: 'h-6 w-6 mr-1.5 text-base'
   };
   
-  const iconClass = `${sizeClasses[size]} text-gray-500`;
-  const textClass = `${sizeClasses[size].split(' ').pop()} text-gray-600`;
+  const iconClass = `${sizeClasses[size]}`;
+  const textClass = `${sizeClasses[size].split(' ').pop()}`;
   
   return (
     <div className={`flex flex-row space-x-4 ${className}`}>

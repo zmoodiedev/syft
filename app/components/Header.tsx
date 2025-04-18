@@ -8,9 +8,10 @@ import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useFriends } from '@/app/context/FriendsContext';
+import { getUnreadNotificationCount } from '../lib/notification';
 
 export default function Header() {
-    const { user, logout } = useAuth();
+    const { user, userProfile, logout } = useAuth();
     const { sharedRecipes } = useFriends();
     const router = useRouter();
     const pathname = usePathname();
@@ -18,12 +19,34 @@ export default function Header() {
     const [showDropdown, setShowDropdown] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [mounted, setMounted] = useState(false);
+    const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
     
     // Handle mounting
     useEffect(() => {
         setMounted(true);
         return () => setMounted(false);
     }, []);
+    
+    // Fetch unread notification count
+    useEffect(() => {
+        if (!user) return;
+        
+        const fetchNotificationCount = async () => {
+            try {
+                const count = await getUnreadNotificationCount(user.uid);
+                setUnreadNotificationCount(count);
+            } catch (error) {
+                console.error('Error fetching notification count:', error);
+            }
+        };
+        
+        fetchNotificationCount();
+        
+        // You could add a polling mechanism here if needed
+        const interval = setInterval(fetchNotificationCount, 60000); // Check every minute
+        
+        return () => clearInterval(interval);
+    }, [user]);
     
     // Close mobile menu when window is resized to desktop size
     useEffect(() => {
@@ -102,8 +125,8 @@ export default function Header() {
                             <li>
                                 <Link
                                     href="/recipes"
-                                    className={`text-cast-iron hover:text-emerald-500 px-3 py-2 transition-colors ${
-                                        pathname === '/recipes' ? 'border-b-2 border-emerald-500' : ''
+                                    className={`text-cast-iron hover:text-basil px-3 py-2 transition-colors ${
+                                        pathname === '/recipes' ? 'border-b-2 border-basil' : ''
                                     }`}
                                 >
                                     Your Recipes
@@ -112,26 +135,11 @@ export default function Header() {
                             <li>
                                 <Link
                                     href="/add-recipe"
-                                    className={`text-cast-iron hover:text-emerald-500 px-3 py-2 transition-colors ${
-                                        pathname === '/add-recipe' ? 'border-b-2 border-emerald-500' : ''
+                                    className={`text-cast-iron hover:text-basil px-3 py-2 transition-colors ${
+                                        pathname === '/add-recipe' ? 'border-b-2 border-basil' : ''
                                     }`}
                                 >
                                     Add Recipe
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
-                                    href="/friends"
-                                    className={`text-cast-iron hover:text-emerald-500 px-3 py-2  transition-colors ${
-                                        pathname === '/friends' ? 'border-b-2 border-emerald-500' : ''
-                                    } relative`}
-                                >
-                                    Friends
-                                    {sharedRecipes.length > 0 && (
-                                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                                            {sharedRecipes.length}
-                                        </span>
-                                    )}
                                 </Link>
                             </li>
                         </ul>
@@ -146,9 +154,9 @@ export default function Header() {
                                 data-extension-ignore="true"
                             >
                                 <i className={`fa-solid ${mobileMenuOpen ? 'fa-xmark' : 'fa-burger'}`}></i>
-                                {sharedRecipes.length > 0 && !mobileMenuOpen && (
-                                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                                        {sharedRecipes.length}
+                                {(sharedRecipes.length > 0 || unreadNotificationCount > 0) && !mobileMenuOpen && (
+                                    <span className="absolute -top-1 -right-1 bg-basil text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                        {sharedRecipes.length + unreadNotificationCount}
                                     </span>
                                 )}
                             </button>
@@ -166,7 +174,7 @@ export default function Header() {
                                     >
                                         <div className="flex flex-col h-full p-6 pt-20">
                                             <div className="flex items-center mb-8">
-                                                {user.photoURL && (
+                                                {user.photoURL ? (
                                                     <Image
                                                         src={user.photoURL}
                                                         alt="Profile"
@@ -175,12 +183,19 @@ export default function Header() {
                                                         className="rounded-full h-12 w-12 object-cover mr-3"
                                                         data-extension-ignore="true"
                                                     />
+                                                ) : (
+                                                    <div className="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 mr-3">
+                                                        {userProfile?.displayName ? userProfile.displayName.charAt(0).toUpperCase() : user.email?.charAt(0).toUpperCase()}
+                                                    </div>
                                                 )}
-                                                <div>
-                                                    <span className="text-lg font-semibold block">
-                                                        {user.displayName || user.email || 'User'}
-                                                    </span>
-                                                    <span className="text-sm text-gray-500">{user.email || 'No email'}</span>
+                                                <div className="flex items-center">
+                                                    <Link 
+                                                        href={`/profile/${user.uid}`} 
+                                                        className="text-lg font-semibold block hover:text-basil"
+                                                        onClick={() => setMobileMenuOpen(false)}
+                                                    >
+                                                        {userProfile?.displayName || user.email || 'User'}
+                                                    </Link>
                                                 </div>
                                             </div>
                                             
@@ -204,20 +219,27 @@ export default function Header() {
                                                     Add Recipe
                                                 </Link>
                                                 <Link 
-                                                    href="/friends"
+                                                    href={`/profile/${user.uid}`}
                                                     className="py-3 border-b border-gray-100 flex items-center"
                                                     onClick={() => setMobileMenuOpen(false)}
                                                     data-extension-ignore="true"
                                                 >
-                                                    <i className="fa-solid fa-user-group mr-3 w-6 text-center"></i>
-                                                    <div className="relative">
-                                                        Friends
-                                                        {sharedRecipes.length > 0 && (
-                                                            <span className="absolute -top-1 -right-6 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                                                                {sharedRecipes.length}
-                                                            </span>
-                                                        )}
-                                                    </div>
+                                                    <i className="fa-solid fa-user mr-3 w-6 text-center"></i>
+                                                    Profile
+                                                </Link>
+                                                <Link 
+                                                    href={`/profile/${user.uid}?tab=notifications`}
+                                                    className="py-3 border-b border-gray-100 flex items-center"
+                                                    onClick={() => setMobileMenuOpen(false)}
+                                                    data-extension-ignore="true"
+                                                >
+                                                    <i className="fa-solid fa-bell mr-3 w-6 text-center"></i>
+                                                    Notifications
+                                                    {unreadNotificationCount > 0 && (
+                                                        <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-basil rounded-full">
+                                                            {unreadNotificationCount}
+                                                        </span>
+                                                    )}
                                                 </Link>
                                                 <button 
                                                     onClick={handleLogout}
@@ -241,29 +263,40 @@ export default function Header() {
                                 data-extension-ignore="true"
                             >
                                 <div className="flex items-center gap-2 cursor-pointer py-2 px-3 rounded-lg bg-white hover:bg-gray-100 transition-colors">
-                                    {user.photoURL && (
-                                        <Image
-                                            src={user.photoURL}
-                                            alt="Profile"
-                                            width={32}
-                                            height={32}
-                                            className="rounded-full h-8 w-8 object-cover"
+                                    {user && (
+                                        <button
+                                            onClick={() => setShowDropdown(!showDropdown)}
+                                            className="flex items-center"
                                             data-extension-ignore="true"
-                                        />
+                                        >
+                                            <div className="relative w-8 h-8 rounded-full overflow-hidden mr-2">
+                                                {user.photoURL ? (
+                                                    <Image
+                                                        src={user.photoURL}
+                                                        alt="Profile"
+                                                        fill
+                                                        sizes="(max-width: 768px) 32px, 32px"
+                                                        className="object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full bg-indigo-100 flex items-center justify-center text-indigo-600">
+                                                        {userProfile?.displayName ? userProfile.displayName.charAt(0).toUpperCase() : user.email?.charAt(0).toUpperCase()}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex items-center">
+                                                <Link href={`/profile/${user.uid}`} className="text-sm font-medium mr-2 hover:underline">
+                                                    {userProfile?.displayName || user.email}
+                                                </Link>
+                                                {unreadNotificationCount > 0 && (
+                                                    <span className="mr-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-basil rounded-full">
+                                                        {unreadNotificationCount}
+                                                    </span>
+                                                )}
+                                                <i className="fa-solid fa-caret-down text-xs" />
+                                            </div>
+                                        </button>
                                     )}
-                                    <span className="text-sm font-medium">
-                                        {user.displayName || user.email || 'User'}
-                                    </span>
-                                    <svg 
-                                        xmlns="http://www.w3.org/2000/svg" 
-                                        className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${showDropdown ? 'rotate-180' : ''}`} 
-                                        viewBox="0 0 20 20" 
-                                        fill="currentColor"
-                                        aria-hidden="true"
-                                        data-extension-ignore="true"
-                                    >
-                                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                                    </svg>
                                 </div>
                                 <AnimatePresence mode="wait">
                                     {showDropdown && (
@@ -276,6 +309,27 @@ export default function Header() {
                                             data-extension-ignore="true"
                                         >
                                             <div className="p-4">
+                                                <Link 
+                                                    href={`/profile/${user.uid}`}
+                                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-light-grey hover:text-primary-700 flex items-center gap-2 transition-colors mb-2"
+                                                    data-extension-ignore="true"
+                                                >
+                                                    <i className="fa-solid fa-user"></i>
+                                                    Profile
+                                                </Link>
+                                                <Link 
+                                                    href={`/profile/${user.uid}?tab=notifications`}
+                                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-light-grey hover:text-primary-700 flex items-center gap-2 transition-colors mb-2"
+                                                    data-extension-ignore="true"
+                                                >
+                                                    <i className="fa-solid fa-bell"></i>
+                                                    Notifications
+                                                    {unreadNotificationCount > 0 && (
+                                                        <span className="ml-auto inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-basil rounded-full">
+                                                            {unreadNotificationCount}
+                                                        </span>
+                                                    )}
+                                                </Link>
                                                 <button 
                                                     onClick={handleLogout}
                                                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-light-grey hover:text-primary-700 flex items-center gap-2 transition-colors"

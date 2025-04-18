@@ -2,25 +2,22 @@ import { useState, useEffect, useRef } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { useAuth } from '@/app/context/AuthContext';
 import { db } from '@/app/lib/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import Image from 'next/image';
 import { uploadImage } from '@/lib/cloudinary';
 import Button from './Button';
 
-export const RECIPE_CATEGORIES = [
+// Default categories for new users
+export const DEFAULT_CATEGORIES = [
   // Main Meal Types
-  'Breakfast', 'Lunch', 'Dinner', 'Snack', 'Appetizer', 'Side Dish',
-  // Dietary Preferences
-  'Vegetarian', 'Vegan',
-  // Protein Types
-  'Chicken', 'Beef', 'Fish', 'Seafood',
-  // Cooking Methods
-  'Air Fryer', 'Grilling', 'Baking',
-  // Course Types
-  'Main Course', 'Dessert', 'Salad', 'Soup', 'Sandwich', 'Pizza', 'Pasta', 'Rice',
+  'Breakfast', 'Lunch', 'Dinner', 'Snack', 'Baking',
+  
 ];
+
+// Legacy variable maintained for backward compatibility
+export const RECIPE_CATEGORIES = DEFAULT_CATEGORIES;
 
 interface Ingredient {
   amount: string;
@@ -40,6 +37,7 @@ export interface Recipe {
   categories?: string[];
   imageUrl?: string | null;
   userId?: string;
+  sourceUrl?: string;
 }
 
 interface RecipeFormProps {
@@ -66,6 +64,9 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
       ? initialData.instructions
       : ['']
   );
+  const [userCategories, setUserCategories] = useState<string[]>([]);
+  const [newCategory, setNewCategory] = useState<string>('');
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
 
   const { register, handleSubmit, formState: { errors }, setValue } = useForm<Recipe>({
     defaultValues: {
@@ -73,8 +74,51 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
       servings: initialData?.servings || '',
       prepTime: initialData?.prepTime || '',
       cookTime: initialData?.cookTime || '',
+      sourceUrl: initialData?.sourceUrl || '',
     }
   });
+
+  // Fetch user's custom categories
+  useEffect(() => {
+    const fetchUserCategories = async () => {
+      if (!user) return;
+      
+      try {
+        setIsLoadingCategories(true);
+        const userRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userRef);
+        
+        if (userDoc.exists() && userDoc.data().customCategories) {
+          // Check for duplicate categories to avoid key errors
+          const userCustomCategories = userDoc.data().customCategories;
+          
+          // Merge default categories with custom categories
+          const allCategories = [...DEFAULT_CATEGORIES];
+          
+          // Add user custom categories that don't exist in default categories
+          userCustomCategories.forEach((category: string) => {
+            if (!allCategories.includes(category)) {
+              allCategories.push(category);
+            }
+          });
+          
+          setUserCategories(allCategories);
+        } else {
+          // If user doesn't have custom categories yet, use defaults
+          setUserCategories(DEFAULT_CATEGORIES);
+        }
+      } catch (error) {
+        console.error('Error fetching user categories:', error);
+        toast.error('Failed to load your categories');
+        // Fallback to default categories
+        setUserCategories(DEFAULT_CATEGORIES);
+      } finally {
+        setIsLoadingCategories(false);
+      }
+    };
+    
+    fetchUserCategories();
+  }, [user]);
 
   // Set form values when initialData changes
   useEffect(() => {
@@ -83,6 +127,7 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
       setValue('servings', initialData.servings || '');
       setValue('prepTime', initialData.prepTime);
       setValue('cookTime', initialData.cookTime);
+      setValue('sourceUrl', initialData.sourceUrl || '');
       setSelectedCategories(initialData.categories || []);
       setImageUrl(initialData.imageUrl || '');
       setIsPreviewingImage(!!initialData.imageUrl);
@@ -194,6 +239,52 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
     });
   };
 
+  const handleAddNewCategory = async () => {
+    if (!user) {
+      toast.error('Please sign in to add custom categories');
+      return;
+    }
+    
+    if (!newCategory.trim()) {
+      toast.error('Please enter a category name');
+      return;
+    }
+    
+    if (userCategories.includes(newCategory.trim())) {
+      toast.error('This category already exists');
+      return;
+    }
+    
+    try {
+      const updatedCategories = [...userCategories, newCategory.trim()];
+      setUserCategories(updatedCategories);
+      setSelectedCategories(prev => [...prev, newCategory.trim()]);
+      
+      // Only store custom categories that aren't in the defaults
+      const userRef = doc(db, 'users', user.uid);
+      const userDocSnap = await getDoc(userRef);
+      const existingCustomCategories = userDocSnap.exists() && userDocSnap.data().customCategories 
+        ? userDocSnap.data().customCategories 
+        : [];
+        
+      if (!DEFAULT_CATEGORIES.includes(newCategory.trim())) {
+        // Update in Firestore - only store truly custom categories
+        const userCustomCategoriesUpdated = [...existingCustomCategories, newCategory.trim()];
+        
+        await updateDoc(userRef, {
+          customCategories: userCustomCategoriesUpdated,
+          updatedAt: serverTimestamp()
+        });
+      }
+      
+      setNewCategory('');
+      toast.success('Category added successfully');
+    } catch (error) {
+      console.error('Error adding category:', error);
+      toast.error('Failed to add category');
+    }
+  };
+
   const handleFormSubmit: SubmitHandler<Recipe> = async (data) => {
     if (!user) {
       toast.error('Please sign in to submit a recipe');
@@ -259,7 +350,7 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8 max-w-6xl mx-auto">
       {/* Basic Info Section */}
       <div className="space-y-6 bg-white rounded-xl p-8 shadow-sm border border-gray-100">
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
+        <h2 className="text-2xl font-bold bg-basil bg-clip-text text-transparent">
           Recipe Details
         </h2>
         
@@ -318,12 +409,25 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
               />
             </div>
           </div>
+
+          <div>
+            <label htmlFor="sourceUrl" className="block text-sm font-medium text-gray-700 mb-2">
+              Original Source
+            </label>
+            <input
+              id="sourceUrl"
+              type="url"
+              {...register("sourceUrl")}
+              placeholder="https://example.com/recipe"
+              className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base"
+            />
+          </div>
         </div>
       </div>
 
       {/* Image Upload Section */}
       <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100">
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent mb-6">
+        <h2 className="text-2xl font-bold text-basil mb-6">
           Recipe Image
         </h2>
         
@@ -340,7 +444,7 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
               type="button"
               onClick={handleUploadClick}
               disabled={isUploading}
-              variant='primary'
+              variant='outline'
               className="w-full md:w-auto py-3"
             >
               {isUploading ? 'Uploading...' : 'Upload Image'}
@@ -364,7 +468,7 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
               <Button
                 type="button"
                 onClick={validateAndPreviewImage}
-                variant='secondary'
+                variant='primary'
                 className="w-full md:w-auto py-3"
                 size="sm"
               >
@@ -398,7 +502,7 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
 
       {/* Ingredients Section */}
       <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100">
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent mb-6">
+        <h2 className="text-2xl font-bold text-basil mb-6">
           Ingredients
         </h2>
         
@@ -454,7 +558,7 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
           <Button
             type="button"
             onClick={addIngredient}
-            variant='secondary'
+            variant='outline'
             className="w-full md:w-auto py-3"
             size="sm"
           >
@@ -465,17 +569,17 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
 
       {/* Instructions Section */}
       <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100">
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent mb-6">
+        <h2 className="text-2xl font-bold text-basil mb-6">
           Instructions
         </h2>
         
         <div className="space-y-6">
           {instructions.map((instruction, index) => (
-            <div key={index} className="flex items-start space-x-4">
-              <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-gradient-to-r from-red-500 to-orange-500 text-white font-medium">
-                {index + 1}
+            <div key={index} className="flex items-start space-x-4 flex-col lg:flex-row">
+              <div className="flex-shrink-0 w-20 h-10 flex items-center justify-center text-cast-iron font-medium">
+                STEP {index + 1}
               </div>
-              <div className="flex-1">
+              <div className="flex-1 w-full">
                 <textarea
                   value={instruction}
                   onChange={(e) => updateInstruction(index, e.target.value)}
@@ -490,7 +594,7 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
                 <button
                   type="button"
                   onClick={() => removeInstruction(index)}
-                  className="flex-shrink-0 text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-50"
+                  className="flex-shrink-0 text-tomato hover:opacity-90 rounded-full w-8 h-8"
                 >
                   ✕
                 </button>
@@ -501,7 +605,7 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
           <Button
             type="button"
             onClick={addInstruction}
-            variant='secondary'
+            variant='outline'
             className="w-full md:w-auto py-3"
             size="sm"
           >
@@ -511,28 +615,56 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
       </div>
 
       {/* Categories Section */}
-      <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100">
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent mb-6">
-          Categories
-        </h2>
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-gray-900">Categories</h3>
+        <p className="text-sm text-gray-600">Select categories that apply to your recipe</p>
         
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {RECIPE_CATEGORIES.map((category) => (
-            <label key={category} className="flex items-center space-x-2 p-3 rounded-lg hover:bg-gray-50 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={selectedCategories.includes(category)}
-                onChange={() => handleCategoryChange(category)}
-                className="rounded border-gray-300 text-red-500 focus:ring-red-500 h-5 w-5"
-              />
-              <span className="text-sm text-gray-700">{category}</span>
-            </label>
-          ))}
+        {isLoadingCategories ? (
+          <div className="py-4 text-center">
+            <div className="inline-block animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-emerald-500"></div>
+            <span className="ml-2">Loading categories...</span>
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-3">
+            {userCategories.map(category => (
+              <div key={category} className="relative group">
+                <button
+                  type="button"
+                  onClick={() => handleCategoryChange(category)}
+                  className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                    selectedCategories.includes(category)
+                      ? 'bg-emerald-100 text-emerald-800'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {category}
+                </button>
+                
+              </div>
+            ))}
+          </div>
+        )}
+        {/* Add new category input */}
+        <div className="flex gap-2 mb-4">
+          <input 
+            type="text"
+            value={newCategory}
+            onChange={(e) => setNewCategory(e.target.value)}
+            placeholder="Add a new category..."
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleAddNewCategory}
+          >
+            Add
+          </Button>
         </div>
       </div>
 
       {/* Submit Button */}
-      <div className="flex justify-end">
+      <div className="flex justify-center">
         <Button
           type="submit"
           variant='primary'

@@ -38,7 +38,7 @@ export default function RecipesPage() {
                 const q = query(
                     recipesRef,
                     where('userId', '==', user.uid),
-                    orderBy('createdAt', 'desc')
+                    orderBy('__name__', 'desc')
                 );
                 const querySnapshot = await getDocs(q);
                 const recipesData = querySnapshot.docs.map(doc => ({
@@ -118,7 +118,7 @@ export default function RecipesPage() {
                             placeholder="Search recipes..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                            className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-basil focus:border-basil"
                         />
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -179,12 +179,12 @@ export default function RecipesPage() {
                         </Button>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredRecipes.map((recipe, index) => (
                             <RecipeCard 
                                 key={recipe.id} 
                                 recipe={recipe} 
-                                priority={index < 2}
+                                priority={index < 3}
                             />
                         ))}
                     </div>

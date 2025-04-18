@@ -6,6 +6,7 @@ interface ScrapedRecipe {
     ingredients: string[];
     instructions: string[];
     imageUrl?: string;
+    sourceUrl: string;
 }
 
 export async function scrapeRecipe(url: string): Promise<ScrapedRecipe | null> {
@@ -26,7 +27,8 @@ export async function scrapeRecipe(url: string): Promise<ScrapedRecipe | null> {
             title,
             ingredients,
             instructions,
-            imageUrl
+            imageUrl,
+            sourceUrl: url
         };
     } catch (error) {
         console.error('Error scraping recipe:', error);

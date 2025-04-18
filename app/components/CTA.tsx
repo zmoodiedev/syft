@@ -20,10 +20,6 @@ export default function CTA() {
                     transition={{ duration: 0.6, delay: 0.2 }}
                     className="bg-white p-12 rounded-2xl shadow-xl relative overflow-hidden"
                 >
-                    {/* Decorative corner elements */}
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-emerald-50 to-transparent rounded-tr-2xl"></div>
-                    <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-emerald-50 to-transparent rounded-bl-2xl"></div>
-                    
                     {/* Content */}
                     <div className="relative z-10">
                         <motion.h2 
@@ -49,7 +45,7 @@ export default function CTA() {
                         >
                             <ScrollToTopLink 
                                 href="/recipes" 
-                                className="inline-block px-8 py-4 bg-emerald-500 text-white hover:bg-emerald-600 active:bg-emerald-700 font-semibold rounded-xl hover:shadow-lg transition-all duration-300 hover:scale-105"
+                                className="inline-block px-8 py-4 bg-basil text-white font-semibold rounded-xl hover:shadow-lg transition-all duration-300 hover:scale-105"
                             >
                                 Get Started for Free
                             </ScrollToTopLink>

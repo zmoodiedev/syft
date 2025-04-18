@@ -11,6 +11,9 @@ interface ScrapedRecipe {
     cookTime: string;
     ingredients: { id: string; item: string; amount: string; unit: string }[];
     instructions: string[];
+    imageUrl?: string;
+    categories?: string[];
+    sourceUrl: string;
 }
 
 export default function UrlInput() {
@@ -36,14 +39,18 @@ export default function UrlInput() {
                 body: JSON.stringify({ url }),
             });
 
+            const data = await response.json();
+
             if (!response.ok) {
-                throw new Error('Failed to scrape recipe');
+                // Use the specific error message from the API if available
+                throw new Error(data.error || 'Failed to scrape recipe');
             }
 
-            const data = await response.json();
             setScrapedRecipe(data);
         } catch (err) {
-            setError('Failed to scrape recipe. Please check the URL and try again.');
+            // Show the specific error message if available
+            const errorMessage = err instanceof Error ? err.message : 'Failed to scrape recipe. Please check the URL and try again.';
+            setError(errorMessage);
             console.error('Error scraping recipe:', err);
         } finally {
             setLoading(false);
@@ -85,7 +92,15 @@ export default function UrlInput() {
                     />
                 </div>
                 {error && (
-                    <p className="text-red-500 text-sm">{error}</p>
+                    <div className="p-4 bg-red-50 border border-red-200 rounded-md">
+                        <p className="text-red-600 text-sm font-medium mb-1">{error.includes('known to block') ? 'Website Not Supported' : 'Error'}</p>
+                        <p className="text-red-600 text-sm">{error}</p>
+                        {error.includes('known to block') && (
+                            <p className="text-gray-600 text-sm mt-2">
+                                Try manually copying the recipe details from the website instead. Please make sure to credit the original source!
+                            </p>
+                        )}
+                    </div>
                 )}
                 <Button
                     type="submit"

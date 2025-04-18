@@ -6,11 +6,6 @@ import { motion } from "framer-motion";
 export default function Features() {
     return (
         <div className="w-full px-6 py-20 lg:py-32 relative z-1 bg-white">
-            {/* Background decorative elements */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-emerald-100 to-emerald-100 rounded-full opacity-20 blur-3xl"></div>
-                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-emerald-100 to-emerald-100 rounded-full opacity-20 blur-3xl"></div>
-            </div>
 
             <motion.div 
                 initial={{ opacity: 0, y: 20 }}
@@ -22,7 +17,7 @@ export default function Features() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.2 }}
-                    className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-500 font-semibold mb-4 uppercase tracking-wider"
+                    className="inline-block text-transparent bg-clip-text bg-basil font-semibold mb-4 uppercase tracking-wider"
                 >
                     Why Use Syft?
                 </motion.span>
@@ -46,7 +41,7 @@ export default function Features() {
                     initial={{ scaleX: 0 }}
                     animate={{ scaleX: 1 }}
                     transition={{ duration: 0.6, delay: 0.5 }}
-                    className="w-16 h-1 bg-gradient-to-r from-emerald-500 to-teal-500 mx-auto mt-8 rounded-full"
+                    className="w-16 h-1 bg-basil mx-auto mt-8 rounded-full"
                 ></motion.div>
             </motion.div>
             
@@ -62,21 +57,21 @@ export default function Features() {
                     title="Save Recipes from Anywhere"
                     description="Import recipes from around the internet, without the added fluff."
                     index={0}
-                    color="from-emerald-500 to-teal-500"
+                    color="basil"
                 />
                 <FeatureCard
                     icon="filter"
                     title="Organize with Categories"
                     description="Filter and Syft through your recipes with categories based on ingredients or meal types."
                     index={1}
-                    color="from-emerald-500 to-teal-500"
+                    color="basil"
                 />
                 <FeatureCard
                     icon="share"
                     title="Share with Friends"
                     description="Share your recipes with friends, and let them add it to their own. Coming Soon."
                     index={2}
-                    color="from-emerald-500 to-teal-500"
+                    color="basil"
                 />
             </motion.section>
         </div>

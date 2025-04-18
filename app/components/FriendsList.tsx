@@ -186,7 +186,7 @@ export default function FriendsList() {
                                                 Accept
                                             </Button>
                                             <Button
-                                                variant="secondary"
+                                                variant="primary"
                                                 onClick={() => handleRejectRequest(request.id)}
                                                 className="text-sm"
                                             >
@@ -238,14 +238,14 @@ export default function FriendsList() {
                                                     <p className="font-medium text-gray-900">
                                                         {request.receiverName || 'Unknown User'}
                                                     </p>
-                                                    <span className="inline-flex items-center text-sm text-emerald-600">
+                                                    <span className="inline-flex items-center text-sm text-basil">
                                                         <FiClock className="mr-1" />
                                                         Pending response
                                                     </span>
                                                 </div>
                                             </div>
                                             <Button
-                                                variant="secondary"
+                                                variant="primary"
                                                 onClick={() => {
                                                     setRequestToCancel(request.id);
                                                     setIsConfirming(true);
@@ -283,7 +283,7 @@ export default function FriendsList() {
 
                         <div className="mt-4 flex justify-end space-x-3">
                             <Button
-                                variant="secondary"
+                                variant="primary"
                                 onClick={() => {
                                     setIsConfirming(false);
                                     setRequestToCancel(null);

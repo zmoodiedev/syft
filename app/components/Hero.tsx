@@ -6,8 +6,9 @@ import Image from 'next/image';
 
 export default function Hero() {
     return (
-        <section className="relative overflow-hidden bg-gradient-to-br from-emerald-50 via-white to-teal-50">
-            <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] opacity-30"></div>
+        <section className="relative overflow-hidden">
+            <div className="absolute inset-0 bg-[url('/images/bg_ingredients.png')] bg-repeat opacity-90 bg-fixed bg-[length:500px_500px]"></div>
+            <div className="absolute inset-0 bg-gradient-to-b from-white/90 to-white/90"></div>
             <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-36 md:py-32">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                     <motion.div
@@ -40,7 +41,7 @@ export default function Hero() {
                         transition={{ duration: 0.5 }}
                         className="relative order-2 lg:order-1"
                     >
-                        <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-emerald-500 to-teal-500 bg-clip-text text-transparent">
+                        <h1 className="text-4xl md:text-5xl font-bold mb-6 text-basil">
                             Share Your Favorite Recipes
                         </h1>
                         <p className="text-lg text-gray-600 mb-8">
@@ -52,7 +53,7 @@ export default function Hero() {
                                 <motion.button
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
-                                    className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
+                                    className="w-full sm:w-auto px-8 py-3 bg-basil text-white rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
                                 >
                                     Browse Recipes
                                 </motion.button>
@@ -61,7 +62,7 @@ export default function Hero() {
                                 <motion.button
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
-                                    className="w-full sm:w-auto px-8 py-3 bg-white text-emerald-600 border-2 border-emerald-500 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
+                                    className="w-full sm:w-auto px-8 py-3 bg-white-600 text-basil border-2 border-basil rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
                                 >
                                     Learn More
                                 </motion.button>

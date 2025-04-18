@@ -24,10 +24,11 @@ export default function RecipeCard({ recipe, priority = false }: RecipeCardProps
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
+      className="relative rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 h-64"
     >
-      <Link href={`/recipes/${recipe.id}`} className="flex h-full flex-col sm:flex-row">
-        <div className="relative w-full sm:w-2/5 min-h-[180px]">
+      <Link href={`/recipes/${recipe.id}`} className="block h-full">
+        {/* Image Background */}
+        <div className="absolute inset-0">
           {recipe.imageUrl ? (
             <Image
               src={recipe.imageUrl}
@@ -39,15 +40,24 @@ export default function RecipeCard({ recipe, priority = false }: RecipeCardProps
               className="object-cover"
             />
           ) : (
-            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-              <span className="text-gray-400">No image</span>
-            </div>
+            <Image
+              src="/images/bg_ingredients.png"
+              alt="Default recipe background"
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              loading={priority ? "eager" : "lazy"}
+              priority={priority}
+              className="object-cover opacity-75"
+            />
           )}
+          {/* Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
         </div>
         
-        <div className="w-full sm:w-3/5 p-4 flex flex-col justify-between">
-          <div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">{recipe.name}</h3>
+        {/* Content */}
+        <div className="relative h-full flex flex-col justify-between p-5 text-white z-10">
+          <div className="mt-auto">
+            <h3 className="text-2xl font-bold mb-2 text-white drop-shadow-md">{recipe.name}</h3>
             
             {/* Recipe Stats */}
             <RecipeStats
@@ -55,15 +65,13 @@ export default function RecipeCard({ recipe, priority = false }: RecipeCardProps
               cookTime={recipe.cookTime}
               servings={recipe.servings}
               size="sm"
-              className="mb-2"
+              className="text-white"
             />
-          </div>
-
-          {/* View Recipe Button */}
-          <div className="mt-auto">
+            
+            {/* View Button */}
             <Button
-              className=""
-              variant='outline'
+              className="mt-3 text-white border-none pl-0"
+              variant="secondary"
               size="sm"
             >
               View Recipe

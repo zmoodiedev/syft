@@ -13,9 +13,11 @@ import {
 import { auth, db } from '../lib/firebase';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { useRouter, usePathname } from 'next/navigation';
+import { UserProfile } from '../models/User';
 
 interface AuthContextType {
     user: User | null;
+    userProfile: UserProfile | null;
     loading: boolean;
     signUp: (email: string, password: string) => Promise<void>;
     signIn: (email: string, password: string) => Promise<void>;
@@ -49,8 +51,31 @@ const createUserProfile = async (user: User) => {
     }
 };
 
+// Function to fetch user profile from Firestore
+const fetchUserProfile = async (userId: string): Promise<UserProfile | null> => {
+    try {
+        const userRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userRef);
+        
+        if (!userDoc.exists()) {
+            return null;
+        }
+        
+        return {
+            id: userDoc.id,
+            ...userDoc.data(),
+            createdAt: userDoc.data().createdAt?.toDate() || new Date(),
+            updatedAt: userDoc.data().updatedAt?.toDate() || new Date()
+        } as UserProfile;
+    } catch (error) {
+        console.error('Error fetching user profile:', error);
+        return null;
+    }
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
+    const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
     const pathname = usePathname();
@@ -64,12 +89,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (user) {
                 await createUserProfile(user);
                 setUser(user);
+                
+                // Fetch user profile from Firestore
+                const profile = await fetchUserProfile(user.uid);
+                if (profile) {
+                    setUserProfile(profile);
+                }
+                
                 // Only redirect if we're on the login page and not already authenticated
                 if (pathname === '/login') {
                     router.push('/recipes');
                 }
             } else {
                 setUser(null);
+                setUserProfile(null);
                 // Only redirect to login if we're not already there and not on a public route
                 if (pathname !== '/login' && pathname !== '/') {
                     router.push('/login');
@@ -97,6 +130,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
 
             await createUserProfile(result.user);
+            // Get user profile data
+            const profile = await fetchUserProfile(result.user.uid);
+            if (profile) {
+                setUserProfile(profile);
+            }
             // No need to redirect here as onAuthStateChanged will handle it
         } catch (error) {
             console.error('Authentication error:', error);
@@ -106,18 +144,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const value = {
         user,
+        userProfile,
         loading,
         signUp: async (email: string, password: string) => {
             const result = await createUserWithEmailAndPassword(auth, email, password);
             await createUserProfile(result.user);
+            const profile = await fetchUserProfile(result.user.uid);
+            if (profile) {
+                setUserProfile(profile);
+            }
         },
         signIn: async (email: string, password: string) => {
             const result = await signInWithEmailAndPassword(auth, email, password);
             await createUserProfile(result.user);
+            const profile = await fetchUserProfile(result.user.uid);
+            if (profile) {
+                setUserProfile(profile);
+            }
         },
         signInWithGoogle,
         logout: async () => {
             await signOut(auth);
+            setUserProfile(null);
         }
     };
 

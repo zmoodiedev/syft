@@ -29,7 +29,42 @@ function ClientLayoutContent({ children }: { children: React.ReactNode }) {
   return (
     <>
       <TitleNotifications />
-      <Toaster position="top-center" />
+      <Toaster 
+        position="top-center"
+        toastOptions={{
+          // Default styles for all toasts
+          style: {
+            background: '#FFFFFF',
+            color: '#181a24', // cast-iron color
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+            padding: '16px',
+            borderRadius: '8px',
+          },
+          // Custom styles for different toast types
+          success: {
+            style: {
+              background: '#3E9D61', // basil color
+              color: 'white',
+            },
+            iconTheme: {
+              primary: 'white',
+              secondary: '#3E9D61',
+            },
+          },
+          error: {
+            style: {
+              background: '#EE4534', // tomato color
+              color: 'white',
+            },
+            iconTheme: {
+              primary: 'white',
+              secondary: '#EE4534',
+            },
+          },
+          // Duration settings
+          duration: 4000, // 4 seconds
+        }}
+      />
       {children}
     </>
   );

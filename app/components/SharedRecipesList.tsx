@@ -68,9 +68,13 @@ export default function SharedRecipesList() {
                                             className="object-cover rounded-md"
                                         />
                                     ) : (
-                                        <div className="w-full h-full bg-gray-200 rounded-md flex items-center justify-center">
-                                            <span className="text-gray-400 text-xs">No image</span>
-                                        </div>
+                                        <Image
+                                            src="/images/bg_ingredients.png"
+                                            alt="Default recipe background"
+                                            fill
+                                            sizes="(max-width: 640px) 100vw, 80px"
+                                            className="object-cover rounded-md opacity-75"
+                                        />
                                     )}
                                 </div>
                                 
@@ -89,7 +93,7 @@ export default function SharedRecipesList() {
                                             Accept Recipe
                                         </Button>
                                         <Button
-                                            variant="secondary"
+                                            variant="primary"
                                             size="sm"
                                             onClick={() => handleRejectRecipe(sharedRecipe.id)}
                                         >
