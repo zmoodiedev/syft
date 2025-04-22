@@ -270,32 +270,40 @@ export default function ProfilePage() {
         await sendFriendRequest(id as string);
         // Show success message
         toast.success('Friend request sent');
+        
+        // Update UI optimistically to show request as pending
+        if (relationship) {
+          setRelationship({ ...relationship, isPendingFriend: true });
+        }
       } catch (requestError) {
         console.error('Error sending friend request:', requestError);
         
         // Show specific error message based on error type
         if (requestError instanceof Error) {
-          if (requestError.message === 'Friend request already sent') {
-            toast.error('Friend request already sent');
-            // Still update UI to show as pending
-          } else if (requestError.message === 'Already friends with this user') {
-            toast.error('Already friends with this user');
+          const errorMessage = requestError.message;
+          
+          if (errorMessage === 'Friend request already sent') {
+            toast.success('Friend request already sent');
+            // Update UI to show as pending
+            if (relationship) {
+              setRelationship({ ...relationship, isPendingFriend: true });
+            }
+          } else if (errorMessage === 'Already friends with this user') {
+            toast.success('You are already friends with this user');
             // Update relationship to reflect they're already friends
             if (relationship) {
               setRelationship({ ...relationship, isFriend: true });
             }
-            return; // Exit early as we don't want to mark as pending
+          } else if (errorMessage === 'This user has already sent you a friend request') {
+            toast.success('This user has already sent you a friend request. Check your notifications to accept it.');
+          } else if (errorMessage === 'You cannot send a friend request to yourself') {
+            toast.error('You cannot send a friend request to yourself');
           } else {
-            toast.error(requestError.message || 'Failed to send friend request');
+            toast.error(errorMessage || 'Failed to send friend request');
           }
         } else {
           toast.error('Failed to send friend request');
         }
-      }
-      
-      // Update UI optimistically to show request as pending
-      if (relationship) {
-        setRelationship({ ...relationship, isPendingFriend: true });
       }
     } catch (error) {
       console.error('Error in handleSendFriendRequest:', error);

@@ -309,24 +309,47 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
         console.log('Sending friend request to:', receiverId);
         
         try {
-            // Check if a friend request already exists
-            const existingRequestsQuery = firestoreQuery(
+            // Check if users are trying to friend themselves
+            if (user.uid === receiverId) {
+                throw new Error('You cannot send a friend request to yourself');
+            }
+            
+            // Check if a friend request already exists from sender to receiver
+            const outgoingRequestsQuery = firestoreQuery(
                 collection(db, 'friendRequests'),
                 where('senderId', '==', user.uid),
                 where('receiverId', '==', receiverId),
                 where('status', '==', 'pending')
             );
 
-            const existingRequestsSnapshot = await getDocs(existingRequestsQuery);
-            if (!existingRequestsSnapshot.empty) {
+            const outgoingRequestsSnapshot = await getDocs(outgoingRequestsQuery);
+            if (!outgoingRequestsSnapshot.empty) {
                 throw new Error('Friend request already sent');
             }
+            
+            // Check if a friend request already exists from receiver to sender
+            const incomingRequestsQuery = firestoreQuery(
+                collection(db, 'friendRequests'),
+                where('senderId', '==', receiverId),
+                where('receiverId', '==', user.uid),
+                where('status', '==', 'pending')
+            );
+            
+            const incomingRequestsSnapshot = await getDocs(incomingRequestsQuery);
+            if (!incomingRequestsSnapshot.empty) {
+                throw new Error('This user has already sent you a friend request');
+            }
 
-            // Check if they're already friends
-            const existingFriendshipId = `${user.uid}_${receiverId}`;
-            const friendshipDocRef = doc(db, 'friendships', existingFriendshipId);
-            const existingFriendshipDoc = await getDoc(friendshipDocRef);
-            if (existingFriendshipDoc.exists()) {
+            // Check if they're already friends (checking both possible IDs)
+            const friendshipId1 = `${user.uid}_${receiverId}`;
+            const friendshipId2 = `${receiverId}_${user.uid}`;
+            
+            const [friendshipDoc1, friendshipDoc2] = await Promise.all([
+                getDoc(doc(db, 'friendships', friendshipId1)),
+                getDoc(doc(db, 'friendships', friendshipId2))
+            ]);
+            
+            if (friendshipDoc1.exists() || friendshipDoc2.exists()) {
                 throw new Error('Already friends with this user');
             }
 

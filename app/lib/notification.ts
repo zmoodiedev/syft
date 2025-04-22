@@ -10,9 +10,43 @@ import {
   where, 
   orderBy, 
   limit, 
-  serverTimestamp
+  serverTimestamp,
+  getDoc
 } from 'firebase/firestore';
 import { Notification } from '@/app/models/User';
+
+export type NotificationCountListener = (count: number) => void;
+const notificationCountListeners = new Map<string, Set<NotificationCountListener>>();
+
+export const subscribeToNotificationCount = (userId: string, listener: NotificationCountListener): (() => void) => {
+  if (!notificationCountListeners.has(userId)) {
+    notificationCountListeners.set(userId, new Set());
+  }
+  
+  notificationCountListeners.get(userId)?.add(listener);
+  
+  return () => {
+    const listeners = notificationCountListeners.get(userId);
+    if (listeners) {
+      listeners.delete(listener);
+      if (listeners.size === 0) {
+        notificationCountListeners.delete(userId);
+      }
+    }
+  };
+};
+
+const notifyCountChange = async (userId: string) => {
+  const listeners = notificationCountListeners.get(userId);
+  if (!listeners || listeners.size === 0) return;
+  
+  try {
+    const count = await getUnreadNotificationCount(userId);
+    listeners.forEach(listener => listener(count));
+  } catch (error) {
+    console.error('Error updating notification count listeners:', error);
+  }
+};
 
 /**
  * Get notifications for a user
@@ -87,18 +121,34 @@ export async function getUnreadNotificationCount(userId: string): Promise<number
 /**
  * Mark a notification as read
  */
-export async function markNotificationAsRead(notificationId: string): Promise<boolean> {
+export const markNotificationAsRead = async (notificationId: string): Promise<boolean> => {
   try {
     const notificationRef = doc(db, 'notifications', notificationId);
+    
+    // Get the notification first to extract the user ID
+    const notificationDoc = await getDoc(notificationRef);
+    if (!notificationDoc.exists()) {
+      return false;
+    }
+    
+    const userId = notificationDoc.data().toUserId;
+    
+    // Update the notification
     await updateDoc(notificationRef, {
       isRead: true
     });
+    
+    // Notify listeners about the count change
+    if (userId) {
+      await notifyCountChange(userId);
+    }
+    
     return true;
   } catch (error) {
     console.error('Error marking notification as read:', error);
     return false;
   }
-}
+};
 
 /**
  * Mark all notifications for a user as read
@@ -120,6 +170,7 @@ export async function markAllNotificationsAsRead(userId: string): Promise<boolea
     );
     
     await Promise.all(updatePromises);
+    await notifyCountChange(userId);
     return true;
   } catch (error) {
     console.error('Error marking all notifications as read:', error);
@@ -130,16 +181,32 @@ export async function markAllNotificationsAsRead(userId: string): Promise<boolea
 /**
  * Delete a notification
  */
-export async function deleteNotification(notificationId: string): Promise<boolean> {
+export const deleteNotification = async (notificationId: string): Promise<boolean> => {
   try {
     const notificationRef = doc(db, 'notifications', notificationId);
+    
+    // Get the notification first to extract the user ID
+    const notificationDoc = await getDoc(notificationRef);
+    let userId = null;
+    
+    if (notificationDoc.exists()) {
+      userId = notificationDoc.data().toUserId;
+    }
+    
+    // Delete the notification
     await deleteDoc(notificationRef);
+    
+    // Notify listeners about the count change
+    if (userId) {
+      await notifyCountChange(userId);
+    }
+    
     return true;
   } catch (error) {
     console.error('Error deleting notification:', error);
     return false;
   }
-}
+};
 
 /**
  * Create a follow notification

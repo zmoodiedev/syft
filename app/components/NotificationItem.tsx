@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Notification } from '@/app/models/User';
 import { FiUser, FiUserPlus, FiUserCheck, FiBook, FiX, FiCheck, FiThumbsUp, FiThumbsDown } from 'react-icons/fi';
 import { markNotificationAsRead, deleteNotification } from '@/app/lib/notification';
 import { useFriends } from '@/app/context/FriendsContext';
+import { useAuth } from '@/app/context/AuthContext';
 
 interface NotificationItemProps {
   notification: Notification;
@@ -14,13 +15,22 @@ interface NotificationItemProps {
 export default function NotificationItem({ notification, onDelete }: NotificationItemProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { acceptFriendRequest, rejectFriendRequest, acceptSharedRecipe, rejectSharedRecipe } = useFriends();
+  const { user } = useAuth();
+  
+  useEffect(() => {
+    if (notification && !notification.isRead && user) {
+      markNotificationAsRead(notification.id)
+        .catch(error => console.error('Error marking notification as read on view:', error));
+    }
+  }, [notification, user]);
   
   const handleMarkAsRead = async () => {
     setIsLoading(true);
     try {
       await markNotificationAsRead(notification.id);
-      // We're not setting the notification as read in state because
-      // this component assumes the parent will handle that
+      if (onDelete) {
+        onDelete(notification.id);
+      }
     } catch (error) {
       console.error('Error marking notification as read:', error);
     } finally {

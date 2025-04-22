@@ -4,9 +4,8 @@ import { useState } from 'react';
 import { useFriends } from '../context/FriendsContext';
 import { useAuth } from '../context/AuthContext';
 import Button from './Button';
-import UserTierBadge from '@/app/components/UserTierBadge';
-import { UserTier } from '@/app/lib/tiers';
 import { toast } from 'react-hot-toast';
+import Image from 'next/image';
 
 interface UserSearchResult {
     id: string;
@@ -109,22 +108,32 @@ export default function AddFriend() {
                 {searchResults.map((result) => (
                     <div
                         key={result.id}
-                        className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                        className="flex items-center justify-between p-4 bg-gray-50 rounded-lg flex-col md:flex-row"
                     >
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-basil rounded-full flex items-center justify-center">
-                                <span className="text-basil font-medium">
-                                    {result.displayName?.charAt(0) || result.email?.charAt(0) || '?'}
-                                </span>
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-10 h-10 bg-basil/10 rounded-full flex items-center justify-center overflow-hidden">
+                                {result.photoURL ? (
+                                    <Image 
+                                        src={result.photoURL} 
+                                        alt={result.displayName || 'User'} 
+                                        width={40} 
+                                        height={40}
+                                        className="h-full w-full object-cover"
+                                    />
+                                ) : (
+                                    <span className="text-basil font-medium">
+                                        {result.displayName?.charAt(0) || result.email?.charAt(0) || '?'}
+                                    </span>
+                                )}
                             </div>
                             <div>
                                 <h3 className="font-medium">{result.displayName || 'No Name'}</h3>
                             </div>
-                            <UserTierBadge tier={(result.tier || 'Free') as UserTier} />
                         </div>
                         <Button
-                            variant="primary"
+                            variant="outline"
                             onClick={() => handleSendRequest(result.id)}
+                            className="w-full md:w-auto"
                         >
                             Add Friend
                         </Button>
