@@ -4,15 +4,12 @@ import { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { toast } from 'react-hot-toast';
-import { FiUser, FiLock, FiImage, FiSave, FiX, FiTag, FiCamera, FiRefreshCw } from 'react-icons/fi';
+import { FiUser, FiLock, FiImage, FiSave, FiX, FiTag, FiCamera } from 'react-icons/fi';
 import { useAuth } from '@/app/context/AuthContext';
 import { getUserProfile, updateUserProfile } from '@/app/lib/user';
 import { UserProfile } from '@/app/models/User';
 import Button from '@/app/components/Button';
 import { uploadImage, deleteImage } from '@/lib/cloudinary';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '@/app/lib/firebase';
-import { DEFAULT_CATEGORIES } from '@/app/components/RecipeForm';
 
 export default function EditProfilePage() {
   const { user } = useAuth();
@@ -20,7 +17,6 @@ export default function EditProfilePage() {
   const [profile, setProfile] = useState<Partial<UserProfile>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [findingCategories, setFindingCategories] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [newCategory, setNewCategory] = useState('');
@@ -145,71 +141,7 @@ export default function EditProfilePage() {
     }
   };
   
-  // Add a new function to find categories from recipes
-  const findCategoriesFromRecipes = async () => {
-    if (!user) return;
-    
-    setFindingCategories(true);
-    
-    try {
-      // Fetch the user's recipes
-      const recipesRef = collection(db, 'recipes');
-      const q = query(
-        recipesRef,
-        where('userId', '==', user.uid)
-      );
-      
-      const querySnapshot = await getDocs(q);
-      const recipesData = querySnapshot.docs.map(doc => doc.data());
-      
-      // Extract unique categories from all recipes
-      const allCategories = new Set<string>();
-      
-      // Add existing custom categories
-      if (profile.customCategories) {
-        profile.customCategories.forEach((cat: string) => allCategories.add(cat));
-      }
-      
-      // Add categories from recipes
-      let newCategoriesFound = false;
-      recipesData.forEach(recipe => {
-        if (recipe.categories && Array.isArray(recipe.categories)) {
-          recipe.categories.forEach((category: string) => {
-            // Skip default categories
-            if (!DEFAULT_CATEGORIES.includes(category) && !allCategories.has(category)) {
-              allCategories.add(category);
-              newCategoriesFound = true;
-            }
-          });
-        }
-      });
-      
-      // Update profile with the found categories
-      if (newCategoriesFound) {
-        const customCategories = Array.from(allCategories);
-        setProfile(prev => ({
-          ...prev,
-          customCategories
-        }));
-        toast.success('Found new categories from your recipes!');
-      } else {
-        toast.success('No new categories found in your recipes.');
-      }
-    } catch (error) {
-      console.error('Error finding categories from recipes:', error);
-      toast.error('Failed to find categories from recipes');
-    } finally {
-      setFindingCategories(false);
-    }
-  };
-  
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-basil"></div>
-      </div>
-    );
-  }
+
   
   return (
     <div className="w-full max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
