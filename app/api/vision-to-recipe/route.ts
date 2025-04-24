@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ImageAnnotatorClient } from '@google-cloud/vision';
 import sharp from 'sharp';
 
+// Specify Node.js runtime for Sharp and Google Cloud Vision compatibility
+export const runtime = 'nodejs';
+
 // Initialize Google Cloud Vision client
 let visionClient: ImageAnnotatorClient;
 

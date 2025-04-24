@@ -2,6 +2,9 @@ import 'server-only';
 import { NextRequest, NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
 
+// Specify Node.js runtime for Cloudinary compatibility
+export const runtime = 'nodejs';
+
 // Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,

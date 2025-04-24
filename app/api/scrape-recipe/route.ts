@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import * as cheerio from 'cheerio';
 
+// Set the runtime to edge to ensure compatibility with Vercel deployments
+export const runtime = 'edge';
+
 // List of known problematic websites that block scraping
 const BLOCKED_WEBSITES: string[] = [
     'https://www.canadianliving.com',
