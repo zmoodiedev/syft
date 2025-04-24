@@ -79,7 +79,7 @@ try {
       // Test the credentials immediately with a very small request
       try {
         const testResult = await visionClient.textDetection({
-          image: { content: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVQI12P4//8/AAX+Av7czFnnAAAAAElFTkSuQmCC', 'base64') }
+          image: { content: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADElEQVR42mP4z8AAAAMBAQDK2cGEAAAAAElFTkSuQmCC', 'base64') }
         });
         logVercel('info', 'Credentials test successful', { 
           hasResult: !!testResult 
