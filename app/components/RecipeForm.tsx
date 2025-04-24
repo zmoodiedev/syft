@@ -44,11 +44,13 @@ export interface RecipeFormProps {
   initialData?: Recipe;
   onSubmit?: (data: Recipe) => Promise<void>;
   scanMode?: boolean;
+  submitButtonText?: string;
 }
 
-export default function RecipeForm({ initialData, onSubmit, scanMode = false }: RecipeFormProps) {
+export default function RecipeForm({ initialData, onSubmit, scanMode = false, submitButtonText }: RecipeFormProps) {
   const { user } = useAuth();
   const router = useRouter();
+  const isEditMode = !!initialData?.id;
   const [selectedCategories, setSelectedCategories] = useState<string[]>(initialData?.categories || []);
   const [imageUrl, setImageUrl] = useState(initialData?.imageUrl || '');
   const [isPreviewingImage, setIsPreviewingImage] = useState(!!initialData?.imageUrl);
@@ -1193,7 +1195,9 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false }: 
             w-full md:w-auto py-3 px-8
           " 
           type="submit"
-        >Save Recipe</button>
+        >
+          {submitButtonText || (isEditMode ? 'Update Recipe' : 'Save Recipe')}
+        </button>
       </div>
     </form>
   );
