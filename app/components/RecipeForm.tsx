@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { uploadImage } from '@/lib/cloudinary';
 import Button from './Button';
+import { FiGlobe, FiLock, FiUsers } from 'react-icons/fi';
 
 // Default categories for new users
 export const DEFAULT_CATEGORIES = [
@@ -58,8 +59,11 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
   const [isProcessingRecipe, setIsProcessingRecipe] = useState(false);
   const [fileDialogRequested, setFileDialogRequested] = useState(false);
   const [showScanFeature, setShowScanFeature] = useState(scanMode);
+  const [isMobile, setIsMobile] = useState(false);
+  const [visibility, setVisibility] = useState(initialData?.visibility || 'public');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recipeImageInputRef = useRef<HTMLInputElement>(null);
+  const cameraCaptureRef = useRef<HTMLInputElement>(null);
   const [ingredients, setIngredients] = useState<Ingredient[]>(
     initialData?.ingredients && initialData.ingredients.length > 0 
       ? initialData.ingredients.map(ing => ({ ...ing, id: ing.id || String(Date.now() + Math.random()) }))
@@ -83,6 +87,22 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
       sourceUrl: initialData?.sourceUrl || '',
     }
   });
+
+  // Check if the device is mobile
+  useEffect(() => {
+    const checkIfMobile = () => {
+      const userAgent = typeof window.navigator === 'undefined' ? '' : navigator.userAgent;
+      const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+      setIsMobile(mobileRegex.test(userAgent));
+    };
+
+    checkIfMobile();
+    window.addEventListener('resize', checkIfMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkIfMobile);
+    };
+  }, []);
 
   // Automatically trigger file input when in scan mode only on initial mount
   useEffect(() => {
@@ -157,8 +177,26 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
       setSelectedCategories(initialData.categories || []);
       setImageUrl(initialData.imageUrl || '');
       setIsPreviewingImage(!!initialData.imageUrl);
+      
+      // Wait for next render cycle for DOM elements to be available
+      setTimeout(() => {
+        const textareas = document.querySelectorAll('textarea');
+        textareas.forEach(textarea => {
+          adjustTextareaHeight(textarea);
+        });
+      }, 100);
     }
   }, [initialData, setValue]);
+
+  // Add useEffect hook to adjust textarea heights whenever instructions change
+  useEffect(() => {
+    setTimeout(() => {
+      const textareas = document.querySelectorAll('textarea');
+      textareas.forEach(textarea => {
+        adjustTextareaHeight(textarea);
+      });
+    }, 0);
+  }, [instructions]);
 
   const addIngredient = () => {
     setIngredients([
@@ -879,6 +917,10 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
     fileInputRef.current?.click();
   };
   
+  const handleCameraCaptureClick = () => {
+    cameraCaptureRef.current?.click();
+  };
+  
   // Trigger file input click for recipe card scan
   const handleRecipeImageClick = () => {
     // Don't do anything if we're already processing
@@ -991,19 +1033,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
     const filteredInstructions = instructions.filter(instr => instr.trim());
     
     try {
-      // Get user's recipe visibility setting
-      let visibility = 'public'; // Default to public
-      try {
-        const userProfileRef = doc(db, 'users', user.uid);
-        const userProfileSnap = await getDoc(userProfileRef);
-        if (userProfileSnap.exists()) {
-          const userData = userProfileSnap.data();
-          visibility = userData.recipeVisibility || 'public';
-        }
-      } catch (error) {
-        console.error('Error fetching user visibility settings:', error);
-      }
-      
       const recipeData: Recipe = {
         ...data,
         ingredients: filteredIngredients,
@@ -1011,7 +1040,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
         categories: selectedCategories,
         imageUrl: imageUrl || null,
         userId: user.uid,
-        visibility: visibility // Add visibility field directly to recipe
+        visibility: visibility // Use the visibility state 
       };
       
       // If onSubmit is provided, use it
@@ -1044,7 +1073,9 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
   };
   
   const adjustTextareaHeight = (element: HTMLTextAreaElement) => {
+    // Reset height to auto to get the correct scrollHeight
     element.style.height = 'auto';
+    // Set the height to match the content
     element.style.height = `${element.scrollHeight}px`;
   };
 
@@ -1066,22 +1097,46 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
             </p>
           </div>
           <div className="flex items-center">
-            <input
-              type="file"
-              accept="image/*"
-              ref={recipeImageInputRef}
-              onChange={handleRecipeImageUpload}
-              className="hidden"
-            />
-            <Button 
-              onClick={handleRecipeImageClick}
-              variant={scanMode ? "primary" : "outline"}
-              disabled={isProcessingRecipe}
-              className="flex items-center gap-2"
-            >
-              <i className="fa-solid fa-camera"></i>
-              {isProcessingRecipe ? 'Processing...' : 'Upload Recipe Image'}
-            </Button>
+            {isMobile ? (
+              <>
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  ref={recipeImageInputRef}
+                  onChange={handleRecipeImageUpload}
+                  className="hidden"
+                />
+                <Button 
+                  onClick={handleRecipeImageClick}
+                  variant={scanMode ? "primary" : "outline"}
+                  disabled={isProcessingRecipe}
+                  className="flex items-center gap-2"
+                >
+                  <i className="fa-solid fa-camera"></i>
+                  {isProcessingRecipe ? 'Processing...' : 'Take Recipe Photo'}
+                </Button>
+              </>
+            ) : (
+              <>
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={recipeImageInputRef}
+                  onChange={handleRecipeImageUpload}
+                  className="hidden"
+                />
+                <Button 
+                  onClick={handleRecipeImageClick}
+                  variant={scanMode ? "primary" : "outline"}
+                  disabled={isProcessingRecipe}
+                  className="flex items-center gap-2"
+                >
+                  <i className="fa-solid fa-upload"></i>
+                  {isProcessingRecipe ? 'Processing...' : 'Upload Recipe Image'}
+                </Button>
+              </>
+            )}
           </div>
         </div>
         
@@ -1112,7 +1167,52 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
 
       {/* Regular Form Fields */}
       <div className="space-y-6 md:bg-white md:rounded-xl md:p-8 md:shadow-sm md:border md:border-gray-100">
-        <h2 className="text-2xl font-bold bg-basil bg-clip-text text-transparent">Recipe Details</h2>
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold bg-basil bg-clip-text text-transparent">Recipe Details</h2>
+          
+          {/* Recipe Visibility Toggle */}
+          <div className="flex items-center bg-gray-100 p-1 rounded-lg">
+            <button
+              type="button"
+              onClick={() => setVisibility('public')}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm transition-colors ${
+                visibility === 'public' 
+                  ? 'bg-white text-basil shadow-sm' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+              title="Anyone can view this recipe"
+            >
+              <FiGlobe className="h-4 w-4" />
+              <span className="hidden sm:inline">Public</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setVisibility('friends')}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm transition-colors ${
+                visibility === 'friends' 
+                  ? 'bg-white text-basil shadow-sm' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+              title="Only your friends can view this recipe"
+            >
+              <FiUsers className="h-4 w-4" />
+              <span className="hidden sm:inline">Friends</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setVisibility('private')}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm transition-colors ${
+                visibility === 'private' 
+                  ? 'bg-white text-basil shadow-sm' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+              title="Only you can view this recipe"
+            >
+              <FiLock className="h-4 w-4" />
+              <span className="hidden sm:inline">Private</span>
+            </button>
+          </div>
+        </div>
         <div className="space-y-6">
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">Recipe Name</label>
@@ -1143,7 +1243,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
                 placeholder="e.g., 15 mins" 
                 className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base" 
                 type="text" 
-                {...register('prepTime', { required: true })}
+                {...register('prepTime')}
               />
               {errors.prepTime && <p className="mt-1 text-sm text-red-500">Prep time is required</p>}
             </div>
@@ -1154,7 +1254,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
                 placeholder="e.g., 30 mins" 
                 className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base" 
                 type="text" 
-                {...register('cookTime', { required: true })}
+                {...register('cookTime')}
               />
               {errors.cookTime && <p className="mt-1 text-sm text-red-500">Cook time is required</p>}
             </div>
@@ -1176,27 +1276,62 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
         <div className="space-y-6">
           <div className="flex flex-col space-y-4">
             <input accept="image/*" className="hidden" type="file" ref={fileInputRef} onChange={handleFileChange} />
-            <button 
-              className="
-                inline-flex items-center justify-center gap-2
-                rounded-lg font-medium
-                transition-colors duration-200
-                disabled:opacity-50 disabled:cursor-not-allowed
-                border-2 border-basil text-basil hover:bg-basil hover:text-white active:bg-basil active:text-white
-                px-4 py-2 text-base
-                w-full md:w-auto py-3
-              " 
-              type="button" 
-              onClick={handleUploadClick}
-              disabled={isUploading}
-            >
-              {isUploading ? (
+            <div className="flex flex-col md:flex-row gap-2 justify-center items-center">
+              <button 
+                className="
+                  inline-flex items-center justify-center gap-2
+                  rounded-lg font-medium
+                  transition-colors duration-200
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                  border-2 border-basil text-basil hover:bg-basil hover:text-white active:bg-basil active:text-white
+                  px-4 py-2 text-base
+                  w-full md:w-auto py-3
+                " 
+                type="button" 
+                onClick={handleUploadClick}
+                disabled={isUploading}
+              >
+                {isUploading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    Uploading...
+                  </>
+                ) : <>
+                  <i className="fa-solid fa-upload mr-1"></i>
+                  Upload Image
+                </>}
+              </button>
+              
+              {isMobile && (
                 <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                  Uploading...
+                  <input accept="image/*" capture="environment" className="hidden" type="file" ref={cameraCaptureRef} onChange={handleFileChange} />
+                  <button 
+                    className="
+                      inline-flex items-center justify-center gap-2
+                      rounded-lg font-medium
+                      transition-colors duration-200
+                      disabled:opacity-50 disabled:cursor-not-allowed
+                      border-2 border-basil text-basil hover:bg-basil hover:text-white active:bg-basil active:text-white
+                      px-4 py-2 text-base
+                      w-full md:w-auto py-3
+                    " 
+                    type="button" 
+                    onClick={handleCameraCaptureClick}
+                    disabled={isUploading}
+                  >
+                    {isUploading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                        Uploading...
+                      </>
+                    ) : <>
+                      <i className="fa-solid fa-camera mr-1"></i>
+                      Take Photo
+                    </>}
+                  </button>
                 </>
-              ) : 'Upload Image'}
-            </button>
+              )}
+            </div>
             <div className="flex items-center justify-center my-4">
               <div className="h-px bg-gray-200 flex-1"></div>
               <span className="px-4 text-sm text-gray-500">or</span>
@@ -1314,10 +1449,12 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
                   required 
                   rows={1} 
                   className="w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base resize-none overflow-hidden" 
-                  style={{ height: '48px' }}
                   value={instruction}
-                  onChange={(e) => updateInstruction(index, e.target.value)}
-                  onInput={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
+                  onChange={(e) => {
+                    updateInstruction(index, e.target.value);
+                    adjustTextareaHeight(e.target);
+                  }}
+                  onFocus={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
                 ></textarea>
               </div>
               {instructions.length > 1 && (

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
-import { FiUser, FiSettings, FiUsers, FiBookmark, FiPlusCircle, FiUserPlus, FiUserCheck, FiUserX, FiChevronDown, FiBell } from 'react-icons/fi';
+import { FiUser, FiSettings, FiBookmark, FiPlusCircle, FiUserPlus, FiUserCheck, FiUserX, FiChevronDown, FiBell } from 'react-icons/fi';
 import { useAuth } from '@/app/context/AuthContext';
 import { useFriends } from '@/app/context/FriendsContext';
 import AddFriend from '@/app/components/AddFriend';
@@ -100,13 +100,40 @@ export default function ProfilePage() {
           profileData = await getUserProfile(id as string);
           if (profileData) {
             setProfile(profileData as UserProfile);
+            profileData = profileData as UserProfile;
           }
         } catch (profileError) {
           console.error('Error loading user profile:', profileError);
           // If we can't load the profile, we'll show the "User Not Found" UI
         }
         
+        // If the profile exists, continue loading data based on visibility settings
         if (profileData) {
+          const isOwnProfile = user?.uid === id;
+          
+          // If this is NOT the user's own profile and profileVisibility is private
+          if (!isOwnProfile && (profileData as UserProfile).profileVisibility === 'private') {
+            // Only show the profile if the current user is a friend or has special permissions
+            if (!user) {
+              // If no user is logged in, don't show private profiles
+              setProfile(null);
+              setLoading(false);
+              return;
+            } else {
+              // Check if users are friends before showing a private profile
+              const relationshipData = await getUserRelationship(user.uid, id as string);
+              if (!relationshipData.isFriend) {
+                // If they're not friends, don't show the private profile
+                setProfile(null);
+                setLoading(false);
+                return;
+              }
+            }
+          }
+          
+          // Public profile - continue loading, but adapt what we show for non-authenticated users
+          const currentUserId = user?.uid;
+          
           // Load user stats - continue if this fails
           try {
             const stats = await getUserStats(id as string);
@@ -118,7 +145,7 @@ export default function ProfilePage() {
           
           // Load initial batch of user recipes
           try {
-            const result = await getUserRecipes(id as string);
+            const result = await getUserRecipes(id as string, 6, undefined, currentUserId);
             setRecipes(result.recipes);
             setLastVisible(result.lastVisible);
             setHasMoreRecipes(result.recipes.length === 6 && result.lastVisible !== null);
@@ -153,7 +180,7 @@ export default function ProfilePage() {
         }
         
         // If not the user's own profile, load relationship info
-        if (!isOwnProfile && user && profileData) {
+        if (user && id !== user.uid && profile) {
           try {
             const relationshipData = await getUserRelationship(user.uid, id as string);
             setRelationship(relationshipData);
@@ -183,7 +210,7 @@ export default function ProfilePage() {
     
     setLoadingMoreRecipes(true);
     try {
-      const result = await getUserRecipes(id as string, 6, lastVisible);
+      const result = await getUserRecipes(id as string, 6, lastVisible, user?.uid);
       
       // Append new recipes to existing ones
       setRecipes(prevRecipes => [...prevRecipes, ...result.recipes]);
@@ -516,7 +543,10 @@ export default function ProfilePage() {
                     </span>
                   </button>
                   
-                  {(isOwnProfile || profile.friendsVisibility === 'public') && (
+                  {/* Show Friends tab if: it's the user's own profile OR friendsVisibility is public OR users are friends */}
+                  {(isOwnProfile || 
+                    (profile as UserProfile).friendsVisibility === 'public' || 
+                    (relationship && relationship.isFriend)) && (
                     <button
                       onClick={() => setActiveTab('friends')}
                       className={`py-4 px-3 border-b-2 font-medium text-sm ml-4 flex-shrink-0 ${
@@ -525,14 +555,13 @@ export default function ProfilePage() {
                           : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                       }`}
                     >
-                      <span className="flex items-center">
-                        <FiUsers className="mr-2" />
-                        Friends
+                     <span className="flex items-center">
+                        <FiUser className="mr-2" />
+                       Friends {userStats.friendCount > 0 && `(${userStats.friendCount})`}
                       </span>
                     </button>
                   )}
                   
-                  {/* Only show Following tab on user's own profile - it needs special permissions */}
                   {isOwnProfile && (
                     <button
                       onClick={() => setActiveTab('following')}
@@ -668,7 +697,10 @@ export default function ProfilePage() {
                 {activeTab === 'friends' && (
                   <>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                      {isOwnProfile && friends.length > 0 ? (
+                      {/* Show friends if it's the owner's profile, or if friends list is public, or if users are friends */}
+                      {((isOwnProfile && friends.length > 0) || 
+                         ((profile as UserProfile).friendsVisibility === 'public' && friends.length > 0) ||
+                         (relationship?.isFriend && friends.length > 0)) ? (
                         <>
                           {friends.map(friend => (
                             <div key={friend.id} className="flex items-center p-3 bg-white rounded-lg border border-gray-100">
@@ -703,7 +735,9 @@ export default function ProfilePage() {
                         </>
                       ) : (
                         <div className="text-center py-12 col-span-full text-gray-500">
-                          <p>No friends to display.</p>
+                          {((profile as UserProfile).friendsVisibility === 'private' && !isOwnProfile && !relationship?.isFriend) ? 
+                            "This user's friends list is private." : 
+                            "No friends to display."}
                         </div>
                       )}
                     </div>
@@ -748,7 +782,9 @@ export default function ProfilePage() {
                       </div>
                     )}
                     
-                    <AddFriend />
+                    {isOwnProfile && (
+                      <AddFriend />
+                    )}
                   </>
                 )}
                 

@@ -19,7 +19,8 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
             !pathname.includes('/login') && 
             !pathname.includes('/signup') && 
             pathname !== '/' && 
-            !pathname.includes('/recipes/')) {
+            !pathname.includes('/recipes/') &&
+            !pathname.includes('/profile/')) {
             router.push('/login');
         }
     }, [user, loading, router, pathname]);
@@ -37,11 +38,13 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     // 1. User is authenticated
     // 2. On login or signup page
     // 3. On a recipe detail page (will be handled by the page component)
+    // 4. On a profile page (will be handled by the page component)
     if (user || 
         pathname.includes('/login') || 
         pathname.includes('/signup') || 
         pathname === '/' || 
-        pathname.includes('/recipes/')) {
+        pathname.includes('/recipes/') ||
+        pathname.includes('/profile/')) {
         return <>{children}</>;
     }
 

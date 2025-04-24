@@ -4,7 +4,7 @@ import { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { toast } from 'react-hot-toast';
-import { FiUser, FiLock, FiImage, FiSave, FiX, FiTag } from 'react-icons/fi';
+import { FiUser, FiLock, FiImage, FiSave, FiX, FiTag, FiCamera } from 'react-icons/fi';
 import { useAuth } from '@/app/context/AuthContext';
 import { getUserProfile, updateUserProfile } from '@/app/lib/user';
 import { UserProfile } from '@/app/models/User';
@@ -20,6 +20,23 @@ export default function EditProfilePage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [newCategory, setNewCategory] = useState('');
+  const [isMobile, setIsMobile] = useState(false);
+  
+  // Check if the device is mobile
+  useEffect(() => {
+    const checkIfMobile = () => {
+      const userAgent = typeof window.navigator === 'undefined' ? '' : navigator.userAgent;
+      const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+      setIsMobile(mobileRegex.test(userAgent));
+    };
+
+    checkIfMobile();
+    window.addEventListener('resize', checkIfMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkIfMobile);
+    };
+  }, []);
   
   // Redirect if not logged in
   useEffect(() => {
@@ -197,17 +214,36 @@ export default function EditProfilePage() {
                       )}
                     </div>
                     <div>
-                      <label htmlFor="photoUpload" className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                        <FiImage className="mr-2" />
-                        Change Photo
-                      </label>
-                      <input 
-                        id="photoUpload" 
-                        type="file" 
-                        accept="image/*"
-                        onChange={handleImageChange}
-                        className="sr-only"
-                      />
+                      <div className="flex flex-col space-y-2">
+                        <label htmlFor="photoUpload" className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                          <FiImage className="mr-2" />
+                          Choose Photo
+                        </label>
+                        <input 
+                          id="photoUpload" 
+                          type="file" 
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          className="sr-only"
+                        />
+                        
+                        {isMobile && (
+                          <>
+                            <label htmlFor="cameraUpload" className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                              <FiCamera className="mr-2" />
+                              Take Photo
+                            </label>
+                            <input 
+                              id="cameraUpload" 
+                              type="file" 
+                              accept="image/*"
+                              capture="environment"
+                              onChange={handleImageChange}
+                              className="sr-only"
+                            />
+                          </>
+                        )}
+                      </div>
                       <p className="mt-1 text-sm text-gray-500">
                         JPG or PNG. Max 2MB.
                       </p>
@@ -237,23 +273,6 @@ export default function EditProfilePage() {
                     className="w-full px-4 py-2 border border-gray-300 text-sm rounded-lg focus:ring-2 focus:ring-basil focus:border-basil"
                   >
                     <option value="public">Public</option>
-                    <option value="private">Private</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label htmlFor="recipeVisibility" className="block text-sm font-medium text-gray-700 mb-1">
-                    Recipe Visibility
-                  </label>
-                  <select
-                    id="recipeVisibility"
-                    name="recipeVisibility"
-                    value={profile.recipeVisibility || 'public'}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 text-sm rounded-lg focus:ring-2 focus:ring-basil focus:border-basil"
-                  >
-                    <option value="public">Public</option>
-                    <option value="friends">Friends Only</option>
                     <option value="private">Private</option>
                   </select>
                 </div>
@@ -307,7 +326,7 @@ export default function EditProfilePage() {
                   value={newCategory}
                   onChange={(e) => setNewCategory(e.target.value)}
                   placeholder="Add a category..."
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-basil focus:border-basil"
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-basil focus:border-basil w-full md:w-auto"
                 />
                 <button
                   type="button"
@@ -326,7 +345,7 @@ export default function EditProfilePage() {
             <div className="flex justify-end">
               <Button
                 type="button"
-                variant="primary"
+                variant="outline"
                 className="mr-4"
                 onClick={() => router.push(`/profile/${user?.uid}`)}
               >

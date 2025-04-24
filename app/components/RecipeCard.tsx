@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import RecipeStats from './RecipeStats';
 import Button from './Button';
+import { useAuth } from '@/app/context/AuthContext';
+import { FiGlobe, FiLock, FiUsers } from 'react-icons/fi';
 
 interface Recipe {
   id: string;
@@ -11,6 +13,8 @@ interface Recipe {
   prepTime: string;
   cookTime: string;
   servings?: string;
+  userId: string;
+  visibility?: string;
 }
 
 interface RecipeCardProps {
@@ -19,6 +23,36 @@ interface RecipeCardProps {
 }
 
 export default function RecipeCard({ recipe, priority = false }: RecipeCardProps) {
+  const { user } = useAuth();
+  const isOwner = user?.uid === recipe.userId;
+  
+  // Helper to get the visibility icon
+  const renderVisibilityIcon = () => {
+    if (!isOwner) return null;
+    
+    switch(recipe.visibility) {
+      case 'private':
+        return (
+          <div className="absolute top-2 right-2 bg-white/90 p-1.5 rounded-full z-20 shadow-sm" title="Private - Only you can view this recipe">
+            <FiLock className="h-4 w-4 text-gray-600" />
+          </div>
+        );
+      case 'friends':
+        return (
+          <div className="absolute top-2 right-2 bg-white/90 p-1.5 rounded-full z-20 shadow-sm" title="Friends only - Only your friends can view this recipe">
+            <FiUsers className="h-4 w-4 text-gray-600" />
+          </div>
+        );
+      case 'public':
+      default:
+        return (
+          <div className="absolute top-2 right-2 bg-white/90 p-1.5 rounded-full z-20 shadow-sm" title="Public - Anyone can view this recipe">
+            <FiGlobe className="h-4 w-4 text-gray-600" />
+          </div>
+        );
+    }
+  };
+  
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -26,6 +60,9 @@ export default function RecipeCard({ recipe, priority = false }: RecipeCardProps
       transition={{ duration: 0.3 }}
       className="relative rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 h-64"
     >
+      {/* Visibility indicator (shown only to owner) */}
+      {renderVisibilityIcon()}
+      
       <Link href={`/recipes/${recipe.id}`} className="block h-full">
         {/* Image Background */}
         <div className="absolute inset-0">

@@ -11,7 +11,7 @@ import Button from '@/app/components/Button';
 import { toast } from 'react-hot-toast';
 import { deleteImage } from '@/lib/cloudinary';
 import { useFriends } from '@/app/context/FriendsContext';
-import { FiEdit, FiClock, FiUsers, FiShare2, FiTrash2 } from 'react-icons/fi';
+import { FiEdit, FiClock, FiUsers, FiShare2, FiTrash2, FiGlobe, FiLock } from 'react-icons/fi';
 import { getUserRelationship } from '@/app/lib/user';
 
 interface FriendItem {
@@ -362,6 +362,38 @@ export default function RecipeDetail() {
     router.push('/login?redirect=' + encodeURIComponent(`/recipes/${slug}`));
   };
 
+  // Function to render visibility badge
+  const VisibilityBadge = () => {
+    if (!recipe || !user || user.uid !== recipe.userId) return null;
+    
+    const visibilityStr = String(recipe.visibility || 'public').toLowerCase();
+    let icon, label, bgColor;
+    
+    switch(visibilityStr) {
+      case 'private':
+        icon = <FiLock className="w-4 h-4 mr-1" />;
+        label = "Private";
+        bgColor = "bg-red-500";
+        break;
+      case 'friends':
+        icon = <FiUsers className="w-4 h-4 mr-1" />;
+        label = "Friends Only";
+        bgColor = "bg-orange-500";
+        break;
+      default:
+        icon = <FiGlobe className="w-4 h-4 mr-1" />;
+        label = "Public";
+        bgColor = "bg-emerald-500";
+    }
+    
+    return (
+      <div className={`absolute top-4 right-4 ${bgColor} text-white text-xs font-medium px-2.5 py-1.5 rounded-full z-20 flex items-center`}>
+        {icon}
+        {label}
+      </div>
+    );
+  };
+
   const pageContent = (
     <div className="min-h-screen bg-eggshell">
       {loading ? (
@@ -374,7 +406,7 @@ export default function RecipeDetail() {
           {error === 'Please log in to view this recipe' && (
             <Button 
               variant="primary"
-              onClick={() => router.push('/login?redirect=' + encodeURIComponent(`/recipes/${slug}`))}
+              onClick={handleLoginPrompt}
               className="mb-4"
             >
               Log In
@@ -391,6 +423,9 @@ export default function RecipeDetail() {
         <div className="mx-auto py-8">
           {/* Full-width Image Header with Overlay Text */}
           <div className="relative w-full h-[50vh] mb-8 -mt-8">
+            {/* Visibility badge - only shown to owner */}
+            <VisibilityBadge />
+            
             {recipe.imageUrl ? (
               <>
                 <div className="absolute inset-0">
@@ -526,11 +561,11 @@ export default function RecipeDetail() {
             <div className="flex justify-between items-center mb-8">
               
               <div className="flex gap-3 flex-wrap">
-                {/* Add the Save to My Recipes button when user is not the owner */}
-                {!isOwner && (
+                {/* Add the Save to My Recipes button when user is not the owner and is logged in */}
+                {!isOwner && user && (
                   <Button
                     variant="primary"
-                    onClick={user ? handleSaveRecipe : handleLoginPrompt}
+                    onClick={handleSaveRecipe}
                     disabled={isSaving}
                     className="flex items-center gap-2"
                     size="sm"

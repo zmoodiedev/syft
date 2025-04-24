@@ -10,7 +10,6 @@ export interface UserProfile {
   
   // Privacy settings
   profileVisibility: 'public' | 'private';
-  recipeVisibility: 'public' | 'friends' | 'private';
   friendsVisibility: 'public' | 'private';
   
   // Custom settings
@@ -52,7 +51,6 @@ export const DEFAULT_USER_SETTINGS: Partial<UserProfile> = {
   tier: 'Free',
   bio: null,
   profileVisibility: 'public',
-  recipeVisibility: 'public',
   friendsVisibility: 'public',
   customCategories: ['Breakfast', 'Lunch', 'Dinner', 'Dessert', 'Snack']
 }; 

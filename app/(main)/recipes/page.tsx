@@ -19,6 +19,8 @@ interface Recipe {
     createdAt: Date;
     categories: string[];
     imageUrl?: string;
+    userId: string;
+    visibility?: string;
 }
 
 export default function RecipesPage() {
@@ -41,11 +43,15 @@ export default function RecipesPage() {
 
             try {
                 const recipesRef = collection(db, 'recipes');
+                
+                // Create query to get only the user's own recipes
+                // This ensures private recipes are only visible to their owner
                 const q = query(
                     recipesRef,
                     where('userId', '==', user.uid),
                     orderBy('__name__', 'desc')
                 );
+                
                 const querySnapshot = await getDocs(q);
                 const recipesData = querySnapshot.docs.map(doc => ({
                     id: doc.id,

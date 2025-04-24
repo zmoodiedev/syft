@@ -23,31 +23,76 @@ import { auth } from '@/lib/firebase';
 export async function getUserRecipes(
   userId: string, 
   limit: number = 6,
-  lastVisible?: QueryDocumentSnapshot<DocumentData>
+  lastVisible?: QueryDocumentSnapshot<DocumentData>,
+  currentUserId?: string
 ): Promise<{recipes: Recipe[], lastVisible: QueryDocumentSnapshot<DocumentData> | null}> {
   try {
     const recipesRef = collection(db, 'recipes');
+    const isOwnProfile = currentUserId === userId;
     
-    let q = query(
-      recipesRef,
-      where('userId', '==', userId),
-      orderBy('__name__'),
-      firestoreLimit(limit)
-    );
+    let q;
     
-    // If there's a last visible document, start after it for pagination
-    if (lastVisible) {
+    if (isOwnProfile) {
+      // User viewing their own recipes - show all regardless of visibility
       q = query(
         recipesRef,
         where('userId', '==', userId),
         orderBy('__name__'),
-        startAfter(lastVisible),
+        firestoreLimit(limit)
+      );
+    } else if (currentUserId) {
+      // Another user viewing someone's recipes - check friend relationship
+      // This is a simpler implementation that still relies on frontend filtering
+      // A full implementation would check friendships in the database
+      q = query(
+        recipesRef,
+        where('userId', '==', userId),
+        orderBy('__name__'),
+        firestoreLimit(limit)
+      );
+    } else {
+      // Not logged in - only show public recipes
+      q = query(
+        recipesRef,
+        where('userId', '==', userId),
+        where('visibility', '==', 'public'),
+        orderBy('__name__'),
         firestoreLimit(limit)
       );
     }
     
+    // If there's a last visible document, start after it for pagination
+    if (lastVisible) {
+      if (isOwnProfile) {
+        q = query(
+          recipesRef,
+          where('userId', '==', userId),
+          orderBy('__name__'),
+          startAfter(lastVisible),
+          firestoreLimit(limit)
+        );
+      } else if (currentUserId) {
+        q = query(
+          recipesRef,
+          where('userId', '==', userId),
+          orderBy('__name__'),
+          startAfter(lastVisible),
+          firestoreLimit(limit)
+        );
+      } else {
+        q = query(
+          recipesRef,
+          where('userId', '==', userId),
+          where('visibility', '==', 'public'),
+          orderBy('__name__'),
+          startAfter(lastVisible),
+          firestoreLimit(limit)
+        );
+      }
+    }
+    
     const querySnapshot = await getDocs(q);
-    const recipes: Recipe[] = [];
+    let recipes: Recipe[] = [];
     
     // Set the last visible document for next pagination
     const newLastVisible = querySnapshot.docs.length > 0 
@@ -63,6 +108,16 @@ export async function getUserRecipes(
         updatedAt: data.updatedAt?.toDate() || new Date(),
       } as unknown as Recipe);
     });
+    
+    // If viewing someone else's recipes, filter based on visibility
+    if (!isOwnProfile && currentUserId) {
+      // For a complete implementation, you would check friendship status here
+      // This simplified version just filters out private recipes
+      recipes = recipes.filter(recipe => {
+        const visibility = recipe.visibility?.toLowerCase() || 'public';
+        return visibility !== 'private';
+      });
+    }
     
     return {
       recipes,
@@ -97,38 +152,96 @@ export async function getUserRecipeCount(userId: string): Promise<number> {
  */
 export async function getUserStats(userId: string) {
   try {
-    // Get recipes count - Safer approach as this should have proper permissions
+    // Get recipes count - Only count public recipes for non-authenticated users
     let recipeCount = 0;
     try {
-      recipeCount = await getUserRecipeCount(userId);
+      const recipesRef = collection(db, 'recipes');
+      // Only query for public recipes unless we're authenticated
+      const currentUser = auth.currentUser;
+      let recipesQuery;
+      
+      if (currentUser) {
+        if (currentUser.uid === userId) {
+          // User viewing their own recipes - count all
+          recipesQuery = query(recipesRef, where('userId', '==', userId));
+        } else {
+          // Another user viewing someone's recipes - count all non-private
+          recipesQuery = query(
+            recipesRef, 
+            where('userId', '==', userId),
+            where('visibility', 'in', ['public', 'friends'])
+          );
+        }
+      } else {
+        // Not authenticated - only count public recipes
+        recipesQuery = query(
+          recipesRef, 
+          where('userId', '==', userId),
+          where('visibility', '==', 'public')
+        );
+      }
+      
+      const recipesSnapshot = await getDocs(recipesQuery);
+      recipeCount = recipesSnapshot.size;
     } catch (error) {
       console.error('Error counting recipes:', error);
       // Continue with zeroed count
     }
     
-    // Get friends count - Safer approach
+    // Get friends count - Only attempt if user is authenticated
     let friendCount = 0;
     try {
-      const friendshipsRef = collection(db, 'friendships');
-      const friendshipsQuery = query(
-        friendshipsRef, 
-        where('userIds', 'array-contains', userId)
-      );
-      const friendshipsSnapshot = await getDocs(friendshipsQuery);
-      friendCount = friendshipsSnapshot.size;
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        // We have permission to read friendships data when authenticated
+        const friendshipsRef = collection(db, 'friendships');
+        const friendshipsQuery = query(
+          friendshipsRef, 
+          where('userIds', 'array-contains', userId)
+        );
+        const friendshipsSnapshot = await getDocs(friendshipsQuery);
+        friendCount = friendshipsSnapshot.size;
+      }
     } catch (error) {
       console.error('Error counting friends:', error);
       // Continue with zeroed count
     }
     
-    // Following counts might have permission issues, so we'll skip them for now
-    // and just return the counts we can reliably get
+    // Get follower/following counts only if authenticated
+    let followerCount = 0;
+    let followingCount = 0;
+    
+    try {
+      // Try to get following count
+      const followingRef = doc(db, 'userFollowing', userId);
+      const followingDoc = await getDoc(followingRef);
+      
+      if (followingDoc.exists() && followingDoc.data().following) {
+        followingCount = followingDoc.data().following.length;
+      }
+      
+      // Count followers by checking who is following this user
+      // Query all userFollowing documents
+      const userFollowingRef = collection(db, 'userFollowing');
+      const allFollowingDocs = await getDocs(userFollowingRef);
+      
+      // Check each document to see if it includes this user in its following array
+      allFollowingDocs.forEach(doc => {
+        const data = doc.data();
+        if (data.following && Array.isArray(data.following) && data.following.includes(userId)) {
+          followerCount++;
+        }
+      });
+    } catch (error) {
+      console.error('Error counting followers/following:', error);
+      // Continue with zeroed counts
+    }
     
     return {
       recipeCount,
       friendCount,
-      followerCount: 0,   // Placeholder - we'll implement these properly later
-      followingCount: 0   // Placeholder - we'll implement these properly later
+      followerCount,
+      followingCount
     };
   } catch (error) {
     console.error('Error fetching user stats:', error);

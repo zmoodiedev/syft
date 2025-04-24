@@ -107,7 +107,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 if (pathname !== '/login' && 
                     pathname !== '/' && 
                     !pathname.includes('/signup') && 
-                    !pathname.includes('/recipes/')) {
+                    !pathname.includes('/recipes/') &&
+                    !pathname.includes('/profile/')) {
                     router.push('/login');
                 }
             }
