@@ -173,27 +173,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Add a trace ID to track this specific request
+
     const traceId = `vision-req-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     logVercel('info', `Starting Vision API call [${traceId}]`);
 
-    // Perform OCR using Google Cloud Vision API with detailed error tracking
+
     try {
       logVercel('info', `Sending image to Vision API [${traceId}]`);
       
       let detectionResult;
       try {
-        // Use the simplified base64 content approach which is more reliable
-        [detectionResult] = await visionClient.textDetection({
-          image: { content: base64Image }
+
+        [ detectionResult ] = await visionClient.textDetection({
+          image: { content: Buffer.from(base64Image, 'base64') }
         });
         
         logVercel('info', `Successfully received Vision API response [${traceId}]`);
       } catch (visionError: unknown) {
-        // Log the specific error and return a detailed error response
         const errorDetails = visionError instanceof Error ? {
           message: visionError.message,
-          // Type assertion for additional properties that might be on the error
           code: (visionError as { code?: string }).code,
           details: (visionError as { details?: unknown }).details,
           status: (visionError as { status?: unknown }).status
