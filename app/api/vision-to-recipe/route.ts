@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ImageAnnotatorClient } from '@google-cloud/vision';
-import sharp from 'sharp';
 
-// Specify Node.js runtime for Sharp and Google Cloud Vision compatibility
+// Specify Node.js runtime for Google Cloud Vision compatibility
 export const runtime = 'nodejs';
 
 // Initialize Google Cloud Vision client
@@ -55,83 +54,19 @@ export async function POST(request: NextRequest) {
       size: file.size,
     });
 
-    // Convert file to buffer
+    // Convert file directly to base64 - skipping any Sharp processing
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    let processedBuffer: Buffer = buffer;
-    let skippedImageProcessing = false;
+    const base64Image = buffer.toString('base64');
 
-    // Convert image to a standard format (JPEG) using Sharp
-    try {
-      // Using sharp with more explicit format handling
-      const image = sharp(buffer);
-      
-      // Get image metadata to detect format issues
-      const metadata = await image.metadata();
-      console.log('Image metadata:', JSON.stringify({
-        format: metadata.format,
-        width: metadata.width,
-        height: metadata.height,
-        space: metadata.space,
-        channels: metadata.channels
-      }));
-      
-      // Force conversion to JPEG with explicit settings
-      const convertedBuffer = await image
-        .jpeg({
-          quality: 90,
-          progressive: true,
-          force: true,
-          chromaSubsampling: '4:4:4'
-        })
-        .toBuffer();
-      
-      processedBuffer = convertedBuffer;
-      console.log('Successfully converted image to JPEG format');
-    } catch (conversionError) {
-      console.error('Error converting image format:', conversionError);
-      // Continue with original buffer if conversion fails
-      console.log('Proceeding with original image format');
-      
-      // Try a simpler conversion as fallback
-      try {
-        const simpleConversion = await sharp(buffer, { failOn: 'none' })
-          .toFormat('jpeg')
-          .toBuffer();
-        processedBuffer = simpleConversion;
-        console.log('Fallback conversion successful');
-      } catch (fallbackError) {
-        console.error('Fallback conversion also failed:', fallbackError);
-        skippedImageProcessing = true;
-      }
-    }
+    console.log(`Converted image to base64 (${base64Image.length} chars)`);
 
-    // Perform OCR using Google Cloud Vision API
+    // Perform OCR using Google Cloud Vision API with base64 content
     try {
-      // If all Sharp conversions failed, log this info
-      if (skippedImageProcessing) {
-        console.log('Using original buffer: Sharp image processing was skipped');
-      }
-      
-      // Try direct text detection
-      let textDetectionResult;
-      try {
-        [textDetectionResult] = await visionClient.textDetection(processedBuffer);
-      } catch (visionError) {
-        console.error('Error with standard buffer detection:', visionError);
-        
-        // Last resort: Try sending as base64 content
-        console.log('Attempting base64 encoded image detection as last resort');
-        try {
-          const base64Image = buffer.toString('base64');
-          [textDetectionResult] = await visionClient.textDetection({
-            image: { content: base64Image }
-          });
-        } catch (base64Error) {
-          console.error('Base64 detection also failed:', base64Error);
-          throw new Error(`All image detection methods failed: ${(visionError as Error).message}`);
-        }
-      }
+      console.log('Sending image directly as base64 to Vision API');
+      const [textDetectionResult] = await visionClient.textDetection({
+        image: { content: base64Image }
+      });
       
       if (!textDetectionResult) {
         console.error('Vision API returned no results');
@@ -176,8 +111,17 @@ export async function POST(request: NextRequest) {
       });
     } catch (error) {
       console.error('Error calling Google Cloud Vision API:', error);
+      
+      // Add more context to the error for debugging
+      let errorMessage = error instanceof Error ? error.message : String(error);
+      
+      // Special handling for common Vision API errors
+      if (errorMessage.includes('DECODER') || errorMessage.includes('unsupported')) {
+        errorMessage = 'The image format appears to be unsupported by Google Cloud Vision API. Please try converting the image to JPEG format before uploading.';
+      }
+      
       return NextResponse.json(
-        { error: 'Failed to extract text from image: ' + (error as Error).message },
+        { error: 'Failed to extract text from image: ' + errorMessage },
         { status: 500 }
       );
     }

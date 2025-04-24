@@ -282,9 +282,82 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
         throw new Error('API configuration issue - please check server setup');
       }
       
-      // Create form data for the file
+      // Pre-process the image on the client side to ensure compatibility
+      // This converts any image to a normalized JPEG format before sending to the API
+      let processedFile = file;
+      
+      try {
+        // Create an image element
+        const img = document.createElement('img');
+        const imgLoaded = new Promise<void>((resolve, reject) => {
+          img.onload = () => resolve();
+          img.onerror = () => reject(new Error('Failed to load image'));
+        });
+        
+        // Create an object URL from the file
+        img.src = URL.createObjectURL(file);
+        
+        // Wait for the image to load
+        await imgLoaded;
+        
+        // Create a canvas to draw the image
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        if (!ctx) {
+          throw new Error('Failed to get canvas context');
+        }
+        
+        // Set canvas dimensions to match image (with a reasonable max size)
+        const MAX_SIZE = 2048;
+        let width = img.width;
+        let height = img.height;
+        
+        if (width > height && width > MAX_SIZE) {
+          height = (height * MAX_SIZE) / width;
+          width = MAX_SIZE;
+        } else if (height > MAX_SIZE) {
+          width = (width * MAX_SIZE) / height;
+          height = MAX_SIZE;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Draw the image onto the canvas
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Convert to a JPEG blob
+        const blob = await new Promise<Blob>((resolve, reject) => {
+          canvas.toBlob(
+            (blob) => {
+              if (blob) resolve(blob);
+              else reject(new Error('Failed to create blob'));
+            },
+            'image/jpeg',
+            0.92 // Quality
+          );
+        });
+        
+        // Create a new file from the blob
+        processedFile = new File([blob], 'processed-image.jpg', {
+          type: 'image/jpeg',
+          lastModified: Date.now(),
+        });
+        
+        // Clean up the object URL
+        URL.revokeObjectURL(img.src);
+        
+        console.log('Successfully pre-processed image on client side');
+      } catch (processingError) {
+        // If client-side processing fails, continue with the original file
+        console.error('Client-side image processing failed:', processingError);
+        console.log('Proceeding with original image file');
+      }
+      
+      // Create form data for the file (using the processed file if available)
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', processedFile);
       
       // Send to our API endpoint
       const response = await fetch('/api/vision-to-recipe', {
