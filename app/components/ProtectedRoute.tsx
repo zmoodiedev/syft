@@ -14,7 +14,12 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
         if (typeof window === 'undefined' || loading) return;
 
         // If no user is authenticated and not already on the login page, redirect to login
-        if (!user && !pathname.includes('/login') && !pathname.includes('/signup')) {
+        // Allow access to public routes: login, signup, home, and recipe detail pages
+        if (!user && 
+            !pathname.includes('/login') && 
+            !pathname.includes('/signup') && 
+            pathname !== '/' && 
+            !pathname.includes('/recipes/')) {
             router.push('/login');
         }
     }, [user, loading, router, pathname]);
@@ -28,8 +33,15 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
         );
     }
 
-    // If on login or signup page, or if authenticated, show the content
-    if (user || pathname.includes('/login') || pathname.includes('/signup')) {
+    // Show the content if:
+    // 1. User is authenticated
+    // 2. On login or signup page
+    // 3. On a recipe detail page (will be handled by the page component)
+    if (user || 
+        pathname.includes('/login') || 
+        pathname.includes('/signup') || 
+        pathname === '/' || 
+        pathname.includes('/recipes/')) {
         return <>{children}</>;
     }
 

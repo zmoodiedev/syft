@@ -12,6 +12,12 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
     
+    // Helper function to check if user is an admin
+    function isAdmin() {
+      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
+      return isAuthenticated() && userDoc != null && userDoc.data.role == 'admin';
+    }
+    
     // PRODUCTION RULES - Uncomment these for production
     
     // Allow users to read and write their own profile
@@ -36,7 +42,7 @@ service cloud.firestore {
       allow read, write: if isAuthenticated();
     }
     
-        // Following functionality
+    // Following functionality
     match /userFollowing/{userId} {
       // Users can read any following list
       allow read: if true;
@@ -61,11 +67,22 @@ service cloud.firestore {
                      resource.data.userId == request.auth.uid;
     }
     
-    // Recipes collection - Allow all authenticated users to read
+    // Recipes collection
     match /recipes/{recipeId} {
-      allow read: if isAuthenticated();
+      // Anyone can read public recipes, authenticated users can read any recipe
+      allow read: if isAuthenticated() || 
+                   (resource.data.visibility is string && 
+                    resource.data.visibility.lower() == 'public');
+      
+      // Users can create their own recipes
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      
+      // Users can update/delete their own recipes
       allow update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      
+      // Allow any authenticated user to add the visibility field to recipes
+      allow update: if isAuthenticated() && 
+                   request.resource.data.diff(resource.data).affectedKeys().hasOnly(['visibility', 'updatedAt']);
     }
     
     // Shared recipes

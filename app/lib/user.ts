@@ -1,5 +1,5 @@
 import { db } from '@/lib/firebase';
-import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, deleteDoc, collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
 import { UserProfile, UserRelationship, DEFAULT_USER_SETTINGS } from '@/app/models/User';
 import { auth } from '@/lib/firebase';
 
@@ -52,7 +52,35 @@ export async function updateUserProfile(userId: string, updates: Partial<UserPro
     updatedAt: serverTimestamp()
   };
   
+  // Update the user profile
   await updateDoc(userRef, updatedData);
+  
+  // If recipe visibility has changed, update all the user's recipes
+  if (updates.recipeVisibility) {
+    try {
+      const recipesRef = collection(db, 'recipes');
+      const q = query(recipesRef, where('userId', '==', userId));
+      const querySnapshot = await getDocs(q);
+      
+      // Create a batch to update all recipes at once
+      const batch = writeBatch(db);
+      
+      querySnapshot.forEach((docSnapshot) => {
+        batch.update(docSnapshot.ref, { 
+          visibility: updates.recipeVisibility,
+          updatedAt: serverTimestamp()
+        });
+      });
+      
+      // Commit the batch
+      await batch.commit();
+      console.log(`Updated visibility for ${querySnapshot.size} recipes to ${updates.recipeVisibility}`);
+    } catch (error) {
+      console.error('Error updating recipe visibility:', error);
+      // Continue even if recipe updates fail
+    }
+  }
+  
   return updatedData;
 }
 

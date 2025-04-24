@@ -19,4 +19,5 @@ export interface Recipe {
   sourceUrl?: string;
   sourceName?: string;
   lastScraped?: Date;
+  visibility?: string;  // Recipe visibility (public, private, friends)
 } 

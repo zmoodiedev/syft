@@ -5,7 +5,6 @@ import { db } from '@/app/lib/firebase';
 import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
-import Image from 'next/image';
 import { uploadImage } from '@/lib/cloudinary';
 import Button from './Button';
 
@@ -38,22 +37,27 @@ export interface Recipe {
   imageUrl?: string | null;
   userId?: string;
   sourceUrl?: string;
+  visibility?: string;
 }
 
-interface RecipeFormProps {
+export interface RecipeFormProps {
   initialData?: Recipe;
   onSubmit?: (data: Recipe) => Promise<void>;
-  submitButtonText?: string;
+  scanMode?: boolean;
 }
 
-export default function RecipeForm({ initialData, onSubmit, submitButtonText = 'Save Recipe' }: RecipeFormProps) {
+export default function RecipeForm({ initialData, onSubmit, scanMode = false }: RecipeFormProps) {
   const { user } = useAuth();
   const router = useRouter();
   const [selectedCategories, setSelectedCategories] = useState<string[]>(initialData?.categories || []);
   const [imageUrl, setImageUrl] = useState(initialData?.imageUrl || '');
   const [isPreviewingImage, setIsPreviewingImage] = useState(!!initialData?.imageUrl);
   const [isUploading, setIsUploading] = useState(false);
+  const [isProcessingRecipe, setIsProcessingRecipe] = useState(false);
+  const [fileDialogRequested, setFileDialogRequested] = useState(false);
+  const [showScanFeature, setShowScanFeature] = useState(scanMode);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const recipeImageInputRef = useRef<HTMLInputElement>(null);
   const [ingredients, setIngredients] = useState<Ingredient[]>(
     initialData?.ingredients && initialData.ingredients.length > 0 
       ? initialData.ingredients.map(ing => ({ ...ing, id: ing.id || String(Date.now() + Math.random()) }))
@@ -66,8 +70,8 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
   );
   const [userCategories, setUserCategories] = useState<string[]>([]);
   const [newCategory, setNewCategory] = useState<string>('');
-  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
-
+  const [extractedRecipeText, setExtractedRecipeText] = useState<string>('');
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const { register, handleSubmit, formState: { errors }, setValue } = useForm<Recipe>({
     defaultValues: {
       name: initialData?.name || '',
@@ -77,6 +81,26 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
       sourceUrl: initialData?.sourceUrl || '',
     }
   });
+
+  // Automatically trigger file input when in scan mode only on initial mount
+  useEffect(() => {
+    let timeout: NodeJS.Timeout;
+    
+    // Only execute this on first render in scan mode
+    if (scanMode && !isProcessingRecipe && !fileDialogRequested) {
+      setFileDialogRequested(true);
+      
+      // Small delay to ensure component is fully mounted
+      timeout = setTimeout(() => {
+        if (recipeImageInputRef.current) {
+          recipeImageInputRef.current.click();
+        }
+      }, 100);
+    }
+    
+    return () => clearTimeout(timeout);
+    // Add fileDialogRequested to deps list to prevent firing after state changes
+  }, [scanMode, isProcessingRecipe, fileDialogRequested]);
 
   // Fetch user's custom categories
   useEffect(() => {
@@ -187,10 +211,420 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
     setIsPreviewingImage(true);
   };
 
-  // Handle file selection
+  // Adding a function to check API configuration
+  const checkAPIConfiguration = async (): Promise<boolean> => {
+    try {
+      const response = await fetch('/api/check-recipe-scan-setup');
+      const data = await response.json();
+      
+      if (!data.ready) {
+        console.error('Recipe scanning setup not complete:', data);
+        
+        let errorMessage = 'Recipe scanning setup not complete. ';
+        if (!data.setupStatus.googleVision.configured) {
+          errorMessage += 'Google Cloud Vision API credentials are missing. ';
+        }
+        
+        toast.error(errorMessage + 'Please check server configuration.', {
+          duration: 6000
+        });
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error checking API configuration:', error);
+      toast.error('Could not verify API configuration. Please try again later.');
+      return false;
+    }
+  };
+
+  // Handle file selection for recipe image
+  const handleRecipeImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Reset the file dialog requested flag since the dialog has been handled
+    setFileDialogRequested(false);
+    
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Prevent processing if we're already handling an image
+    if (isProcessingRecipe) return;
+    
+    // Clear the file input value to allow selecting the same file again
+    e.target.value = '';
+    
+    // Set processing state immediately to prevent double calls
+    setIsProcessingRecipe(true);
+    
+    // Validate file type more strictly
+    const validTypes = ['image/jpeg', 'image/png'];
+    if (!validTypes.includes(file.type)) {
+      toast.error('Please select a JPG or PNG image file (other formats may not be supported by the API)');
+      setIsProcessingRecipe(false);
+      return;
+    }
+    
+    // Validate file size (max 10MB for recipe cards which may contain more text)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Image size must be less than 10MB');
+      setIsProcessingRecipe(false);
+      return;
+    }
+    
+    try {
+      toast.loading('Processing your recipe image...', { id: 'processing-recipe' });
+      
+      // Check if APIs are configured
+      const apisConfigured = await checkAPIConfiguration();
+      if (!apisConfigured) {
+        throw new Error('API configuration issue - please check server setup');
+      }
+      
+      // Create form data for the file
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      // Send to our API endpoint
+      const response = await fetch('/api/vision-to-recipe', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        console.error('API error response:', data);
+        throw new Error(data.error || 'Failed to process recipe image');
+      }
+      
+      // Process the raw text with basic heuristics
+      if (data.rawText) {
+        // Save raw text for reference
+        setExtractedRecipeText(data.rawText);
+        
+        // Parse the text into different recipe components
+        const { name, ingredients, instructions } = parseRecipeText(data.rawText);
+        
+        // Set recipe name
+        setValue('name', name);
+        
+        // Set ingredients
+        if (ingredients.length > 0) {
+          const parsedIngredients = ingredients.map((ing, index) => {
+            // Try to parse each ingredient into amount, unit, and item
+            const { amount, unit, item } = parseIngredient(ing);
+            return {
+              amount,
+              unit,
+              item: item || ing, // Use the original text if parsing fails
+              id: `extracted-${index}-${Date.now()}`
+            };
+          });
+          
+          setIngredients(parsedIngredients);
+        }
+        
+        // Set instructions
+        if (instructions.length > 0) {
+          setInstructions(instructions);
+        }
+        
+        toast.success('Recipe extracted and parsed into form fields!', { 
+          id: 'processing-recipe',
+          duration: 5000
+        });
+        
+        toast.success('Please review and edit the auto-populated fields as needed.', {
+          duration: 5000
+        });
+      } else {
+        throw new Error('No text data found in the response');
+      }
+    } catch (error) {
+      console.error('Error processing recipe image:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Failed to extract recipe text: ${errorMessage}`, { id: 'processing-recipe' });
+      
+      // If scanning was initiated in scan mode, provide a prompt to try manual entry
+      if (scanMode) {
+        setTimeout(() => {
+          toast.error('Please try entering the recipe details manually instead', { 
+            id: 'manual-entry-suggestion',
+            duration: 6000
+          });
+        }, 1000);
+      }
+    } finally {
+      setIsProcessingRecipe(false);
+    }
+  };
+
+  // Parse raw recipe text into components using basic heuristics
+  const parseRecipeText = (text: string): { 
+    name: string; 
+    ingredients: string[]; 
+    instructions: string[] 
+  } => {
+    // Split text into lines and remove empty ones
+    const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+    
+    // Assume the first line with reasonable length is the recipe name
+    let name = '';
+    let nameLineIndex = -1;
+    
+    for (let i = 0; i < Math.min(5, lines.length); i++) {
+      if (lines[i].length > 3 && lines[i].length < 60) {
+        name = lines[i];
+        nameLineIndex = i;
+        break;
+      }
+    }
+    
+    // If no name found, use a default
+    if (!name && lines.length > 0) {
+      name = lines[0]; 
+      nameLineIndex = 0;
+    }
+    
+    // Skip the name line and start looking for ingredients and instructions
+    const remainingLines = lines.slice(nameLineIndex + 1);
+    
+    // Try to identify ingredients and instructions sections
+    const ingredientLines: string[] = [];
+    const instructionLines: string[] = [];
+    
+    let currentSection: 'none' | 'ingredients' | 'instructions' = 'none';
+    
+    // Keywords that might indicate the start of ingredients or instructions sections
+    const ingredientKeywords = ['ingredients', 'materials', 'you will need', 'what you need'];
+    const instructionKeywords = ['instructions', 'directions', 'method', 'preparation', 'steps', 'how to', 'procedure'];
+    
+    for (const line of remainingLines) {
+      // Skip very short lines that might be section separators
+      if (line.length < 3) continue;
+      
+      const lowerLine = line.toLowerCase();
+      
+      // Check if this line is a section header
+      const isIngredientHeader = ingredientKeywords.some(keyword => lowerLine.includes(keyword));
+      const isInstructionHeader = instructionKeywords.some(keyword => lowerLine.includes(keyword));
+      
+      // Determine the section based on headers or patterns
+      if (isIngredientHeader) {
+        currentSection = 'ingredients';
+        continue; // Skip the header line
+      } else if (isInstructionHeader) {
+        currentSection = 'instructions';
+        continue; // Skip the header line
+      }
+      
+      // If no explicit section is found, try to guess based on content patterns
+      if (currentSection === 'none') {
+        // Lines with measurements, fractions, or quantities often indicate ingredients
+        if (/\d+\s*(?:\d\/\d|\/)?\s*(?:cup|tbsp|tsp|oz|g|lb|ml|l|teaspoon|tablespoon|pound|ounce)/i.test(line) || 
+            /\d+\s*(?:\/)\s*\d+/.test(line)) { // Fractions
+          ingredientLines.push(line);
+          continue;
+        }
+        
+        // Lines starting with numbers followed by period or parenthesis often indicate instructions
+        if (/^\s*\d+[\.\)]/.test(line) || /^step\s+\d+:/i.test(line)) {
+          instructionLines.push(line);
+          currentSection = 'instructions'; // Assume remaining lines are also instructions
+          continue;
+        }
+        
+        // If we can't determine, default to ingredients first
+        ingredientLines.push(line);
+      } else if (currentSection === 'ingredients') {
+        // Check if we might have switched to instructions
+        if (/^\s*\d+[\.\)]/.test(line) || /^step\s+\d+:/i.test(line)) {
+          instructionLines.push(line);
+          currentSection = 'instructions';
+        } else {
+          ingredientLines.push(line);
+        }
+      } else if (currentSection === 'instructions') {
+        instructionLines.push(line);
+      }
+    }
+    
+    // If we have too few instructions but many ingredients, some ingredients might actually be instructions
+    if (instructionLines.length <= 1 && ingredientLines.length > 5) {
+      // Look for sentences in the ingredients that might be instructions
+      const possibleInstructions = ingredientLines.filter(ing => 
+        ing.length > 40 || // Long lines
+        /\.\s*$/.test(ing) || // Ends with period
+        /^[A-Z]/.test(ing.trim()) // Starts with capital letter
+      );
+      
+      if (possibleInstructions.length > 0) {
+        // Remove these from ingredients and add to instructions
+        possibleInstructions.forEach(instr => {
+          const index = ingredientLines.indexOf(instr);
+          if (index !== -1) {
+            ingredientLines.splice(index, 1);
+          }
+          instructionLines.push(instr);
+        });
+      }
+    }
+    
+    // Now process the instruction lines into actual instruction steps
+    // We'll try to identify numbered steps and merge continuation lines
+    const instructions: string[] = [];
+    let currentInstruction = '';
+    
+    for (let i = 0; i < instructionLines.length; i++) {
+      const line = instructionLines[i];
+      
+      // Check if this line starts a new numbered step
+      const numberMatch = line.match(/^\s*(\d+)[\.\)]\s*/);
+      
+      if (numberMatch) {
+        // Save the previous instruction if it exists
+        if (currentInstruction) {
+          instructions.push(currentInstruction.trim());
+          currentInstruction = '';
+        }
+        
+        // Remove the step number from the line
+        currentInstruction = line.replace(/^\s*\d+[\.\)]\s*/, '');
+      } else if (line.toLowerCase().startsWith('step') && /\d+/.test(line)) {
+        // Handle "Step X: ..." format
+        if (currentInstruction) {
+          instructions.push(currentInstruction.trim());
+          currentInstruction = '';
+        }
+        
+        // Remove the "Step X:" prefix
+        currentInstruction = line.replace(/^step\s+\d+\s*:?\s*/i, '');
+      } else {
+        // This is either a continuation of the current instruction or a non-numbered instruction
+        
+        // Check if this might be a new instruction without a number
+        const startsNewSentence = /^[A-Z]/.test(line) && 
+                                  (currentInstruction.endsWith('.') || 
+                                   currentInstruction.endsWith('!') || 
+                                   currentInstruction.endsWith('?'));
+        
+        // If this line starts with a capital letter and the previous line ends with punctuation,
+        // it might be a new instruction
+        if (startsNewSentence && currentInstruction) {
+          instructions.push(currentInstruction.trim());
+          currentInstruction = line;
+        } else if (!currentInstruction) {
+          // Start a new instruction if we don't have one
+          currentInstruction = line;
+        } else {
+          // Append to the current instruction with a space
+          currentInstruction += ' ' + line;
+        }
+      }
+    }
+    
+    // Add the last instruction if there is one
+    if (currentInstruction) {
+      instructions.push(currentInstruction.trim());
+    }
+    
+    // If we ended up with no instructions, but have instructionLines,
+    // fall back to using the raw lines
+    if (instructions.length === 0 && instructionLines.length > 0) {
+      return { 
+        name, 
+        ingredients: ingredientLines, 
+        instructions: instructionLines 
+      };
+    }
+    
+    // Clean up any very short instructions (likely parsing errors)
+    const finalInstructions = instructions.filter(instr => instr.length > 5);
+    
+    return { 
+      name, 
+      ingredients: ingredientLines, 
+      instructions: finalInstructions 
+    };
+  };
+  
+  // Parse an ingredient line to extract amount, unit, and item
+  const parseIngredient = (text: string): { amount: string; unit: string; item: string } => {
+    // Common cooking units
+    const commonUnits = [
+      'cup', 'cups', 'c.',
+      'tablespoon', 'tablespoons', 'tbsp', 'tbs', 'tbsp.', 'T',
+      'teaspoon', 'teaspoons', 'tsp', 'tsp.', 't',
+      'ounce', 'ounces', 'oz', 'oz.',
+      'pound', 'pounds', 'lb', 'lbs', 'lb.',
+      'gram', 'grams', 'g', 'g.',
+      'kilogram', 'kilograms', 'kg', 'kg.',
+      'milliliter', 'milliliters', 'ml', 'ml.',
+      'liter', 'liters', 'l',
+      'pinch', 'pinches',
+      'dash', 'dashes',
+      'handful', 'handfuls',
+      'clove', 'cloves',
+      'slice', 'slices',
+      'piece', 'pieces'
+    ];
+    
+    // Replace common fractions with decimal values for better parsing
+    const fraction = text.match(/(\d+)\s*\/\s*(\d+)/);
+    let processedText = text;
+    
+    if (fraction) {
+      const [wholeMatch, numerator, denominator] = fraction;
+      const decimal = parseInt(numerator) / parseInt(denominator);
+      processedText = text.replace(wholeMatch, decimal.toString());
+    }
+    
+    // Try to identify number at the start (the amount)
+    const amountMatch = processedText.match(/^[\s\d.\/+\-–—]+/);
+    let amount = '';
+    let remainingText = processedText;
+    
+    if (amountMatch) {
+      amount = amountMatch[0].trim();
+      remainingText = processedText.substring(amountMatch[0].length).trim();
+    }
+    
+    // Try to identify unit after the amount
+    let unit = '';
+    let item = remainingText;
+    
+    for (const unitName of commonUnits) {
+      const regex = new RegExp(`^\\s*(${unitName})(\\s|$)`, 'i');
+      const match = remainingText.match(regex);
+      
+      if (match) {
+        unit = match[1];
+        item = remainingText.substring(match[0].length).trim();
+        break;
+      }
+    }
+    
+    // Clean up: remove common prefixes that might be in the ingredient
+    const prefixesToRemove = [
+      'of ', '- ', '* ', '• '
+    ];
+    
+    prefixesToRemove.forEach(prefix => {
+      if (item.startsWith(prefix)) {
+        item = item.substring(prefix.length);
+      }
+    });
+    
+    return { amount, unit, item };
+  };
+
+  // Handle file selection for recipe photo
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    // Clear the file input value to allow selecting the same file again
+    e.target.value = '';
     
     // Validate file type
     const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -225,9 +659,27 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
     }
   };
   
-  // Trigger file input click
+  // Trigger file input click for recipe photo
   const handleUploadClick = () => {
     fileInputRef.current?.click();
+  };
+  
+  // Trigger file input click for recipe card scan
+  const handleRecipeImageClick = () => {
+    // Don't do anything if we're already processing
+    if (isProcessingRecipe) return;
+    
+    // Show the scan feature if not already visible
+    if (!showScanFeature) {
+      setShowScanFeature(true);
+    }
+    
+    // Set the file dialog requested flag
+    setFileDialogRequested(true);
+    
+    if (recipeImageInputRef.current) {
+      recipeImageInputRef.current.click();
+    }
   };
 
   const handleCategoryChange = (category: string) => {
@@ -250,262 +702,326 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
       return;
     }
     
+    // Check if category already exists
     if (userCategories.includes(newCategory.trim())) {
       toast.error('This category already exists');
       return;
     }
     
     try {
-      const updatedCategories = [...userCategories, newCategory.trim()];
-      setUserCategories(updatedCategories);
-      setSelectedCategories(prev => [...prev, newCategory.trim()]);
-      
-      // Only store custom categories that aren't in the defaults
+      // Add category to user's custom categories in Firestore
       const userRef = doc(db, 'users', user.uid);
-      const userDocSnap = await getDoc(userRef);
-      const existingCustomCategories = userDocSnap.exists() && userDocSnap.data().customCategories 
-        ? userDocSnap.data().customCategories 
-        : [];
-        
-      if (!DEFAULT_CATEGORIES.includes(newCategory.trim())) {
-        // Update in Firestore - only store truly custom categories
-        const userCustomCategoriesUpdated = [...existingCustomCategories, newCategory.trim()];
-        
-        await updateDoc(userRef, {
-          customCategories: userCustomCategoriesUpdated,
-          updatedAt: serverTimestamp()
-        });
-      }
+      const userDoc = await getDoc(userRef);
       
-      setNewCategory('');
-      toast.success('Category added successfully');
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        const customCategories = userData.customCategories || [];
+        
+        // Check again for duplicates
+        if (!customCategories.includes(newCategory)) {
+          await updateDoc(userRef, {
+            customCategories: [...customCategories, newCategory]
+          });
+          
+          // Update local state
+          setUserCategories(prev => [...prev, newCategory]);
+          setSelectedCategories(prev => [...prev, newCategory]);
+          setNewCategory('');
+          
+          toast.success('Category added successfully');
+        } else {
+          toast.error('This category already exists');
+        }
+      } else {
+        // Create user document with first custom category
+        await updateDoc(userRef, {
+          customCategories: [newCategory]
+        });
+        
+        // Update local state
+        setUserCategories(prev => [...prev, newCategory]);
+        setSelectedCategories(prev => [...prev, newCategory]);
+        setNewCategory('');
+        
+        toast.success('Category added successfully');
+      }
     } catch (error) {
       console.error('Error adding category:', error);
       toast.error('Failed to add category');
     }
   };
-
+  
   const handleFormSubmit: SubmitHandler<Recipe> = async (data) => {
     if (!user) {
-      toast.error('Please sign in to submit a recipe');
+      toast.error('You must be logged in to save recipes');
       return;
     }
-
-    // Validate required fields
-    if (ingredients.some(ing => !ing.item)) {
-      toast.error('Please enter all ingredient names');
+    
+    // Validate ingredients
+    if (ingredients.length === 0 || (ingredients.length === 1 && !ingredients[0].item)) {
+      toast.error('Please add at least one ingredient');
       return;
     }
-
-    if (instructions.some(instruction => !instruction)) {
-      toast.error('Please fill out all instruction steps');
+    
+    // Validate instructions
+    if (instructions.length === 0 || (instructions.length === 1 && !instructions[0])) {
+      toast.error('Please add at least one instruction step');
       return;
     }
-
+    
+    // Clean up empty ingredients
+    const filteredIngredients = ingredients.filter(ing => ing.item.trim());
+    
+    // Clean up empty instructions
+    const filteredInstructions = instructions.filter(instr => instr.trim());
+    
     try {
-      const recipeData = {
+      // Get user's recipe visibility setting
+      let visibility = 'public'; // Default to public
+      try {
+        const userProfileRef = doc(db, 'users', user.uid);
+        const userProfileSnap = await getDoc(userProfileRef);
+        if (userProfileSnap.exists()) {
+          const userData = userProfileSnap.data();
+          visibility = userData.recipeVisibility || 'public';
+        }
+      } catch (error) {
+        console.error('Error fetching user visibility settings:', error);
+      }
+      
+      const recipeData: Recipe = {
         ...data,
-        ingredients,
-        instructions,
+        ingredients: filteredIngredients,
+        instructions: filteredInstructions,
         categories: selectedCategories,
-        userId: user.uid,
         imageUrl: imageUrl || null,
-        ...(initialData?.id ? { id: initialData.id } : {})
+        userId: user.uid,
+        visibility: visibility // Add visibility field directly to recipe
       };
-
-      // If a custom onSubmit function is provided, use it
+      
+      // If onSubmit is provided, use it
       if (onSubmit) {
         await onSubmit(recipeData);
-        return;
+      } else {
+        // Otherwise, save to Firestore directly
+        if (initialData?.id) {
+          const recipeRef = doc(db, 'recipes', initialData.id);
+          await updateDoc(recipeRef, {
+            ...recipeData,
+            updatedAt: serverTimestamp()
+          });
+          toast.success('Recipe updated successfully');
+        } else {
+          await addDoc(collection(db, 'recipes'), {
+            ...recipeData,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          });
+          toast.success('Recipe added successfully');
+        }
+        
+        router.push('/recipes');
       }
-
-      // Otherwise, perform the default create operation
-      await addDoc(collection(db, 'recipes'), {
-        ...recipeData,
-        createdAt: serverTimestamp(),
-      });
-      toast.success('Recipe submitted successfully!');
-      router.push('/recipes');
     } catch (error) {
-      console.error('Error submitting recipe:', error);
-      toast.error('Failed to submit recipe');
+      console.error('Error saving recipe:', error);
+      toast.error('Failed to save recipe');
     }
   };
-
-  // Add this new function at the component level
+  
   const adjustTextareaHeight = (element: HTMLTextAreaElement) => {
     element.style.height = 'auto';
     element.style.height = `${element.scrollHeight}px`;
   };
 
-  // Add this new useEffect
-  useEffect(() => {
-    const textareas = document.querySelectorAll('textarea');
-    textareas.forEach((textarea) => {
-      adjustTextareaHeight(textarea as HTMLTextAreaElement);
-    });
-  }, [instructions]); // Re-run when instructions change
-
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-10 max-w-8xl mx-auto">
-      {/* Basic Info Section */}
-      <div className="space-y-6 md:bg-white md:rounded-xl md:p-8 md:shadow-sm md:border md:border-gray-100">
-        <h2 className="text-2xl font-bold bg-basil bg-clip-text text-transparent">
-          Recipe Details
-        </h2>
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+      {/* Recipe Image Scan Feature */}
+      {showScanFeature && (
+      <div className={`rounded-lg p-6 mb-6 border ${scanMode ? 'bg-basil-50 border-basil shadow-md' : 'bg-amber-50 border-amber-200'} transition-colors`}>
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div>
+            <h3 className={`text-xl font-semibold mb-2 ${scanMode ? 'text-basil' : 'text-amber-800'}`}>
+              {scanMode ? 'Scan Your Recipe' : 'Recipe Scanner'}
+            </h3>
+            <p className="text-cast-iron text-sm mb-4">
+              Upload a photo of a recipe card or a page from a cookbook to automatically extract the recipe details.
+            </p>
+          </div>
+          <div className="flex items-center">
+            <input
+              type="file"
+              accept="image/*"
+              ref={recipeImageInputRef}
+              onChange={handleRecipeImageUpload}
+              className="hidden"
+            />
+            <Button 
+              onClick={handleRecipeImageClick}
+              variant={scanMode ? "primary" : "outline"}
+              disabled={isProcessingRecipe}
+              className="flex items-center gap-2"
+            >
+              <i className="fa-solid fa-camera"></i>
+              {isProcessingRecipe ? 'Processing...' : 'Upload Recipe Image'}
+            </Button>
+          </div>
+        </div>
         
+        {!scanMode && !isProcessingRecipe && !extractedRecipeText && (
+          <button 
+            onClick={() => setShowScanFeature(false)}
+            className="mt-2 text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
+          >
+            <i className="fa-solid fa-times"></i> Hide Scanner
+          </button>
+        )}
+        
+        {extractedRecipeText && (
+          <div id="extracted-text-panel" className="mt-4 bg-white border border-light-grey rounded-lg p-3">
+            <details>
+              <summary className="cursor-pointer text-basil font-medium hover:text-basil-dark transition flex items-center">
+                <span>View extracted text</span>
+                <span className="text-xs text-gray-500 ml-2">(Reference only)</span>
+              </summary>
+              <div className="mt-2 bg-gray-50 p-3 rounded-md overflow-auto max-h-60 whitespace-pre-wrap text-xs">
+                {extractedRecipeText}
+              </div>
+            </details>
+          </div>
+        )}
+      </div>
+      )}
+
+      {/* Regular Form Fields */}
+      <div className="space-y-6 md:bg-white md:rounded-xl md:p-8 md:shadow-sm md:border md:border-gray-100">
+        <h2 className="text-2xl font-bold bg-basil bg-clip-text text-transparent">Recipe Details</h2>
         <div className="space-y-6">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-              Recipe Name
-            </label>
-            <input
-              id="name"
-              type="text"
-              {...register("name", { required: "Recipe name is required" })}
-              className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base"
-              placeholder="Enter recipe name"
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">Recipe Name</label>
+            <input 
+              id="name" 
+              className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base" 
+              placeholder="Enter recipe name" 
+              type="text" 
+              {...register('name', { required: true })}
             />
-            {errors.name && <p className="mt-2 text-sm text-red-600">{errors.name.message}</p>}
+            {errors.name && <p className="mt-1 text-sm text-red-500">Recipe name is required</p>}
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label htmlFor="servings" className="block text-sm font-medium text-gray-700 mb-2">
-                Servings
-              </label>
-              <input
-                id="servings"
-                type="text"
-                {...register("servings")}
-                placeholder="e.g., 4"
-                className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base"
+              <label htmlFor="servings" className="block text-sm font-medium text-gray-700 mb-2">Servings</label>
+              <input 
+                id="servings" 
+                placeholder="e.g., 4" 
+                className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base" 
+                type="text" 
+                {...register('servings')}
               />
             </div>
-
             <div>
-              <label htmlFor="prepTime" className="block text-sm font-medium text-gray-700 mb-2">
-                Prep Time
-              </label>
-              <input
-                id="prepTime"
-                type="text"
-                {...register("prepTime")}
-                placeholder="e.g., 15 mins"
-                className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base"
+              <label htmlFor="prepTime" className="block text-sm font-medium text-gray-700 mb-2">Prep Time</label>
+              <input 
+                id="prepTime" 
+                placeholder="e.g., 15 mins" 
+                className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base" 
+                type="text" 
+                {...register('prepTime', { required: true })}
               />
+              {errors.prepTime && <p className="mt-1 text-sm text-red-500">Prep time is required</p>}
             </div>
-
             <div>
-              <label htmlFor="cookTime" className="block text-sm font-medium text-gray-700 mb-2">
-                Cook Time
-              </label>
-              <input
-                id="cookTime"
-                type="text"
-                {...register("cookTime")}
-                placeholder="e.g., 30 mins"
-                className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base"
+              <label htmlFor="cookTime" className="block text-sm font-medium text-gray-700 mb-2">Cook Time</label>
+              <input 
+                id="cookTime" 
+                placeholder="e.g., 30 mins" 
+                className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base" 
+                type="text" 
+                {...register('cookTime', { required: true })}
               />
+              {errors.cookTime && <p className="mt-1 text-sm text-red-500">Cook time is required</p>}
             </div>
           </div>
-
           <div>
-            <label htmlFor="sourceUrl" className="block text-sm font-medium text-gray-700 mb-2">
-              Original Source
-            </label>
-            <input
-              id="sourceUrl"
-              type="url"
-              {...register("sourceUrl")}
-              placeholder="https://example.com/recipe"
-              className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base"
+            <label htmlFor="sourceUrl" className="block text-sm font-medium text-gray-700 mb-2">Original Source</label>
+            <input 
+              id="sourceUrl" 
+              placeholder="https://example.com/recipe" 
+              className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base" 
+              type="url" 
+              {...register('sourceUrl')}
             />
           </div>
         </div>
       </div>
-
-      {/* Image Upload Section */}
       <div className="md:bg-white md:rounded-xl md:p-8 md:shadow-sm md:border md:border-gray-100">
-        <h2 className="text-2xl font-bold text-basil mb-6">
-          Recipe Image
-        </h2>
-        
+        <h2 className="text-2xl font-bold text-basil mb-6">Recipe Image</h2>
         <div className="space-y-6">
           <div className="flex flex-col space-y-4">
-            <input
-              type="file"
-              accept="image/*"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              className="hidden"
-            />
-            <Button
-              type="button"
+            <input accept="image/*" className="hidden" type="file" ref={fileInputRef} onChange={handleFileChange} />
+            <button 
+              className="
+                inline-flex items-center justify-center gap-2
+                rounded-lg font-medium
+                transition-colors duration-200
+                disabled:opacity-50 disabled:cursor-not-allowed
+                border-2 border-basil text-basil hover:bg-basil hover:text-white active:bg-basil active:text-white
+                px-4 py-2 text-base
+                w-full md:w-auto py-3
+              " 
+              type="button" 
               onClick={handleUploadClick}
               disabled={isUploading}
-              variant='outline'
-              className="w-full md:w-auto py-3"
             >
-              {isUploading ? 'Uploading...' : 'Upload Image'}
-            </Button>
-            
+              {isUploading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                  Uploading...
+                </>
+              ) : 'Upload Image'}
+            </button>
             <div className="flex items-center justify-center my-4">
               <div className="h-px bg-gray-200 flex-1"></div>
               <span className="px-4 text-sm text-gray-500">or</span>
               <div className="h-px bg-gray-200 flex-1"></div>
             </div>
-            
             <div className="flex flex-col md:flex-row gap-4">
-              <input
-                id="imageUrl"
-                type="text"
+              <input 
+                id="imageUrl" 
+                placeholder="https://example.com/image.jpg" 
+                className="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base" 
+                type="text" 
                 value={imageUrl}
                 onChange={handleImageUrlChange}
-                placeholder="https://example.com/image.jpg"
-                className="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base"
               />
-              <Button
+              <button 
+                className="
+                  inline-flex items-center justify-center gap-2
+                  rounded-lg font-medium
+                  transition-colors duration-200
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                  bg-basil text-white hover:bg-basil-600 active:bg-basil-700
+                  px-3 py-1.5 text-sm
+                  w-full md:w-auto py-3
+                " 
                 type="button"
                 onClick={validateAndPreviewImage}
-                variant='primary'
-                className="w-full md:w-auto py-3"
-                size="sm"
-              >
-                Preview
-              </Button>
+              >Preview</button>
             </div>
           </div>
+          <p className="text-xs text-gray-500 text-center">Upload an image file or enter a URL. Maximum file size: 5MB.</p>
           
-          <p className="text-xs text-gray-500 text-center">
-            Upload an image file or enter a URL. Maximum file size: 5MB.
-          </p>
-          
-          {isPreviewingImage && (
-            <div className="mt-6">
-              <div className="relative h-48 w-full rounded-lg overflow-hidden border border-gray-200">
-                <Image 
-                  src={imageUrl} 
-                  alt="Recipe preview" 
-                  fill
-                  className="object-cover"
-                  onError={() => {
-                    toast.error("Failed to load image");
-                    setIsPreviewingImage(false);
-                  }}
-                />
+          {isPreviewingImage && imageUrl && (
+            <div className="mt-4">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Image Preview</h3>
+              <div className="w-full h-48 rounded-lg overflow-hidden relative border border-gray-200">
+                <img src={imageUrl} alt="Recipe preview" className="w-full h-full object-cover" />
               </div>
             </div>
           )}
         </div>
       </div>
-
-      {/* Ingredients Section */}
       <div className="md:bg-white md:rounded-xl md:p-8 md:shadow-sm md:border md:border-gray-100">
-        <h2 className="text-2xl font-bold text-basil mb-6">
-          Ingredients
-        </h2>
-        
+        <h2 className="text-2xl font-bold text-basil mb-6">Ingredients</h2>
         <div className="space-y-6">
           <div className="hidden md:grid grid-cols-12 gap-4 text-sm font-medium text-gray-500 border-b pb-3">
             <div className="col-span-3">Amount</div>
@@ -513,175 +1029,171 @@ export default function RecipeForm({ initialData, onSubmit, submitButtonText = '
             <div className="col-span-5">Ingredient</div>
             <div className="col-span-1"></div>
           </div>
-          
           <div className="space-y-6">
             {ingredients.map((ingredient, index) => (
               <div key={ingredient.id} className="grid grid-cols-12 gap-4 items-center">
                 <div className="col-span-12 md:col-span-6 grid grid-cols-2 gap-4">
-                  <input
+                  <input 
+                    placeholder="Amount" 
+                    className="rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base"
                     value={ingredient.amount}
                     onChange={(e) => updateIngredient(index, 'amount', e.target.value)}
-                    placeholder="Amount"
-                    className="rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base"
                   />
-                  <input
+                  <input 
+                    placeholder="Unit" 
+                    className="rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base"
                     value={ingredient.unit}
                     onChange={(e) => updateIngredient(index, 'unit', e.target.value)}
-                    placeholder="Unit"
-                    className="rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base"
                   />
                 </div>
                 <div className="col-span-11 md:col-span-5">
-                  <input
+                  <input 
+                    placeholder="Ingredient" 
+                    required 
+                    className="w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base"
                     value={ingredient.item}
                     onChange={(e) => updateIngredient(index, 'item', e.target.value)}
-                    placeholder="Ingredient"
-                    required
-                    className="w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base"
                   />
                 </div>
                 <div className="col-span-1 flex justify-end">
-                  {index > 0 && (
-                    <button
+                  {ingredients.length > 1 && (
+                    <button 
                       type="button"
+                      className="text-red-500 hover:text-red-700"
                       onClick={() => removeIngredient(index)}
-                      className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-50"
                     >
-                      ✕
+                      <i className="fa-solid fa-times"></i>
                     </button>
                   )}
                 </div>
               </div>
             ))}
           </div>
-          
-          <Button
+          <button 
+            className="
+              inline-flex items-center justify-center gap-2
+              rounded-lg font-medium
+              transition-colors duration-200
+              disabled:opacity-50 disabled:cursor-not-allowed
+              border-2 border-basil text-basil hover:bg-basil hover:text-white active:bg-basil active:text-white
+              px-3 py-1.5 text-sm
+              w-full md:w-auto py-3
+            " 
             type="button"
             onClick={addIngredient}
-            variant='outline'
-            className="w-full md:w-auto py-3"
-            size="sm"
-          >
-            + Add Ingredient
-          </Button>
+          >+ Add Ingredient</button>
         </div>
       </div>
-
-      {/* Instructions Section */}
       <div className="md:bg-white md:rounded-xl md:p-8 md:shadow-sm md:border md:border-gray-100">
-        <h2 className="text-2xl font-bold text-basil mb-6">
-          Instructions
-        </h2>
-        
+        <h2 className="text-2xl font-bold text-basil mb-6">Instructions</h2>
         <div className="space-y-6">
           {instructions.map((instruction, index) => (
             <div key={index} className="flex items-start space-x-4 flex-col lg:flex-row">
-              <div className="flex-shrink-0 w-20 h-10 flex items-center justify-center text-cast-iron font-medium">
-                STEP {index + 1}
-              </div>
+              <div className="flex-shrink-0 w-20 h-10 flex items-center justify-center text-cast-iron font-medium">STEP {index + 1}</div>
               <div className="flex-1 w-full">
-                <textarea
+                <textarea 
+                  placeholder="Enter instruction step" 
+                  required 
+                  rows={1} 
+                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base resize-none overflow-hidden" 
+                  style={{ height: '48px' }}
                   value={instruction}
                   onChange={(e) => updateInstruction(index, e.target.value)}
-                  placeholder="Enter instruction step"
-                  required
-                  rows={1}
                   onInput={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
-                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base resize-none overflow-hidden"
-                />
+                ></textarea>
               </div>
-              {index > 0 && (
-                <button
+              {instructions.length > 1 && (
+                <button 
                   type="button"
+                  className="text-red-500 hover:text-red-700"
                   onClick={() => removeInstruction(index)}
-                  className="flex-shrink-0 text-tomato hover:opacity-90 rounded-full w-8 h-8"
                 >
-                  ✕
+                  <i className="fa-solid fa-times"></i>
                 </button>
               )}
             </div>
           ))}
-          
-          <Button
+          <button 
+            className="
+              inline-flex items-center justify-center gap-2
+              rounded-lg font-medium
+              transition-colors duration-200
+              disabled:opacity-50 disabled:cursor-not-allowed
+              border-2 border-basil text-basil hover:bg-basil hover:text-white active:bg-basil active:text-white
+              px-3 py-1.5 text-sm
+              w-full md:w-auto py-3
+            " 
             type="button"
             onClick={addInstruction}
-            variant='outline'
-            className="w-full md:w-auto py-3"
-            size="sm"
-          >
-            + Add Step
-          </Button>
+          >+ Add Step</button>
         </div>
       </div>
-
-      {/* Categories Section */}
       <div className="md:bg-white md:rounded-xl md:p-8 md:shadow-sm md:border md:border-gray-100 space-y-6">
-        <h2 className="text-2xl font-bold text-basil mb-6">
-          Categories
-        </h2>
-
+        <h2 className="text-2xl font-bold text-basil mb-6">Categories</h2>
         <p className="text-sm text-gray-600">Select categories that apply to your recipe</p>
         
         {isLoadingCategories ? (
-          <div className="py-4 text-center">
-            <div className="inline-block animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-emerald-500"></div>
-            <span className="ml-2">Loading categories...</span>
+          <div className="py-4 flex justify-center">
+            <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-basil"></div>
           </div>
         ) : (
-          <div className="flex flex-wrap gap-3">
-            {userCategories.map(category => (
-              <div key={category} className="relative group">
-                <button
-                  type="button"
-                  onClick={() => handleCategoryChange(category)}
-                  className={`
-                    touch-action-manipulation
-                    px-3 py-1 rounded-full text-sm font-medium 
-                    transition-all duration-150 
-                    focus:outline-none 
-                    ${selectedCategories.includes(category)
-                        ? 'bg-basil text-white hover:bg-basil hover:text-white' 
-                        : 'bg-white text-steel hover:bg-gray-100'
-                    }
-                    active:shadow-inner active:scale-95
-                `}
+        <div className="flex flex-wrap gap-3">
+          {userCategories.map((category) => (
+            <div key={category} className="relative group">
+              <button 
+                type="button" 
+                className={`
+                  touch-action-manipulation
+                  px-3 py-1 rounded-full text-sm font-medium 
+                  transition-all duration-150 
+                  focus:outline-none 
+                  ${selectedCategories.includes(category) 
+                    ? 'bg-basil text-white' 
+                    : 'bg-white text-steel hover:bg-gray-100'}
+                  active:shadow-inner active:scale-95
+                `} 
                 aria-pressed={selectedCategories.includes(category)}
-                >
-                  {category}
-                </button>
-                
-              </div>
-            ))}
-          </div>
+                onClick={() => handleCategoryChange(category)}
+              >{category}</button>
+            </div>
+          ))}
+        </div>
         )}
-        {/* Add new category input */}
         <div className="flex gap-2 mb-4 flex-col md:flex-row">
           <input 
-            type="text"
+            placeholder="Add a new category..." 
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500" 
+            type="text" 
             value={newCategory}
             onChange={(e) => setNewCategory(e.target.value)}
-            placeholder="Add a new category..."
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
           />
-          <Button
+          <button 
+            className="
+              inline-flex items-center justify-center gap-2
+              rounded-lg font-medium
+              transition-colors duration-200
+              disabled:opacity-50 disabled:cursor-not-allowed
+              border-2 border-basil text-basil hover:bg-basil hover:text-white active:bg-basil active:text-white
+              px-4 py-2 text-base
+            " 
             type="button"
-            variant="outline"
             onClick={handleAddNewCategory}
-          >
-            + Add Category
-          </Button>
+          >+ Add Category</button>
         </div>
       </div>
-
-      {/* Submit Button */}
       <div className="flex justify-center">
-        <Button
+        <button 
+          className="
+            inline-flex items-center justify-center gap-2
+            rounded-lg font-medium
+            transition-colors duration-200
+            disabled:opacity-50 disabled:cursor-not-allowed
+            bg-basil text-white hover:bg-basil-600 active:bg-basil-700
+            px-4 py-2 text-base
+            w-full md:w-auto py-3 px-8
+          " 
           type="submit"
-          variant='primary'
-          className="w-full md:w-auto py-3 px-8"
-        >
-          {submitButtonText}
-        </Button>
+        >Save Recipe</button>
       </div>
     </form>
   );

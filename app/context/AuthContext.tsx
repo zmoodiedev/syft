@@ -103,8 +103,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             } else {
                 setUser(null);
                 setUserProfile(null);
-                // Only redirect to login if we're not already there and not on a public route
-                if (pathname !== '/login' && pathname !== '/') {
+                // Only redirect to login if we're not on a public route
+                if (pathname !== '/login' && 
+                    pathname !== '/' && 
+                    !pathname.includes('/signup') && 
+                    !pathname.includes('/recipes/')) {
                     router.push('/login');
                 }
             }
