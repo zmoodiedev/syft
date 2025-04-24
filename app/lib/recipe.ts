@@ -158,31 +158,62 @@ export async function getUserStats(userId: string) {
       const recipesRef = collection(db, 'recipes');
       // Only query for public recipes unless we're authenticated
       const currentUser = auth.currentUser;
-      let recipesQuery;
       
       if (currentUser) {
         if (currentUser.uid === userId) {
           // User viewing their own recipes - count all
-          recipesQuery = query(recipesRef, where('userId', '==', userId));
+          const recipesQuery = query(recipesRef, where('userId', '==', userId));
+          const recipesSnapshot = await getDocs(recipesQuery);
+          recipeCount = recipesSnapshot.size;
         } else {
-          // Another user viewing someone's recipes - count all non-private
-          recipesQuery = query(
-            recipesRef, 
-            where('userId', '==', userId),
-            where('visibility', 'in', ['public', 'friends'])
-          );
+          // Another user viewing someone's recipes - need to check friendship
+          // First get all recipes by this user
+          const recipesQuery = query(recipesRef, where('userId', '==', userId));
+          const recipesSnapshot = await getDocs(recipesQuery);
+          
+          // Check friendship status
+          let isFriend = false;
+          try {
+            const friendshipsRef = collection(db, 'friendships');
+            const friendshipQuery = query(
+              friendshipsRef,
+              where('userIds', 'array-contains', currentUser.uid)
+            );
+            const friendshipsSnapshot = await getDocs(friendshipQuery);
+            
+            // Check if userId is in any of the friendships
+            friendshipsSnapshot.forEach(doc => {
+              const data = doc.data();
+              if (data.userIds && data.userIds.includes(userId)) {
+                isFriend = true;
+              }
+            });
+          } catch (friendError) {
+            console.error('Error checking friendship:', friendError);
+          }
+          
+          // Count recipes based on friendship status
+          recipeCount = 0;
+          recipesSnapshot.forEach(doc => {
+            const data = doc.data();
+            const visibility = data.visibility?.toLowerCase() || 'public';
+            
+            if (visibility === 'public' || 
+                (visibility === 'friends' && isFriend)) {
+              recipeCount++;
+            }
+          });
         }
       } else {
         // Not authenticated - only count public recipes
-        recipesQuery = query(
+        const recipesQuery = query(
           recipesRef, 
           where('userId', '==', userId),
           where('visibility', '==', 'public')
         );
+        const recipesSnapshot = await getDocs(recipesQuery);
+        recipeCount = recipesSnapshot.size;
       }
-      
-      const recipesSnapshot = await getDocs(recipesQuery);
-      recipeCount = recipesSnapshot.size;
     } catch (error) {
       console.error('Error counting recipes:', error);
       // Continue with zeroed count

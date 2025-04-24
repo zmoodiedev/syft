@@ -46,11 +46,25 @@ export async function createUserProfile(userId: string, userData: Partial<UserPr
 export async function updateUserProfile(userId: string, updates: Partial<UserProfile>) {
   const userRef = doc(db, 'users', userId);
   
-  // Add updatedAt timestamp
+  // Check existing profile data
+  const userDoc = await getDoc(userRef);
+  if (!userDoc.exists()) {
+    throw new Error("User profile doesn't exist");
+  }
+  
+  // Add updatedAt timestamp and ensure arrays are handled correctly
   const updatedData = {
     ...updates,
     updatedAt: serverTimestamp()
   };
+  
+  // Ensure customCategories is properly handled as an array
+  if (updates.customCategories !== undefined) {
+    // Make sure it's always stored as an array, even if empty
+    updatedData.customCategories = Array.isArray(updates.customCategories) 
+      ? [...updates.customCategories] 
+      : [];
+  }
   
   // Update the user profile
   await updateDoc(userRef, updatedData);

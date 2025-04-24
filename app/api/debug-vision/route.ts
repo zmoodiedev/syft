@@ -51,7 +51,7 @@ interface DebugResults {
   unexpectedError?: ApiError;
 }
 
-// Create a simple testing function for diagnosis
+
 export async function GET() {
   // Generate a trace ID for tracking
   const traceId = `debug-${Date.now()}`;
@@ -146,7 +146,7 @@ export async function GET() {
         console.log(`[${traceId}] Vision API client created with credentials file`);
         results.visionApiStatus = 'initialized';
         
-        // Try a simple API call
+
         try {
           // Use text detection instead of locationDetection which doesn't exist
           const [response] = await visionClient.textDetection({
