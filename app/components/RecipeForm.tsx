@@ -258,10 +258,10 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
     // Set processing state immediately to prevent double calls
     setIsProcessingRecipe(true);
     
-    // Validate file type more strictly
-    const validTypes = ['image/jpeg', 'image/png'];
-    if (!validTypes.includes(file.type)) {
-      toast.error('Please select a JPG or PNG image file (other formats may not be supported by the API)');
+    // Validate file type - expanded to accept more file types for conversion
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif'];
+    if (!validTypes.includes(file.type) && !file.name.match(/\.(jpg|jpeg|png|gif|webp|heic|heif)$/i)) {
+      toast.error('Please select a valid image file. We support JPG, PNG, GIF, WEBP, and HEIC formats.', { duration: 6000 });
       setIsProcessingRecipe(false);
       return;
     }
@@ -285,13 +285,24 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
       // Pre-process the image on the client side to ensure compatibility
       // This converts any image to a normalized JPEG format before sending to the API
       let processedFile = file;
+      let conversionSuccess = false;
       
       try {
+        // Log file info for debugging
+        console.log('Processing file:', {
+          name: file.name,
+          type: file.type,
+          size: Math.round(file.size / 1024) + 'KB'
+        });
+      
         // Create an image element
         const img = document.createElement('img');
         const imgLoaded = new Promise<void>((resolve, reject) => {
           img.onload = () => resolve();
-          img.onerror = () => reject(new Error('Failed to load image'));
+          img.onerror = (e) => {
+            console.error('Image loading error:', e);
+            reject(new Error('Failed to load image - format may be unsupported'));
+          }
         });
         
         // Create an object URL from the file
@@ -299,6 +310,11 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
         
         // Wait for the image to load
         await imgLoaded;
+        
+        console.log('Image loaded successfully with dimensions:', {
+          width: img.width,
+          height: img.height
+        });
         
         // Create a canvas to draw the image
         const canvas = document.createElement('canvas');
@@ -327,17 +343,36 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
         // Draw the image onto the canvas
         ctx.drawImage(img, 0, 0, width, height);
         
-        // Convert to a JPEG blob
-        const blob = await new Promise<Blob>((resolve, reject) => {
-          canvas.toBlob(
-            (blob) => {
-              if (blob) resolve(blob);
-              else reject(new Error('Failed to create blob'));
-            },
-            'image/jpeg',
-            0.92 // Quality
-          );
-        });
+        // Try multiple quality settings if needed
+        const qualityOptions = [0.92, 0.85, 0.75];
+        let blob: Blob | null = null;
+        
+        for (const quality of qualityOptions) {
+          try {
+            blob = await new Promise<Blob>((resolve, reject) => {
+              canvas.toBlob(
+                (b) => {
+                  if (b) resolve(b);
+                  else reject(new Error('Failed to create blob'));
+                },
+                'image/jpeg',
+                quality
+              );
+            });
+            
+            // If we got a blob, break the loop
+            if (blob) {
+              console.log(`Successfully created JPEG blob with quality ${quality}, size: ${Math.round(blob.size / 1024)}KB`);
+              break;
+            }
+          } catch (blobError) {
+            console.error(`Error creating blob with quality ${quality}:`, blobError);
+          }
+        }
+        
+        if (!blob) {
+          throw new Error('Failed to create image blob after multiple attempts');
+        }
         
         // Create a new file from the blob
         processedFile = new File([blob], 'processed-image.jpg', {
@@ -348,11 +383,25 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
         // Clean up the object URL
         URL.revokeObjectURL(img.src);
         
-        console.log('Successfully pre-processed image on client side');
+        console.log('Successfully pre-processed image on client side:', {
+          originalSize: Math.round(file.size / 1024) + 'KB',
+          processedSize: Math.round(processedFile.size / 1024) + 'KB'
+        });
+        
+        conversionSuccess = true;
       } catch (processingError) {
         // If client-side processing fails, continue with the original file
         console.error('Client-side image processing failed:', processingError);
         console.log('Proceeding with original image file');
+      }
+
+      // If conversion failed but the original isn't a JPEG, warn the user
+      if (!conversionSuccess && file.type !== 'image/jpeg') {
+        console.warn('Using original non-JPEG image without successful conversion');
+        toast.error('Your image format might not be fully supported. If extraction fails, please try with a JPEG image.', { 
+          duration: 5000,
+          icon: '⚠️',
+        });
       }
       
       // Create form data for the file (using the processed file if available)
@@ -418,7 +467,28 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
     } catch (error) {
       console.error('Error processing recipe image:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      toast.error(`Failed to extract recipe text: ${errorMessage}`, { id: 'processing-recipe' });
+      
+      // Create a more helpful error message for the user
+      let userFriendlyMessage = `Failed to extract recipe text: ${errorMessage}`;
+      
+      // Check for the specific image format error message
+      if (errorMessage.toLowerCase().includes('unsupported') &&
+          errorMessage.toLowerCase().includes('image format')) {
+        userFriendlyMessage = 
+          'The image format is not supported. Please try these solutions:' +
+          '\n1. Use your phone to take a normal JPEG photo of your recipe' +
+          '\n2. If using a screenshot, try saving it as JPEG first' +
+          '\n3. Try a different image with clearer text';
+          
+        toast.error(userFriendlyMessage, { 
+          id: 'processing-recipe',
+          duration: 8000
+        });
+      } else {
+        toast.error(`Failed to extract recipe text: ${errorMessage}`, { 
+          id: 'processing-recipe'
+        });
+      }
       
       // If scanning was initiated in scan mode, provide a prompt to try manual entry
       if (scanMode) {
