@@ -28,6 +28,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Log file information for debugging
+    console.log('Received file for upload:', {
+      name: file.name,
+      type: file.type,
+      size: file.size
+    });
+
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       return NextResponse.json(
@@ -53,7 +60,7 @@ export async function POST(request: NextRequest) {
     const base64 = buffer.toString('base64');
     const dataURI = `data:${file.type};base64,${base64}`;
 
-    // Upload to Cloudinary with optimizations
+    // Upload to Cloudinary with optimizations and robust error handling
     const transformationOptions = {
       folder: 'syft_recipes',
       resource_type: 'image' as ResourceType,
@@ -62,25 +69,61 @@ export async function POST(request: NextRequest) {
       width: 1200, // Reasonable max width
       crop: 'limit',
       fetch_format: 'auto',
+      timeout: 60000, // Increase timeout to 60 seconds
     };
 
-    // Upload to Cloudinary
-    const result = await new Promise<{ secure_url: string }>((resolve, reject) => {
-      cloudinary.uploader.upload(
-        dataURI,
-        transformationOptions,
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result as { secure_url: string });
-        }
-      );
+    console.log('Starting Cloudinary upload with options:', {
+      folder: transformationOptions.folder,
+      format: transformationOptions.format,
+      quality: transformationOptions.quality,
+      width: transformationOptions.width,
     });
 
+    // Upload to Cloudinary with retry
+    let result;
+    let retryCount = 0;
+    const maxRetries = 2;
+    
+    while (retryCount <= maxRetries) {
+      try {
+        result = await new Promise<{ secure_url: string }>((resolve, reject) => {
+          cloudinary.uploader.upload(
+            dataURI,
+            transformationOptions,
+            (error, result) => {
+              if (error) {
+                console.error(`Upload attempt ${retryCount + 1} failed:`, error);
+                reject(error);
+              } else {
+                console.log(`Upload successful on attempt ${retryCount + 1}`);
+                resolve(result as { secure_url: string });
+              }
+            }
+          );
+        });
+        break; // Success, exit the retry loop
+      } catch (uploadError) {
+        retryCount++;
+        if (retryCount > maxRetries) {
+          console.error(`All ${maxRetries + 1} upload attempts failed`);
+          throw uploadError;
+        }
+        console.log(`Retrying upload, attempt ${retryCount + 1} of ${maxRetries + 1}`);
+        // Wait briefly before retrying
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+
+    if (!result?.secure_url) {
+      throw new Error('Upload succeeded but no secure URL was returned');
+    }
+
+    console.log('Image uploaded successfully:', result.secure_url);
     return NextResponse.json({ imageUrl: result.secure_url });
   } catch (error) {
     console.error('Error uploading image:', error);
     return NextResponse.json(
-      { error: 'Failed to upload image' },
+      { error: 'Failed to upload image: ' + (error instanceof Error ? error.message : String(error)) },
       { status: 500 }
     );
   }

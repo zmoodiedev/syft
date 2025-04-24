@@ -48,28 +48,90 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get info about the file for debugging
+    console.log('Received file:', {
+      name: file.name,
+      type: file.type,
+      size: file.size,
+    });
+
     // Convert file to buffer
     const bytes = await file.arrayBuffer();
-    let buffer = Buffer.from(bytes);
+    const buffer = Buffer.from(bytes);
+    let processedBuffer: Buffer = buffer;
+    let skippedImageProcessing = false;
 
     // Convert image to a standard format (JPEG) using Sharp
     try {
-      // Using sharp to convert to JPEG format that Vision API handles well
-      const convertedBuffer = await sharp(buffer)
-        .jpeg({ quality: 90 }) // Convert to JPEG with 90% quality
+      // Using sharp with more explicit format handling
+      const image = sharp(buffer);
+      
+      // Get image metadata to detect format issues
+      const metadata = await image.metadata();
+      console.log('Image metadata:', JSON.stringify({
+        format: metadata.format,
+        width: metadata.width,
+        height: metadata.height,
+        space: metadata.space,
+        channels: metadata.channels
+      }));
+      
+      // Force conversion to JPEG with explicit settings
+      const convertedBuffer = await image
+        .jpeg({
+          quality: 90,
+          progressive: true,
+          force: true,
+          chromaSubsampling: '4:4:4'
+        })
         .toBuffer();
       
-      buffer = convertedBuffer as Buffer<ArrayBuffer>;
+      processedBuffer = convertedBuffer;
       console.log('Successfully converted image to JPEG format');
     } catch (conversionError) {
       console.error('Error converting image format:', conversionError);
       // Continue with original buffer if conversion fails
       console.log('Proceeding with original image format');
+      
+      // Try a simpler conversion as fallback
+      try {
+        const simpleConversion = await sharp(buffer, { failOn: 'none' })
+          .toFormat('jpeg')
+          .toBuffer();
+        processedBuffer = simpleConversion;
+        console.log('Fallback conversion successful');
+      } catch (fallbackError) {
+        console.error('Fallback conversion also failed:', fallbackError);
+        skippedImageProcessing = true;
+      }
     }
 
     // Perform OCR using Google Cloud Vision API
     try {
-      const [textDetectionResult] = await visionClient.textDetection(buffer);
+      // If all Sharp conversions failed, log this info
+      if (skippedImageProcessing) {
+        console.log('Using original buffer: Sharp image processing was skipped');
+      }
+      
+      // Try direct text detection
+      let textDetectionResult;
+      try {
+        [textDetectionResult] = await visionClient.textDetection(processedBuffer);
+      } catch (visionError) {
+        console.error('Error with standard buffer detection:', visionError);
+        
+        // Last resort: Try sending as base64 content
+        console.log('Attempting base64 encoded image detection as last resort');
+        try {
+          const base64Image = buffer.toString('base64');
+          [textDetectionResult] = await visionClient.textDetection({
+            image: { content: base64Image }
+          });
+        } catch (base64Error) {
+          console.error('Base64 detection also failed:', base64Error);
+          throw new Error(`All image detection methods failed: ${(visionError as Error).message}`);
+        }
+      }
       
       if (!textDetectionResult) {
         console.error('Vision API returned no results');
