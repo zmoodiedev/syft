@@ -1058,8 +1058,11 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
             <h3 className={`text-xl font-semibold mb-2 ${scanMode ? 'text-basil' : 'text-amber-800'}`}>
               {scanMode ? 'Scan Your Recipe' : 'Recipe Scanner'}
             </h3>
-            <p className="text-cast-iron text-sm mb-4">
+            <p className="text-cast-iron text-sm mb-2">
               Upload a photo of a recipe card or a page from a cookbook to automatically extract the recipe details.
+            </p>
+            <p className="text-amber-700 text-xs italic mb-4">
+              Note: Scanned content may require manual adjustments. The extraction process isn&apos;t perfect and you may need to edit the results.
             </p>
           </div>
           <div className="flex items-center">
