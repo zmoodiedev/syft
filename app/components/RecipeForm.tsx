@@ -406,6 +406,76 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
       
       // Create form data for the file (using the processed file if available)
       const formData = new FormData();
+      
+      // For problematic images, try a more aggressive conversion approach
+      if (!conversionSuccess && file.type !== 'image/jpeg') {
+        try {
+          console.log('Attempting a more aggressive image conversion...');
+          
+          // Create a new Image element
+          const img = new Image();
+          
+          // Set up a promise to wait for the image to load
+          const loadPromise = new Promise<void>((resolve, reject) => {
+            img.onload = () => resolve();
+            img.onerror = () => reject(new Error('Failed to load image in fallback conversion'));
+          });
+          
+          // Set image source to a blob URL
+          img.src = URL.createObjectURL(file);
+          
+          // Wait for the image to load
+          await loadPromise;
+          
+          // Create a canvas with the image dimensions
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          
+          // Get the 2D context and draw the image
+          const ctx = canvas.getContext('2d', { willReadFrequently: true });
+          if (!ctx) {
+            throw new Error('Failed to get canvas context');
+          }
+          
+          // Draw white background to handle transparency
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          
+          // Draw the image
+          ctx.drawImage(img, 0, 0);
+          
+          // Get the data URL (base64)
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          
+          // Convert base64 to Blob
+          const byteString = atob(dataUrl.split(',')[1]);
+          const mimeString = dataUrl.split(',')[0].split(':')[1].split(';')[0];
+          const ab = new ArrayBuffer(byteString.length);
+          const ia = new Uint8Array(ab);
+          
+          for (let i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
+          }
+          
+          const blob = new Blob([ab], { type: mimeString });
+          processedFile = new File([blob], 'converted-image.jpg', { type: 'image/jpeg' });
+          
+          // Clean up
+          URL.revokeObjectURL(img.src);
+          
+          console.log('Successfully performed fallback image conversion:', {
+            originalSize: Math.round(file.size / 1024) + 'KB',
+            newSize: Math.round(processedFile.size / 1024) + 'KB'
+          });
+          
+          toast.success('Image converted successfully for processing', { duration: 2000 });
+          conversionSuccess = true;
+        } catch (fallbackError) {
+          console.error('Fallback conversion also failed:', fallbackError);
+        }
+      }
+      
       formData.append('file', processedFile);
       
       // Send to our API endpoint

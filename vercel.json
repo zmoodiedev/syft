@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "functions": {
+    "app/api/vision-to-recipe/route.ts": {
+      "memory": 1024,
+      "maxDuration": 60
+    },
+    "app/api/scrape-recipe/route.ts": {
+      "memory": 1024,
+      "maxDuration": 60
+    },
+    "app/api/upload-image/route.ts": {
+      "memory": 1024,
+      "maxDuration": 60
+    },
+    "app/api/delete-image/route.ts": {
+      "memory": 1024,
+      "maxDuration": 60
+    }
+  },
+  "env": {
+    "NODE_ENV": "production"
+  }
+} 
