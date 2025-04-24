@@ -7,24 +7,27 @@
     }
   ],
   "functions": {
-    "app/api/vision-to-recipe/route.ts": {
-      "memory": 1024,
-      "maxDuration": 60
-    },
-    "app/api/scrape-recipe/route.ts": {
-      "memory": 1024,
-      "maxDuration": 60
-    },
-    "app/api/upload-image/route.ts": {
-      "memory": 1024,
-      "maxDuration": 60
-    },
-    "app/api/delete-image/route.ts": {
+    "app/api/**/*": {
       "memory": 1024,
       "maxDuration": 60
     }
   },
   "env": {
     "NODE_ENV": "production"
-  }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate, proxy-revalidate"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        }
+      ]
+    }
+  ]
 } 

@@ -4,9 +4,6 @@ import { ImageAnnotatorClient } from '@google-cloud/vision';
 // Specify Node.js runtime for Google Cloud Vision compatibility
 export const runtime = 'nodejs';
 
-// Initialize Google Cloud Vision client with more verbose error handling
-let visionClient: ImageAnnotatorClient;
-
 // Create a simple logging wrapper that's more visible in Vercel logs
 const logVercel = (type: 'info' | 'error' | 'warn', message: string, data?: unknown) => {
   const prefix = `[VERCEL ${type.toUpperCase()}]`;
@@ -17,52 +14,120 @@ const logVercel = (type: 'info' | 'error' | 'warn', message: string, data?: unkn
   }
 };
 
-try {
-  logVercel('info', 'Initializing Vision API client');
-  
-  if (process.env.GOOGLE_VISION_CLIENT_EMAIL && process.env.GOOGLE_VISION_PRIVATE_KEY) {
-    // Use explicit credentials
-    logVercel('info', 'Using explicit credentials via env vars', { 
-      email: process.env.GOOGLE_VISION_CLIENT_EMAIL.substring(0, 5) + '...' 
-    });
-    
-    // Format the private key correctly - Vercel sometimes has issues with newlines
-    const privateKey = process.env.GOOGLE_VISION_PRIVATE_KEY
-      .replace(/\\n/g, '\n')
-      .replace(/""/g, '"'); // Fix potential double quotes issue
-    
-    visionClient = new ImageAnnotatorClient({
-      credentials: {
-        client_email: process.env.GOOGLE_VISION_CLIENT_EMAIL,
-        private_key: privateKey,
-      },
-    });
-    
-    logVercel('info', 'Vision client initialized successfully with credentials');
-  } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-    // Fall back to GOOGLE_APPLICATION_CREDENTIALS environment variable
-    logVercel('info', 'Using credentials file path', { 
-      path: process.env.GOOGLE_APPLICATION_CREDENTIALS 
-    });
-    visionClient = new ImageAnnotatorClient();
-    logVercel('info', 'Vision client initialized successfully with credentials file');
-  } else {
-    logVercel('error', 'No Google Cloud Vision API credentials found');
-    visionClient = new ImageAnnotatorClient(); // This will likely fail, but we'll handle the error when the API is called
+// Initialize Google Cloud Vision client with better Vercel compatibility
+let visionClient: ImageAnnotatorClient;
+
+// Helper function to properly format Google Cloud private key for Vercel
+function formatPrivateKey(privateKey: string): string {
+  // Check if the key already contains the proper format
+  if (privateKey.includes('-----BEGIN PRIVATE KEY-----')) {
+    console.log('Private key appears to be properly formatted already');
+    return privateKey;
   }
-} catch (error) {
-  logVercel('error', 'Error initializing Google Cloud Vision client', error);
-  // Create a dummy client that will throw a more helpful error when used
+  
+  // Apply all possible transformations that might be needed for Vercel
+  let formattedKey = privateKey
+    .replace(/\\n/g, '\n')             // Replace escaped newlines
+    .replace(/\\"/g, '"')              // Replace escaped double quotes
+    .replace(/\\'/g, "'")              // Replace escaped single quotes
+    .replace(/\\&/g, '&')              // Replace escaped ampersands
+    .replace(/\\r/g, '\r')             // Replace escaped carriage returns
+    .replace(/""/g, '"')               // Fix double quotes that might have been doubled
+    .replace(/^"|"$/g, '');            // Remove wrapping quotes if present
+  
+  // Vercel sometimes adds actual newlines before and after the key
+  formattedKey = formattedKey.trim();
+  
+  // If after all transformations, the key still doesn't have the proper format,
+  // it might have been completely escaped or mangled
+  if (!formattedKey.includes('-----BEGIN PRIVATE KEY-----')) {
+    console.log('Warning: Private key still does not contain expected format after transformations');
+  }
+  
+  return formattedKey;
+}
+
+try {
+  logVercel('info', 'Initializing Vision API client in Vercel environment');
+  
+  // Create a credentials object directly using environment variables
+  // This is more reliable in Vercel's serverless environment
+  if (process.env.GOOGLE_VISION_CLIENT_EMAIL && process.env.GOOGLE_VISION_PRIVATE_KEY) {
+    logVercel('info', 'Using explicit Google credentials in Vercel');
+    
+    // Check for proper formatting of the private key using our specialized helper
+    const privateKey = formatPrivateKey(process.env.GOOGLE_VISION_PRIVATE_KEY);
+    
+    // Log the first few characters of credentials for debugging (NOT the full key)
+    logVercel('info', 'Credential info', {
+      client_email_prefix: process.env.GOOGLE_VISION_CLIENT_EMAIL.substring(0, 5) + '...',
+      private_key_valid: privateKey.includes('-----BEGIN PRIVATE KEY-----'),
+      private_key_length: privateKey.length,
+      private_key_first_line: privateKey.split('\n')[0] || 'empty'
+    });
+    
+    try {
+      // Create explicit credentials object
+      visionClient = new ImageAnnotatorClient({
+        credentials: {
+          client_email: process.env.GOOGLE_VISION_CLIENT_EMAIL,
+          private_key: privateKey
+        }
+      });
+      logVercel('info', 'Vision API client created with explicit credentials');
+      
+      // Test the credentials immediately with a very small request
+      try {
+        const testResult = await visionClient.textDetection({
+          image: { content: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVQI12P4//8/AAX+Av7czFnnAAAAAElFTkSuQmCC', 'base64') }
+        });
+        logVercel('info', 'Credentials test successful', { 
+          hasResult: !!testResult 
+        });
+      } catch (testError) {
+        logVercel('error', 'Credentials appear valid but API test failed', testError);
+      }
+    } catch (credError) {
+      logVercel('error', 'Failed to create Vision client with explicit credentials', credError);
+      throw credError;
+    }
+  } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    logVercel('info', 'Using credentials file path in Vercel', {
+      path: process.env.GOOGLE_APPLICATION_CREDENTIALS
+    });
+    
+    try {
+      visionClient = new ImageAnnotatorClient();
+      logVercel('info', 'Vision API client created with credentials file');
+    } catch (fileError) {
+      logVercel('error', 'Failed to create Vision client with credentials file', fileError);
+      throw fileError;
+    }
+  } else {
+    // Last resort: try with default config for project-level authentication
+    logVercel('warn', 'No explicit credentials found, trying default Google auth');
+    
+    try {
+      visionClient = new ImageAnnotatorClient();
+      logVercel('info', 'Vision API client created with default credentials');
+    } catch (defaultError) {
+      logVercel('error', 'Failed to create Vision client with default credentials', defaultError);
+      throw new Error('No valid Google Cloud Vision credentials found. Please configure GOOGLE_VISION_CLIENT_EMAIL and GOOGLE_VISION_PRIVATE_KEY environment variables.');
+    }
+  }
+} catch (initError) {
+  logVercel('error', 'Error initializing Google Cloud Vision client', initError);
+  
+  // Create a client that immediately throws a helpful error when used
   visionClient = {
     textDetection: async () => {
-      throw new Error('Google Cloud Vision API client failed to initialize. Please check your credentials.');
+      throw new Error('Google Cloud Vision API client failed to initialize. Please check your credentials and Vercel environment variables.');
     }
   } as unknown as ImageAnnotatorClient;
 }
 
 export async function POST(request: NextRequest) {
   try {
-    // Log the request is being processed
     logVercel('info', 'Received vision-to-recipe request');
     
     const formData = await request.formData();
@@ -108,9 +173,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Add a trace ID to track this specific request
+    const traceId = `vision-req-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    logVercel('info', `Starting Vision API call [${traceId}]`);
+
     // Perform OCR using Google Cloud Vision API with detailed error tracking
     try {
-      logVercel('info', 'Sending image to Vision API');
+      logVercel('info', `Sending image to Vision API [${traceId}]`);
       
       let detectionResult;
       try {
@@ -119,23 +188,24 @@ export async function POST(request: NextRequest) {
           image: { content: base64Image }
         });
         
-        logVercel('info', 'Successfully received Vision API response');
+        logVercel('info', `Successfully received Vision API response [${traceId}]`);
       } catch (visionError: unknown) {
         // Log the specific error and return a detailed error response
         const errorDetails = visionError instanceof Error ? {
           message: visionError.message,
-          code: (visionError as any).code,
-          details: (visionError as any).details,
-          status: (visionError as any).status
+          // Type assertion for additional properties that might be on the error
+          code: (visionError as { code?: string }).code,
+          details: (visionError as { details?: unknown }).details,
+          status: (visionError as { status?: unknown }).status
         } : { message: String(visionError) };
         
-        logVercel('error', 'Vision API error', errorDetails);
+        logVercel('error', `Vision API error [${traceId}]`, errorDetails);
         
         throw new Error(`Vision API error: ${errorDetails.message || 'Unknown error'}`);
       }
       
       if (!detectionResult) {
-        logVercel('error', 'Vision API returned no results');
+        logVercel('error', `Vision API returned no results [${traceId}]`);
         return NextResponse.json(
           { error: 'Vision API returned no text detection results' },
           { status: 500 }
@@ -145,7 +215,7 @@ export async function POST(request: NextRequest) {
       const detections = detectionResult.textAnnotations || [];
       
       if (!detections.length) {
-        logVercel('error', 'No text detected in the image');
+        logVercel('error', `No text detected in the image [${traceId}]`);
         return NextResponse.json(
           { error: 'No text detected in the image. Please try a clearer photo with visible text.' },
           { status: 400 }
@@ -156,14 +226,14 @@ export async function POST(request: NextRequest) {
       const extractedText = detections[0].description || '';
 
       if (!extractedText) {
-        logVercel('error', 'Empty text extracted from image');
+        logVercel('error', `Empty text extracted from image [${traceId}]`);
         return NextResponse.json(
           { error: 'Failed to extract text from image. Please try a different image.' },
           { status: 400 }
         );
       }
 
-      logVercel('info', 'Successfully extracted text from image', {
+      logVercel('info', `Successfully extracted text from image [${traceId}]`, {
         textLength: extractedText.length,
         textPreview: extractedText.substring(0, 100) + '...'
       });
@@ -171,6 +241,7 @@ export async function POST(request: NextRequest) {
       // Return just the raw text for manual processing
       return NextResponse.json({ 
         rawText: extractedText,
+        traceId, // Include the trace ID in the response for debugging
         // Provide empty template for the client to populate manually
         recipe: {
           name: "",
@@ -179,7 +250,7 @@ export async function POST(request: NextRequest) {
         }
       });
     } catch (error) {
-      logVercel('error', 'Error calling Google Cloud Vision API', error);
+      logVercel('error', `Error calling Google Cloud Vision API [${traceId}]`, error);
       
       // Add more context to the error for debugging
       let errorMessage = error instanceof Error ? error.message : String(error);
@@ -190,14 +261,21 @@ export async function POST(request: NextRequest) {
       }
       
       return NextResponse.json(
-        { error: 'Failed to extract text from image: ' + errorMessage },
+        { 
+          error: 'Failed to extract text from image: ' + errorMessage,
+          traceId // Include trace ID in error responses too
+        },
         { status: 500 }
       );
     }
   } catch (error) {
-    logVercel('error', 'Unexpected error in vision-to-recipe API', error);
+    const errorTraceId = `error-${Date.now()}`;
+    logVercel('error', `Unexpected error in vision-to-recipe API [${errorTraceId}]`, error);
     return NextResponse.json(
-      { error: 'Failed to process image: ' + (error instanceof Error ? error.message : String(error)) },
+      { 
+        error: 'Failed to process image: ' + (error instanceof Error ? error.message : String(error)),
+        traceId: errorTraceId
+      },
       { status: 500 }
     );
   }
