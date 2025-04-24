@@ -10,6 +10,9 @@ import { getUserProfile, updateUserProfile } from '@/app/lib/user';
 import { UserProfile } from '@/app/models/User';
 import Button from '@/app/components/Button';
 import { uploadImage, deleteImage } from '@/lib/cloudinary';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '@/app/lib/firebase';
+import { DEFAULT_CATEGORIES } from '@/app/components/RecipeForm';
 
 export default function EditProfilePage() {
   const { user } = useAuth();
@@ -53,7 +56,52 @@ export default function EditProfilePage() {
       try {
         const profileData = await getUserProfile(user.uid);
         if (profileData) {
-          setProfile(profileData);
+          setProfile(profileData as UserProfile);
+          
+          // Fetch the user's recipes to extract any custom categories that might exist
+          try {
+            const recipesRef = collection(db, 'recipes');
+            const q = query(
+              recipesRef,
+              where('userId', '==', user.uid)
+            );
+            
+            const querySnapshot = await getDocs(q);
+            const recipesData = querySnapshot.docs.map(doc => doc.data());
+            
+            // Extract unique categories from all recipes
+            const allCategories = new Set<string>();
+            
+            // Add default and existing custom categories
+            DEFAULT_CATEGORIES.forEach(cat => allCategories.add(cat));
+            if ((profileData as UserProfile).customCategories) {
+              (profileData as UserProfile).customCategories.forEach((cat: string) => allCategories.add(cat));
+            }
+            
+            // Add any categories from recipes
+            recipesData.forEach(recipe => {
+              if (recipe.categories && Array.isArray(recipe.categories)) {
+                recipe.categories.forEach((category: string) => {
+                  allCategories.add(category);
+                });
+              }
+            });
+            
+            // Remove default categories from the set so we only have custom categories
+            const customCategories = Array.from(allCategories).filter(
+              cat => !DEFAULT_CATEGORIES.includes(cat)
+            );
+            
+            // Update profile with the merged categories
+            if (customCategories.length > 0) {
+              setProfile(prev => ({
+                ...prev,
+                customCategories
+              }));
+            }
+          } catch (error) {
+            console.error('Error fetching recipes for categories:', error);
+          }
         }
       } catch (error) {
         console.error('Error loading profile:', error);

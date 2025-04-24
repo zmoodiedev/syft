@@ -174,6 +174,19 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
       setValue('prepTime', initialData.prepTime);
       setValue('cookTime', initialData.cookTime);
       setValue('sourceUrl', initialData.sourceUrl || '');
+      
+      // Check if the recipe has categories that aren't in userCategories
+      if (initialData.categories && initialData.categories.length > 0) {
+        const newCategories = initialData.categories.filter(
+          category => !userCategories.includes(category)
+        );
+        
+        // If there are new categories, add them to userCategories
+        if (newCategories.length > 0) {
+          setUserCategories(prev => [...prev, ...newCategories]);
+        }
+      }
+      
       setSelectedCategories(initialData.categories || []);
       setImageUrl(initialData.imageUrl || '');
       setIsPreviewingImage(!!initialData.imageUrl);
@@ -186,7 +199,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
         });
       }, 100);
     }
-  }, [initialData, setValue]);
+  }, [initialData, setValue, userCategories]);
 
   // Add useEffect hook to adjust textarea heights whenever instructions change
   useEffect(() => {

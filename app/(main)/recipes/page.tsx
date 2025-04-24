@@ -5,7 +5,6 @@ import { useAuth } from '@/app/context/AuthContext';
 import { db } from '@/app/lib/firebase';
 import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import RecipeCard from '@/app/components/RecipeCard';
-import { RECIPE_CATEGORIES } from '@/app/components/RecipeForm';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import Button from '@/app/components/Button';
 
@@ -62,18 +61,17 @@ export default function RecipesPage() {
                 setRecipes(recipesData);
                 
                 // Extract unique categories from user's recipes
-                const categories = new Set<string>();
+                const usedCategories = new Set<string>();
                 recipesData.forEach(recipe => {
                     if (recipe.categories && Array.isArray(recipe.categories)) {
                         recipe.categories.forEach(category => {
-                            if (RECIPE_CATEGORIES.includes(category)) {
-                                categories.add(category);
-                            }
+                            // Include all categories that are actually used in recipes
+                            usedCategories.add(category);
                         });
                     }
                 });
                 
-                setAvailableCategories(Array.from(categories).sort());
+                setAvailableCategories(Array.from(usedCategories).sort());
             } catch (error) {
                 console.error('Error fetching recipes:', error);
             } finally {
