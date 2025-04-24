@@ -4,14 +4,61 @@ import { ImageAnnotatorClient } from '@google-cloud/vision';
 // Specify Node.js runtime for Google Cloud Vision compatibility
 export const runtime = 'nodejs';
 
+// Define interfaces for error handling
+interface ApiError {
+  message: string;
+  code?: string | number;
+  details?: unknown;
+  stack?: string;
+}
+
+// Define interface for results
+interface DebugResults {
+  traceId: string;
+  timestamp: string;
+  environment?: string;
+  nodeVersion?: string;
+  method?: string;
+  visionApiStatus: string;
+  hasCredentials: boolean;
+  credentialDetails: {
+    type?: string;
+    email?: string;
+    privateKeyValid?: boolean;
+    privateKeyLength?: number;
+    path?: string;
+  };
+  apiResponse?: {
+    status: string;
+    locationsDetected?: number;
+  };
+  error: ApiError | null;
+  fileInfo?: {
+    name: string;
+    type: string;
+    size: number;
+  };
+  conversionSuccess?: boolean;
+  base64Length?: number;
+  credentialType?: string;
+  clientInitialized?: boolean;
+  apiCallSuccess?: boolean;
+  textDetected?: boolean;
+  textSample?: string;
+  apiError?: ApiError;
+  initError?: ApiError;
+  processError?: ApiError;
+  unexpectedError?: ApiError;
+}
+
 // Create a simple testing function for diagnosis
-export async function GET(request: NextRequest) {
+export async function GET() {
   // Generate a trace ID for tracking
   const traceId = `debug-${Date.now()}`;
   console.log(`[${traceId}] Starting Vision API debug check`);
   
   // Return object to collect results
-  const results: Record<string, any> = {
+  const results: DebugResults = {
     traceId,
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV,
@@ -57,33 +104,36 @@ export async function GET(request: NextRequest) {
       
         // Try a simple API call to check connectivity
         try {
-          const [location] = await visionClient.locationDetection({
+          // Use text detection instead of locationDetection which doesn't exist
+          const [response] = await visionClient.textDetection({
             image: { content: getSampleImageBase64() }
           });
           
           results.visionApiStatus = 'connected';
           results.apiResponse = {
             status: 'success',
-            locationsDetected: location?.locationsAnnotations?.length || 0
+            locationsDetected: response?.textAnnotations?.length || 0
           };
           
           console.log(`[${traceId}] Successfully connected to Vision API`);
-        } catch (apiError: any) {
-          console.error(`[${traceId}] API call error`, apiError);
+        } catch (apiError) {
+          const typedError = apiError as ApiError;
+          console.error(`[${traceId}] API call error`, typedError);
           results.visionApiStatus = 'initialization_succeeded_but_api_call_failed';
           results.error = {
-            message: apiError.message,
-            code: apiError.code,
-            details: apiError.details
+            message: typedError.message,
+            code: typedError.code,
+            details: typedError.details
           };
         }
-      } catch (initError: any) {
-        console.error(`[${traceId}] Client initialization error`, initError);
+      } catch (initError) {
+        const typedError = initError as ApiError;
+        console.error(`[${traceId}] Client initialization error`, typedError);
         results.visionApiStatus = 'initialization_failed';
         results.error = {
-          message: initError.message,
-          code: initError.code,
-          details: initError.details
+          message: typedError.message,
+          code: typedError.code,
+          details: typedError.details
         };
       }
     } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
@@ -98,33 +148,36 @@ export async function GET(request: NextRequest) {
         
         // Try a simple API call
         try {
-          const [location] = await visionClient.locationDetection({
+          // Use text detection instead of locationDetection which doesn't exist
+          const [response] = await visionClient.textDetection({
             image: { content: getSampleImageBase64() }
           });
           
           results.visionApiStatus = 'connected';
           results.apiResponse = {
             status: 'success',
-            locationsDetected: location?.locationsAnnotations?.length || 0
+            locationsDetected: response?.textAnnotations?.length || 0
           };
           
           console.log(`[${traceId}] Successfully connected to Vision API`);
-        } catch (apiError: any) {
-          console.error(`[${traceId}] API call error`, apiError);
+        } catch (apiError) {
+          const typedError = apiError as ApiError;
+          console.error(`[${traceId}] API call error`, typedError);
           results.visionApiStatus = 'initialization_succeeded_but_api_call_failed';
           results.error = {
-            message: apiError.message,
-            code: apiError.code,
-            details: apiError.details
+            message: typedError.message,
+            code: typedError.code,
+            details: typedError.details
           };
         }
-      } catch (initError: any) {
-        console.error(`[${traceId}] Client initialization error with file credentials`, initError);
+      } catch (initError) {
+        const typedError = initError as ApiError;
+        console.error(`[${traceId}] Client initialization error with file credentials`, typedError);
         results.visionApiStatus = 'initialization_failed';
         results.error = {
-          message: initError.message,
-          code: initError.code,
-          details: initError.details
+          message: typedError.message,
+          code: typedError.code,
+          details: typedError.details
         };
       }
     } else {
@@ -133,12 +186,13 @@ export async function GET(request: NextRequest) {
       results.visionApiStatus = 'no_credentials';
       console.log(`[${traceId}] No Google Cloud Vision credentials found`);
     }
-  } catch (error: any) {
-    console.error(`[${traceId}] Unexpected error in debug endpoint`, error);
+  } catch (error) {
+    const typedError = error as ApiError;
+    console.error(`[${traceId}] Unexpected error in debug endpoint`, typedError);
     results.visionApiStatus = 'unexpected_error';
     results.error = {
-      message: error.message,
-      stack: error.stack
+      message: typedError.message,
+      stack: typedError.stack
     };
   }
   
@@ -158,11 +212,14 @@ export async function POST(request: NextRequest) {
   const traceId = `debug-post-${Date.now()}`;
   console.log(`[${traceId}] Starting Vision API upload debug check`);
   
-  const results: Record<string, any> = {
+  const results: DebugResults = {
     traceId,
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV,
     method: 'POST',
+    visionApiStatus: 'unknown',
+    hasCredentials: false,
+    credentialDetails: {},
     error: null
   };
   
@@ -171,7 +228,7 @@ export async function POST(request: NextRequest) {
     const file = formData.get('file') as File | null;
     
     if (!file) {
-      results.error = 'No file received';
+      results.error = { message: 'No file received' };
       return NextResponse.json(results, { status: 400 });
     }
     
@@ -223,38 +280,42 @@ export async function POST(request: NextRequest) {
             });
             
             results.apiCallSuccess = true;
-            results.textDetected = response?.textAnnotations && response.textAnnotations.length > 0;
-            if (results.textDetected) {
-              results.textSample = response.textAnnotations[0].description.substring(0, 100);
+            results.textDetected = response?.textAnnotations ? response.textAnnotations.length > 0 : false;
+            if (results.textDetected && response?.textAnnotations) {
+              results.textSample = response.textAnnotations[0].description?.substring(0, 100) || '';
             }
-          } catch (apiError: any) {
+          } catch (apiError) {
+            const typedError = apiError as ApiError;
             results.apiCallSuccess = false;
             results.apiError = {
-              message: apiError.message,
-              code: apiError.code
+              message: typedError.message,
+              code: typedError.code
             };
           }
-        } catch (initError: any) {
+        } catch (initError) {
+          const typedError = initError as ApiError;
           results.clientInitialized = false;
           results.initError = {
-            message: initError.message
+            message: typedError.message
           };
         }
       } else {
         results.credentialType = 'none';
       }
-    } catch (processError: any) {
+    } catch (processError) {
+      const typedError = processError as ApiError;
       results.conversionSuccess = false;
       results.processError = {
-        message: processError.message
+        message: typedError.message
       };
     }
     
     return NextResponse.json(results);
-  } catch (error: any) {
-    console.error(`[${traceId}] Error in POST debug endpoint`, error);
+  } catch (error) {
+    const typedError = error as ApiError;
+    console.error(`[${traceId}] Error in POST debug endpoint`, typedError);
     results.unexpectedError = {
-      message: error.message
+      message: typedError.message
     };
     return NextResponse.json(results, { status: 500 });
   }
