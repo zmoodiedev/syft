@@ -26,6 +26,13 @@ interface Ingredient {
   unit: string;
   item: string;
   id: string;
+  groupName?: string; // Optional group name for organizing ingredients
+}
+
+interface Instruction {
+  text: string;
+  id: string;
+  groupName?: string; // Optional group name for organizing instructions
 }
 
 interface Recipe {
@@ -35,7 +42,7 @@ interface Recipe {
   prepTime: string;
   cookTime: string;
   ingredients: Ingredient[];
-  instructions: string[];
+  instructions: Instruction[] | string[]; // Support both old string[] and new Instruction[] formats
   categories?: string[];
   imageUrl?: string;
   userId: string;
@@ -621,33 +628,126 @@ export default function RecipeDetail() {
             {/* Ingredients Section */}
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b border-gray-200">Ingredients</h2>
-              <ul className="space-y-3">
-                {recipe.ingredients.map((ingredient, index) => (
-                  <li key={ingredient.id || index} className="flex items-start gap-2 mb-4">
-                    <span className="w-1.5 h-1.5 rounded-full bg-basil mt-2.5"></span>
-                    <span className="text-gray-700">
-                      {ingredient.amount && <span className="font-medium">{ingredient.amount} </span>}
-                      {ingredient.unit && <span>{ingredient.unit} </span>}
-                      <span>{ingredient.item}</span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
+              {(() => {
+                // Group ingredients by their groupName
+                const groupedIngredients: { [key: string]: Ingredient[] } = {};
+                
+                recipe.ingredients.forEach(ingredient => {
+                  const group = ingredient.groupName || '';
+                  if (!groupedIngredients[group]) {
+                    groupedIngredients[group] = [];
+                  }
+                  groupedIngredients[group].push(ingredient);
+                });
+                
+                // Get all group names, with empty string (ungrouped) first
+                const groups = Object.keys(groupedIngredients).sort((a, b) => {
+                  if (a === '') return -1;
+                  if (b === '') return 1;
+                  return a.localeCompare(b);
+                });
+                
+                return (
+                  <div className="space-y-6">
+                    {groups.map((groupName) => {
+                      const groupIngredients = groupedIngredients[groupName];
+                      
+                      return (
+                        <div key={groupName || 'ungrouped'} className="space-y-3">
+                          {groupName && (
+                            <h3 className="text-lg font-semibold text-gray-800 mt-6 mb-3 pb-1 border-b border-gray-100">
+                              {groupName}
+                            </h3>
+                          )}
+                          
+                          <ul className="space-y-3">
+                            {groupIngredients.map((ingredient, index) => (
+                              <li key={ingredient.id || index} className="flex items-start gap-2 mb-4">
+                                <span className="w-1.5 h-1.5 rounded-full bg-basil mt-2.5"></span>
+                                <span className="text-gray-700">
+                                  {ingredient.amount && <span className="font-medium">{ingredient.amount} </span>}
+                                  {ingredient.unit && <span>{ingredient.unit} </span>}
+                                  <span>{ingredient.item}</span>
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Instructions Section */}
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b border-gray-200">Instructions</h2>
-              <ol className="space-y-6">
-                {recipe.instructions.map((instruction, index) => (
-                  <li key={index} className="flex gap-4">
-                    <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
-                      <span className="font-semibold">{index + 1}</span>
-                    </div>
-                    <p className="text-gray-700 leading-relaxed">{instruction}</p>
-                  </li>
-                ))}
-              </ol>
+              {(() => {
+                // Convert instructions to Instruction[] format if needed
+                let instructionData: Instruction[] = [];
+                if (recipe.instructions.length > 0) {
+                  if (typeof recipe.instructions[0] === 'string') {
+                    instructionData = (recipe.instructions as string[]).map((text, index) => ({
+                      text,
+                      id: `instruction-${index}`,
+                      groupName: ''
+                    }));
+                  } else {
+                    instructionData = recipe.instructions as Instruction[];
+                  }
+                }
+                
+                // Group instructions by their groupName
+                const groupedInstructions: { [key: string]: Instruction[] } = {};
+                
+                instructionData.forEach(instruction => {
+                  const group = instruction.groupName || '';
+                  if (!groupedInstructions[group]) {
+                    groupedInstructions[group] = [];
+                  }
+                  groupedInstructions[group].push(instruction);
+                });
+                
+                // Get all group names, with empty string (ungrouped) first
+                const groups = Object.keys(groupedInstructions).sort((a, b) => {
+                  if (a === '') return -1;
+                  if (b === '') return 1;
+                  return a.localeCompare(b);
+                });
+                
+                return (
+                  <div className="space-y-8">
+                    {groups.map((groupName) => {
+                      const groupInstructions = groupedInstructions[groupName];
+                      
+                      return (
+                        <div key={groupName || 'ungrouped'} className="space-y-4">
+                          {groupName && (
+                            <h3 className="text-lg font-semibold text-gray-800 mt-6 mb-4 pb-1 border-b border-gray-100">
+                              {groupName}
+                            </h3>
+                          )}
+                          
+                          <ol className="space-y-6">
+                            {groupInstructions.map((instruction, groupIndex) => {
+                              const stepNumber = groupIndex + 1; // Step number within the group
+                              return (
+                                <li key={instruction.id} className="flex gap-4">
+                                  <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                                    <span className="font-semibold">{stepNumber}</span>
+                                  </div>
+                                  <p className="text-gray-700 leading-relaxed">{instruction.text}</p>
+                                </li>
+                              );
+                            })}
+                          </ol>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>
