@@ -24,6 +24,13 @@ interface Ingredient {
   unit: string;
   item: string;
   id: string;
+  groupName?: string; // Optional group name for organizing ingredients
+}
+
+interface Instruction {
+  text: string;
+  id: string;
+  groupName?: string; // Optional group name for organizing instructions
 }
 
 export interface Recipe {
@@ -33,7 +40,7 @@ export interface Recipe {
   prepTime: string;
   cookTime: string;
   ingredients: Ingredient[];
-  instructions: string[];
+  instructions: Instruction[] | string[]; // Support both old string[] and new Instruction[] formats
   categories?: string[];
   imageUrl?: string | null;
   userId?: string;
@@ -69,15 +76,34 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
       ? initialData.ingredients.map(ing => ({ ...ing, id: ing.id || String(Date.now() + Math.random()) }))
       : [{ amount: '', unit: '', item: '', id: '1' }]
   );
-  const [instructions, setInstructions] = useState<string[]>(
-    initialData?.instructions && initialData.instructions.length > 0
-      ? initialData.instructions
-      : ['']
-  );
+  const [instructions, setInstructions] = useState<Instruction[]>(() => {
+    if (initialData?.instructions && initialData.instructions.length > 0) {
+      // Handle both old string[] format and new Instruction[] format
+      if (typeof initialData.instructions[0] === 'string') {
+        return (initialData.instructions as string[]).map((text, index) => ({
+          text,
+          id: `instruction-${index}-${Date.now()}`,
+          groupName: ''
+        }));
+      } else {
+        return (initialData.instructions as Instruction[]).map(instr => ({
+          ...instr,
+          id: instr.id || `instruction-${Date.now()}-${Math.random()}`
+        }));
+      }
+    }
+    return [{ text: '', id: 'instruction-1', groupName: '' }];
+  });
   const [userCategories, setUserCategories] = useState<string[]>([]);
   const [newCategory, setNewCategory] = useState<string>('');
   const [extractedRecipeText, setExtractedRecipeText] = useState<string>('');
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  // New state for ingredient groups
+  const [ingredientGroups, setIngredientGroups] = useState<string[]>(['']);
+  const [newGroupName, setNewGroupName] = useState<string>('');
+  // New state for instruction groups
+  const [instructionGroups, setInstructionGroups] = useState<string[]>(['']);
+  const [newInstructionGroupName, setNewInstructionGroupName] = useState<string>('');
   const { register, handleSubmit, formState: { errors }, setValue } = useForm<Recipe>({
     defaultValues: {
       name: initialData?.name || '',
@@ -175,6 +201,17 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
       setValue('cookTime', initialData.cookTime);
       setValue('sourceUrl', initialData.sourceUrl || '');
       
+      // Initialize ingredient groups from existing ingredients
+      if (initialData.ingredients && initialData.ingredients.length > 0) {
+        const existingGroups = [...new Set(
+          initialData.ingredients
+            .map(ing => ing.groupName)
+            .filter(group => group && group.trim() !== '')
+        )] as string[];
+        
+        setIngredientGroups(['', ...existingGroups]);
+      }
+      
       // Check if the recipe has categories that aren't in userCategories
       if (initialData.categories && initialData.categories.length > 0) {
         const newCategories = initialData.categories.filter(
@@ -198,6 +235,29 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
           adjustTextareaHeight(textarea);
         });
       }, 100);
+
+      // Initialize instruction groups from existing instructions
+      if (initialData.instructions && initialData.instructions.length > 0) {
+        // Handle both old string[] format and new Instruction[] format
+        let instructionData: Instruction[] = [];
+        if (typeof initialData.instructions[0] === 'string') {
+          instructionData = (initialData.instructions as string[]).map((text, index) => ({
+            text,
+            id: `instruction-${index}-${Date.now()}`,
+            groupName: ''
+          }));
+        } else {
+          instructionData = initialData.instructions as Instruction[];
+        }
+        
+        const existingInstructionGroups = [...new Set(
+          instructionData
+            .map(instr => instr.groupName)
+            .filter(group => group && group.trim() !== '')
+        )] as string[];
+        
+        setInstructionGroups(['', ...existingInstructionGroups]);
+      }
     }
   }, [initialData, setValue, userCategories]);
 
@@ -211,10 +271,10 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
     }, 0);
   }, [instructions]);
 
-  const addIngredient = () => {
+  const addIngredient = (groupName?: string) => {
     setIngredients([
       ...ingredients,
-      { amount: '', unit: '', item: '', id: Date.now().toString() }
+      { amount: '', unit: '', item: '', id: Date.now().toString(), groupName: groupName || '' }
     ]);
   };
 
@@ -228,17 +288,24 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
     setIngredients(updatedIngredients);
   };
 
-  const addInstruction = () => {
-    setInstructions([...instructions, '']);
+  const addInstruction = (groupName?: string) => {
+    setInstructions([
+      ...instructions, 
+      { 
+        text: '', 
+        id: `instruction-${Date.now()}-${Math.random()}`, 
+        groupName: groupName || '' 
+      }
+    ]);
   };
 
   const removeInstruction = (indexToRemove: number) => {
     setInstructions(instructions.filter((_, index) => index !== indexToRemove));
   };
 
-  const updateInstruction = (index: number, value: string) => {
+  const updateInstruction = (index: number, field: keyof Instruction, value: string) => {
     const updatedInstructions = [...instructions];
-    updatedInstructions[index] = value;
+    updatedInstructions[index] = { ...updatedInstructions[index], [field]: value };
     setInstructions(updatedInstructions);
   };
 
@@ -571,7 +638,12 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
         
         // Set instructions
         if (instructions.length > 0) {
-          setInstructions(instructions);
+          const parsedInstructions = instructions.map((text, index) => ({
+            text,
+            id: `extracted-instruction-${index}-${Date.now()}`,
+            groupName: ''
+          }));
+          setInstructions(parsedInstructions);
         }
         
         toast.success('Recipe extracted and parsed into form fields!', { 
@@ -1032,9 +1104,9 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
       toast.error('Please add at least one ingredient');
       return;
     }
-    
+
     // Validate instructions
-    if (instructions.length === 0 || (instructions.length === 1 && !instructions[0])) {
+    if (instructions.length === 0 || (instructions.length === 1 && !instructions[0].text.trim())) {
       toast.error('Please add at least one instruction step');
       return;
     }
@@ -1043,7 +1115,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
     const filteredIngredients = ingredients.filter(ing => ing.item.trim());
     
     // Clean up empty instructions
-    const filteredInstructions = instructions.filter(instr => instr.trim());
+    const filteredInstructions = instructions.filter(instr => instr.text.trim());
     
     try {
       const recipeData: Recipe = {
@@ -1090,6 +1162,104 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
     element.style.height = 'auto';
     // Set the height to match the content
     element.style.height = `${element.scrollHeight}px`;
+  };
+
+  // Ingredient group management functions
+  const addIngredientGroup = () => {
+    if (!newGroupName.trim()) {
+      toast.error('Please enter a group name');
+      return;
+    }
+    
+    if (ingredientGroups.includes(newGroupName.trim())) {
+      toast.error('Group name already exists');
+      return;
+    }
+    
+    setIngredientGroups([...ingredientGroups, newGroupName.trim()]);
+    setNewGroupName('');
+  };
+
+  const removeIngredientGroup = (groupName: string) => {
+    // Remove the group
+    setIngredientGroups(ingredientGroups.filter(group => group !== groupName));
+    
+    // Update ingredients to remove the group assignment
+    const updatedIngredients = ingredients.map(ingredient => 
+      ingredient.groupName === groupName 
+        ? { ...ingredient, groupName: '' }
+        : ingredient
+    );
+    setIngredients(updatedIngredients);
+  };
+
+  const getIngredientsByGroup = () => {
+    const grouped: { [key: string]: Ingredient[] } = {};
+    
+    // Initialize groups
+    ingredientGroups.forEach(group => {
+      grouped[group] = [];
+    });
+    
+    // Group ingredients
+    ingredients.forEach(ingredient => {
+      const group = ingredient.groupName || '';
+      if (!grouped[group]) {
+        grouped[group] = [];
+      }
+      grouped[group].push(ingredient);
+    });
+    
+    return grouped;
+  };
+
+  // Instruction group management functions
+  const addInstructionGroup = () => {
+    if (!newInstructionGroupName.trim()) {
+      toast.error('Please enter a group name');
+      return;
+    }
+    
+    if (instructionGroups.includes(newInstructionGroupName.trim())) {
+      toast.error('Group name already exists');
+      return;
+    }
+    
+    setInstructionGroups([...instructionGroups, newInstructionGroupName.trim()]);
+    setNewInstructionGroupName('');
+  };
+
+  const removeInstructionGroup = (groupName: string) => {
+    // Remove the group
+    setInstructionGroups(instructionGroups.filter(group => group !== groupName));
+    
+    // Update instructions to remove the group assignment
+    const updatedInstructions = instructions.map(instruction => 
+      instruction.groupName === groupName 
+        ? { ...instruction, groupName: '' }
+        : instruction
+    );
+    setInstructions(updatedInstructions);
+  };
+
+  const getInstructionsByGroup = () => {
+    const grouped: { [key: string]: Instruction[] } = {};
+    
+    // Initialize groups
+    instructionGroups.forEach(group => {
+      grouped[group] = [];
+    });
+    
+    // Group instructions
+    instructions.forEach(instruction => {
+      const group = instruction.groupName || '';
+      if (!grouped[group]) {
+        grouped[group] = [];
+      }
+      grouped[group].push(instruction);
+    });
+    
+    return grouped;
   };
 
   return (
@@ -1388,112 +1558,370 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
       </div>
       <div className="md:bg-white md:rounded-xl md:p-8 md:shadow-sm md:border md:border-gray-100">
         <h2 className="text-2xl font-bold text-basil mb-6">Ingredients</h2>
-        <div className="space-y-6">
-          <div className="hidden md:grid grid-cols-12 gap-4 text-sm font-medium text-gray-500 border-b pb-3">
-            <div className="col-span-3">Amount</div>
-            <div className="col-span-3">Unit</div>
-            <div className="col-span-5">Ingredient</div>
-            <div className="col-span-1"></div>
-          </div>
-          <div className="space-y-6">
-            {ingredients.map((ingredient, index) => (
-              <div key={ingredient.id} className="grid grid-cols-12 gap-4 items-center">
-                <div className="col-span-12 md:col-span-6 grid grid-cols-2 gap-4">
-                  <input 
-                    placeholder="Amount" 
-                    className="rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base"
-                    value={ingredient.amount}
-                    onChange={(e) => updateIngredient(index, 'amount', e.target.value)}
-                  />
-                  <input 
-                    placeholder="Unit" 
-                    className="rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base"
-                    value={ingredient.unit}
-                    onChange={(e) => updateIngredient(index, 'unit', e.target.value)}
-                  />
-                </div>
-                <div className="col-span-11 md:col-span-5">
-                  <input 
-                    placeholder="Ingredient" 
-                    required 
-                    className="w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base"
-                    value={ingredient.item}
-                    onChange={(e) => updateIngredient(index, 'item', e.target.value)}
-                  />
-                </div>
-                <div className="col-span-1 flex justify-end">
-                  {ingredients.length > 1 && (
-                    <button 
-                      type="button"
-                      className="text-red-500 hover:text-red-700"
-                      onClick={() => removeIngredient(index)}
-                    >
-                      <i className="fa-solid fa-times"></i>
-                    </button>
-                  )}
-                </div>
+        
+        {/* Ingredient Groups Management */}
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Ingredient Groups</h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Create groups to organize your ingredients (e.g., &quot;For the sauce&quot;, &quot;For the main dish&quot;, &quot;For garnish&quot;)
+          </p>
+          
+          <div className="flex flex-wrap gap-2 mb-4">
+            {ingredientGroups.filter(group => group !== '').map((group) => (
+              <div key={group} className="flex items-center gap-2 bg-white px-3 py-1 rounded-full border">
+                <span className="text-sm font-medium">{group}</span>
+                <button
+                  type="button"
+                  onClick={() => removeIngredientGroup(group)}
+                  className="text-red-500 hover:text-red-700 text-xs"
+                >
+                  <i className="fa-solid fa-times"></i>
+                </button>
               </div>
             ))}
           </div>
-          <button 
-            className="
-              inline-flex items-center justify-center gap-2
-              rounded-lg font-medium
-              transition-colors duration-200
-              disabled:opacity-50 disabled:cursor-not-allowed
-              border-2 border-basil text-basil hover:bg-basil hover:text-white active:bg-basil active:text-white
-              px-3 py-1.5 text-sm
-              w-full md:w-auto py-3
-            " 
-            type="button"
-            onClick={addIngredient}
-          >+ Add Ingredient</button>
+          
+          <div className="flex gap-2 flex-col md:flex-row">
+            <input
+              type="text"
+              placeholder="Enter group name (e.g., 'For the sauce')"
+              value={newGroupName}
+              onChange={(e) => setNewGroupName(e.target.value)}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-basil focus:border-transparent"
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  addIngredientGroup();
+                }
+              }}
+            />
+            <button
+              type="button"
+              onClick={addIngredientGroup}
+              className="
+                inline-flex items-center justify-center gap-2
+                rounded-lg font-medium
+                transition-colors duration-200
+                disabled:opacity-50 disabled:cursor-not-allowed
+                border-2 border-basil text-basil hover:bg-basil hover:text-white active:bg-basil active:text-white
+                px-4 py-2 text-sm
+              "
+            >
+              + Add Group
+            </button>
+          </div>
+        </div>
+
+        {/* Ingredients by Group */}
+        <div className="space-y-8">
+          {(() => {
+            const groupedIngredients = getIngredientsByGroup();
+            const groups = ['', ...ingredientGroups.filter(group => group !== '')];
+            
+            return groups.map((groupName) => {
+              const groupIngredients = groupedIngredients[groupName] || [];
+              
+              return (
+                <div key={groupName || 'ungrouped'} className="space-y-4">
+                  {groupName && (
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-lg font-medium text-gray-900">{groupName}</h4>
+                      <button
+                        type="button"
+                        onClick={() => addIngredient(groupName)}
+                        className="text-basil hover:text-basil-600 text-sm"
+                      >
+                        + Add ingredient to this group
+                      </button>
+                    </div>
+                  )}
+                  
+                  {!groupName && groupIngredients.length > 0 && (
+                    <h4 className="text-lg font-medium text-gray-900">General Ingredients</h4>
+                  )}
+                  
+                  <div className="space-y-4">
+                    <div className="hidden md:grid grid-cols-12 gap-4 text-sm font-medium text-gray-500 border-b pb-2">
+                      <div className="col-span-2">Amount</div>
+                      <div className="col-span-2">Unit</div>
+                      <div className="col-span-4">Ingredient</div>
+                      <div className="col-span-3">Group</div>
+                      <div className="col-span-1"></div>
+                    </div>
+                    
+                    {groupIngredients.map((ingredient) => {
+                      const globalIndex = ingredients.findIndex(ing => ing.id === ingredient.id);
+                      return (
+                        <div key={ingredient.id} className="grid grid-cols-12 gap-4 items-center">
+                          <div className="col-span-12 md:col-span-4 grid grid-cols-2 gap-4">
+                            <input 
+                              placeholder="Amount" 
+                              className="rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-2 px-3 text-sm"
+                              value={ingredient.amount}
+                              onChange={(e) => updateIngredient(globalIndex, 'amount', e.target.value)}
+                            />
+                            <input 
+                              placeholder="Unit" 
+                              className="rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-2 px-3 text-sm"
+                              value={ingredient.unit}
+                              onChange={(e) => updateIngredient(globalIndex, 'unit', e.target.value)}
+                            />
+                          </div>
+                          <div className="col-span-11 md:col-span-4">
+                            <input 
+                              placeholder="Ingredient" 
+                              required 
+                              className="w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-2 px-3 text-sm"
+                              value={ingredient.item}
+                              onChange={(e) => updateIngredient(globalIndex, 'item', e.target.value)}
+                            />
+                          </div>
+                          <div className="col-span-12 md:col-span-3">
+                            <select
+                              value={ingredient.groupName || ''}
+                              onChange={(e) => updateIngredient(globalIndex, 'groupName', e.target.value)}
+                              className="w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-2 px-3 text-sm"
+                            >
+                              <option value="">No group</option>
+                              {ingredientGroups.filter(group => group !== '').map((group) => (
+                                <option key={group} value={group}>{group}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="col-span-1 flex justify-end">
+                            {ingredients.length > 1 && (
+                              <button 
+                                type="button"
+                                className="text-red-500 hover:text-red-700"
+                                onClick={() => removeIngredient(globalIndex)}
+                              >
+                                <i className="fa-solid fa-times"></i>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  {groupIngredients.length === 0 && groupName && (
+                    <div className="text-gray-500 text-sm italic py-2">
+                      No ingredients in this group yet.
+                    </div>
+                  )}
+                </div>
+              );
+            });
+          })()}
+          
+          <div className="flex gap-2 flex-wrap">
+            <button 
+              className="
+                inline-flex items-center justify-center gap-2
+                rounded-lg font-medium
+                transition-colors duration-200
+                disabled:opacity-50 disabled:cursor-not-allowed
+                border-2 border-basil text-basil hover:bg-basil hover:text-white active:bg-basil active:text-white
+                px-3 py-1.5 text-sm
+                w-full md:w-auto py-3
+              " 
+              type="button"
+              onClick={() => addIngredient()}
+            >+ Add Ingredient</button>
+            
+            {ingredientGroups.filter(group => group !== '').length > 0 && (
+              <select
+                onChange={(e) => {
+                  if (e.target.value) {
+                    addIngredient(e.target.value);
+                    e.target.value = '';
+                  }
+                }}
+                className="rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base"
+              >
+                <option value="">+ Add to group...</option>
+                {ingredientGroups.filter(group => group !== '').map((group) => (
+                  <option key={group} value={group}>Add to {group}</option>
+                ))}
+              </select>
+            )}
+          </div>
         </div>
       </div>
       <div className="md:bg-white md:rounded-xl md:p-8 md:shadow-sm md:border md:border-gray-100">
         <h2 className="text-2xl font-bold text-basil mb-6">Instructions</h2>
-        <div className="space-y-6">
-          {instructions.map((instruction, index) => (
-            <div key={index} className="flex items-start space-x-4 flex-col lg:flex-row">
-              <div className="flex-shrink-0 w-20 h-10 flex items-center justify-center text-cast-iron font-medium">STEP {index + 1}</div>
-              <div className="flex-1 w-full">
-                <textarea 
-                  placeholder="Enter instruction step" 
-                  required 
-                  rows={1} 
-                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base resize-none overflow-hidden" 
-                  value={instruction}
-                  onChange={(e) => {
-                    updateInstruction(index, e.target.value);
-                    adjustTextareaHeight(e.target);
-                  }}
-                  onFocus={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
-                ></textarea>
-              </div>
-              {instructions.length > 1 && (
-                <button 
+        
+        {/* Instruction Groups Management */}
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Instruction Groups</h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Create groups to organize your instructions (e.g., &quot;For the sauce&quot;, &quot;For assembly&quot;, &quot;For garnish&quot;)
+          </p>
+          
+          <div className="flex flex-wrap gap-2 mb-4">
+            {instructionGroups.filter(group => group !== '').map((group) => (
+              <div key={group} className="flex items-center gap-2 bg-white px-3 py-1 rounded-full border">
+                <span className="text-sm font-medium">{group}</span>
+                <button
                   type="button"
-                  className="text-red-500 hover:text-red-700"
-                  onClick={() => removeInstruction(index)}
+                  onClick={() => removeInstructionGroup(group)}
+                  className="text-red-500 hover:text-red-700 text-xs"
                 >
                   <i className="fa-solid fa-times"></i>
                 </button>
-              )}
-            </div>
-          ))}
-          <button 
-            className="
-              inline-flex items-center justify-center gap-2
-              rounded-lg font-medium
-              transition-colors duration-200
-              disabled:opacity-50 disabled:cursor-not-allowed
-              border-2 border-basil text-basil hover:bg-basil hover:text-white active:bg-basil active:text-white
-              px-3 py-1.5 text-sm
-              w-full md:w-auto py-3
-            " 
-            type="button"
-            onClick={addInstruction}
-          >+ Add Step</button>
+              </div>
+            ))}
+          </div>
+          
+          <div className="flex gap-2 flex-col md:flex-row">
+            <input
+              type="text"
+              placeholder="Enter group name (e.g., 'For the sauce')"
+              value={newInstructionGroupName}
+              onChange={(e) => setNewInstructionGroupName(e.target.value)}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-basil focus:border-transparent"
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  addInstructionGroup();
+                }
+              }}
+            />
+            <button
+              type="button"
+              onClick={addInstructionGroup}
+              className="
+                inline-flex items-center justify-center gap-2
+                rounded-lg font-medium
+                transition-colors duration-200
+                disabled:opacity-50 disabled:cursor-not-allowed
+                border-2 border-basil text-basil hover:bg-basil hover:text-white active:bg-basil active:text-white
+                px-4 py-2 text-sm
+              "
+            >
+              + Add Group
+            </button>
+          </div>
+        </div>
+
+        {/* Instructions by Group */}
+        <div className="space-y-8">
+          {(() => {
+            const groupedInstructions = getInstructionsByGroup();
+            const groups = ['', ...instructionGroups.filter(group => group !== '')];
+            
+            return groups.map((groupName) => {
+              const groupInstructions = groupedInstructions[groupName] || [];
+              
+              return (
+                <div key={groupName || 'ungrouped'} className="space-y-4">
+                  {groupName && (
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-lg font-medium text-gray-900">{groupName}</h4>
+                      <button
+                        type="button"
+                        onClick={() => addInstruction(groupName)}
+                        className="text-basil hover:text-basil-600 text-sm"
+                      >
+                        + Add instruction to this group
+                      </button>
+                    </div>
+                  )}
+                  
+                  {!groupName && groupInstructions.length > 0 && (
+                    <h4 className="text-lg font-medium text-gray-900">General Instructions</h4>
+                  )}
+                  
+                  <div className="space-y-6">
+                    {groupInstructions.map((instruction, groupIndex) => {
+                      const globalIndex = instructions.findIndex(instr => instr.id === instruction.id);
+                      const stepNumber = groupIndex + 1; // Step number within the group
+                      
+                      return (
+                        <div key={instruction.id} className="flex items-start space-x-4 flex-col lg:flex-row">
+                          <div className="flex-shrink-0 w-20 h-10 flex items-center justify-center text-cast-iron font-medium">
+                            STEP {stepNumber}
+                          </div>
+                          <div className="flex-1 w-full">
+                            <textarea 
+                              placeholder="Enter instruction step" 
+                              required 
+                              rows={1} 
+                              className="w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base resize-none overflow-hidden mb-2" 
+                              value={instruction.text}
+                              onChange={(e) => {
+                                updateInstruction(globalIndex, 'text', e.target.value);
+                                adjustTextareaHeight(e.target as HTMLTextAreaElement);
+                              }}
+                              onFocus={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
+                            />
+                            <select
+                              value={instruction.groupName || ''}
+                              onChange={(e) => updateInstruction(globalIndex, 'groupName', e.target.value)}
+                              className="w-full md:w-1/2 rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-2 px-3 text-sm"
+                            >
+                              <option value="">No group</option>
+                              {instructionGroups.filter(group => group !== '').map((group) => (
+                                <option key={group} value={group}>{group}</option>
+                              ))}
+                            </select>
+                          </div>
+                          {instructions.length > 1 && (
+                            <button 
+                              type="button"
+                              className="text-red-500 hover:text-red-700 mt-2 lg:mt-0"
+                              onClick={() => removeInstruction(globalIndex)}
+                            >
+                              <i className="fa-solid fa-times"></i>
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  {groupInstructions.length === 0 && groupName && (
+                    <div className="text-gray-500 text-sm italic py-2">
+                      No instructions in this group yet.
+                    </div>
+                  )}
+                </div>
+              );
+            });
+          })()}
+          
+          <div className="flex gap-2 flex-wrap">
+            <button 
+              className="
+                inline-flex items-center justify-center gap-2
+                rounded-lg font-medium
+                transition-colors duration-200
+                disabled:opacity-50 disabled:cursor-not-allowed
+                border-2 border-basil text-basil hover:bg-basil hover:text-white active:bg-basil active:text-white
+                px-3 py-1.5 text-sm
+                w-full md:w-auto py-3
+              " 
+              type="button"
+              onClick={() => addInstruction()}
+            >+ Add Instruction</button>
+            
+            {instructionGroups.filter(group => group !== '').length > 0 && (
+              <select
+                onChange={(e) => {
+                  if (e.target.value) {
+                    addInstruction(e.target.value);
+                    e.target.value = '';
+                  }
+                }}
+                className="rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base"
+              >
+                <option value="">+ Add to group...</option>
+                {instructionGroups.filter(group => group !== '').map((group) => (
+                  <option key={group} value={group}>Add to {group}</option>
+                ))}
+              </select>
+            )}
+          </div>
         </div>
       </div>
       <div className="md:bg-white md:rounded-xl md:p-8 md:shadow-sm md:border md:border-gray-100 space-y-6">
