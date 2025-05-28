@@ -5,9 +5,10 @@ import { useAuth } from '@/app/context/AuthContext';
 import { db } from '@/app/lib/firebase';
 import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import RecipeCard from '@/app/components/RecipeCard';
+import RecipeListItem from '@/app/components/RecipeListItem';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import Button from '@/app/components/Button';
-
+import { FiGrid, FiList } from 'react-icons/fi';
 
 interface Recipe {
     id: string;
@@ -29,6 +30,7 @@ export default function RecipesPage() {
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const [availableCategories, setAvailableCategories] = useState<string[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [viewMode, setViewMode] = useState<'cards' | 'list'>('cards');
 
     // Add effect to handle styles update after category toggle
     useEffect(() => {
@@ -108,18 +110,62 @@ export default function RecipesPage() {
         return matchesCategory && matchesSearch;
     });
 
+    // Sort recipes based on view mode
+    const sortedRecipes = viewMode === 'list' 
+        ? [...filteredRecipes].sort((a, b) => a.name.localeCompare(b.name))
+        : filteredRecipes;
+
+    // Group recipes by first letter for list view
+    const groupedRecipes = viewMode === 'list' ? sortedRecipes.reduce((groups, recipe) => {
+        const firstLetter = recipe.name.charAt(0).toUpperCase();
+        if (!groups[firstLetter]) {
+            groups[firstLetter] = [];
+        }
+        groups[firstLetter].push(recipe);
+        return groups;
+    }, {} as Record<string, Recipe[]>) : {};
+
     return (
         <ProtectedRoute>
             <div className="container mx-auto px-4 py-12 md:py-20">
                 <div className="flex flex-col md:flex-row justify-between md:items-center mb-8 flex-wrap lg:flex-nowrap">
                     <div className="flex flex-row gap-4 w-full mb-6 lg:mb-0 flex-wrap md:nowrap justify-between md:justify-start">
                         <h1 className="text-4xl font-bold">My Recipes</h1>
-                        <Button
+                        <div className="flex items-center gap-2">
+                            {/* View Toggle */}
+                            <div className="flex items-center bg-gray-100 p-1 rounded-lg mr-2">
+                                <button
+                                    onClick={() => setViewMode('cards')}
+                                    className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm transition-colors ${
+                                        viewMode === 'cards' 
+                                            ? 'bg-white text-basil shadow-sm' 
+                                            : 'text-gray-600 hover:text-gray-900'
+                                    }`}
+                                    title="Card view"
+                                >
+                                    <FiGrid className="h-4 w-4" />
+                                    <span className="hidden sm:inline">Cards</span>
+                                </button>
+                                <button
+                                    onClick={() => setViewMode('list')}
+                                    className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm transition-colors ${
+                                        viewMode === 'list' 
+                                            ? 'bg-white text-basil shadow-sm' 
+                                            : 'text-gray-600 hover:text-gray-900'
+                                    }`}
+                                    title="List view"
+                                >
+                                    <FiList className="h-4 w-4" />
+                                    <span className="hidden sm:inline">List</span>
+                                </button>
+                            </div>
+                            <Button
                                 href="/add-recipe"
                                 className="w-auto"
                             >
-                        Add New Recipe
-                        </Button>
+                                Add New Recipe
+                            </Button>
+                        </div>
                     </div>
                     {/* Search Bar */}
                     <div className="relative w-full">
@@ -173,7 +219,7 @@ export default function RecipesPage() {
                     <div className="flex justify-center">
                         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
                     </div>
-                ) : filteredRecipes.length === 0 ? (
+                ) : sortedRecipes.length === 0 ? (
                     <div className="text-center py-12">
                         <h3 className="text-xl font-semibold text-gray-900 mb-2">
                             {searchQuery
@@ -197,15 +243,47 @@ export default function RecipesPage() {
                         </Button>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {filteredRecipes.map((recipe, index) => (
-                            <RecipeCard 
-                                key={recipe.id} 
-                                recipe={recipe} 
-                                priority={index < 3}
-                            />
-                        ))}
-                    </div>
+                    <>
+                        {viewMode === 'cards' ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {sortedRecipes.map((recipe, index) => (
+                                    <RecipeCard 
+                                        key={recipe.id} 
+                                        recipe={recipe} 
+                                        priority={index < 3}
+                                    />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="space-y-0 w-full pt-4">
+                                {Object.entries(groupedRecipes)
+                                    .sort(([a], [b]) => a.localeCompare(b))
+                                    .map(([letter, recipes]) => (
+                                        <div key={letter}>
+                                            {/* Letter section header */}
+                                            <div className="relative mb-[-4px] mt-6 first:mt-0 w-full" style={{ zIndex: 1000 }}>
+                                                <div className="bg-gray-100 rounded-t-lg px-4 py-2 border border-gray-200 shadow-sm">
+                                                    <h3 className="text-lg font-bold text-gray-700">
+                                                        {letter}
+                                                    </h3>
+                                                </div>
+                                            </div>
+                                            
+                                            {/* Recipes in this letter group */}
+                                            <div className="space-y-0  mb-[-4px]">
+                                                {recipes.map((recipe, index) => (
+                                                    <RecipeListItem 
+                                                        key={recipe.id} 
+                                                        recipe={recipe}
+                                                        index={index}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
         </ProtectedRoute>
