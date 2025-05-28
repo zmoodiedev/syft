@@ -5,10 +5,11 @@ import { motion } from 'framer-motion';
 import { AnimatePresence } from 'framer-motion';
 import RecipeForm from '@/app/components/RecipeForm';
 import UrlInput from '@/app/components/UrlInput';
-import { FiArrowLeft, FiFileText, FiGlobe, FiCamera } from 'react-icons/fi';
+import BulkEntryForm from '@/app/components/BulkEntryForm';
+import { FiArrowLeft, FiFileText, FiGlobe, FiCamera, FiList } from 'react-icons/fi';
 
 export default function AddRecipe() {
-    const [selectedOption, setSelectedOption] = useState<'url' | 'manual' | 'scan' | null>(null);
+    const [selectedOption, setSelectedOption] = useState<'url' | 'manual' | 'scan' | 'bulk' | null>(null);
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
@@ -25,7 +26,7 @@ export default function AddRecipe() {
                     
                     {/* Option Selection */}
                     {!selectedOption && (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
                             <motion.div
                                 className="group p-6 bg-white rounded-2xl shadow-md border border-gray-100 hover:border-basil hover:shadow-lg transition-all cursor-pointer relative overflow-hidden"
                                 whileHover={{ scale: 1.03, y: -5 }}
@@ -110,6 +111,46 @@ export default function AddRecipe() {
                                 className="group p-6 bg-white rounded-2xl shadow-md border border-gray-100 hover:border-basil hover:shadow-lg transition-all cursor-pointer relative overflow-hidden"
                                 whileHover={{ scale: 1.03, y: -5 }}
                                 whileTap={{ scale: 0.98 }}
+                                onClick={() => setSelectedOption('bulk')}
+                            >
+                                {/* Background decoration */}
+                                <div className="absolute -right-10 -top-10 h-40 w-40 bg-basil-50 rounded-full opacity-20 group-hover:bg-basil-100 transition-colors"></div>
+                                
+                                <div className="relative z-10">
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <div className="w-12 h-12 rounded-xl bg-basil-50 flex items-center justify-center text-basil group-hover:bg-basil group-hover:text-white transition-all shadow-sm">
+                                            <FiList className="w-6 h-6" />
+                                        </div>
+                                        <h2 className="text-xl font-bold text-gray-900 group-hover:text-basil transition-colors">Bulk Entry</h2>
+                                    </div>
+
+                                    <div className="ml-1">
+                                        <p className="text-gray-600 mb-4 group-hover:text-gray-700 transition-colors text-sm">
+                                            Copy and paste ingredients and instructions from another source. Perfect for importing from text sources.
+                                        </p>
+                                        
+                                        <ul className="space-y-1 text-xs text-gray-500 mb-4">
+                                            <li className="flex items-center gap-2">
+                                                <span className="h-1.5 w-1.5 rounded-full bg-basil flex-shrink-0"></span>
+                                                <span>Copy and paste from any text source</span>
+                                            </li>
+                                            <li className="flex items-center gap-2">
+                                                <span className="h-1.5 w-1.5 rounded-full bg-basil flex-shrink-0"></span>
+                                                <span>Automatically parses ingredients and instructions</span>
+                                            </li>
+                                        </ul>
+                                        
+                                        <span className="inline-flex items-center text-basil font-medium text-sm group-hover:translate-x-1 transition-transform">
+                                            Bulk import <FiArrowLeft className="ml-1 rotate-180 w-4 h-4" />
+                                        </span>
+                                    </div>
+                                </div>
+                            </motion.div>
+
+                            <motion.div
+                                className="group p-6 bg-white rounded-2xl shadow-md border border-gray-100 hover:border-basil hover:shadow-lg transition-all cursor-pointer relative overflow-hidden"
+                                whileHover={{ scale: 1.03, y: -5 }}
+                                whileTap={{ scale: 0.98 }}
                                 onClick={() => setSelectedOption('manual')}
                             >
                                 {/* Background decoration */}
@@ -170,6 +211,8 @@ export default function AddRecipe() {
                                     <UrlInput />
                                 ) : selectedOption === 'scan' ? (
                                     <RecipeForm scanMode={true} />
+                                ) : selectedOption === 'bulk' ? (
+                                    <BulkEntryForm />
                                 ) : (
                                     <RecipeForm />
                                 )}

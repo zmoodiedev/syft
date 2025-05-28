@@ -351,7 +351,15 @@ export default function Navbar() {
                     >
                         Log In
                     </Button>
-                </div>
+
+                <Button 
+                    variant="primary"
+                    href="/login"
+                    className="text-sm"
+                >
+                    Sign Up
+                </Button>
+            </div>
             )}
         </nav>
     );
