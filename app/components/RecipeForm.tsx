@@ -104,6 +104,10 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
   // New state for instruction groups
   const [instructionGroups, setInstructionGroups] = useState<string[]>(['']);
   const [newInstructionGroupName, setNewInstructionGroupName] = useState<string>('');
+  // New state for bulk import
+  const [showBulkImport, setShowBulkImport] = useState<boolean>(false);
+  const [bulkIngredients, setBulkIngredients] = useState<string>('');
+  const [bulkInstructions, setBulkInstructions] = useState<string>('');
   const { register, handleSubmit, formState: { errors }, setValue } = useForm<Recipe>({
     defaultValues: {
       name: initialData?.name || '',
@@ -1262,11 +1266,83 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
     return grouped;
   };
 
+  // Bulk import functions
+  const parseBulkIngredients = (text: string): Ingredient[] => {
+    if (!text.trim()) return [];
+    
+    const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+    
+    return lines.map((line, index) => {
+      const { amount, unit, item } = parseIngredient(line);
+      return {
+        amount,
+        unit,
+        item: item || line, // Use the original text if parsing fails
+        id: `bulk-ingredient-${index}-${Date.now()}`,
+        groupName: ''
+      };
+    });
+  };
+
+  const parseBulkInstructions = (text: string): Instruction[] => {
+    if (!text.trim()) return [];
+    
+    const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+    
+    return lines.map((line, index) => {
+      // Remove common prefixes like numbers, bullets, etc.
+      let cleanText = line;
+      
+      // Remove step numbers at the beginning (e.g., "1.", "Step 1:", "1)", etc.)
+      cleanText = cleanText.replace(/^\s*(?:\d+[\.\)]\s*|step\s+\d+\s*:?\s*)/i, '');
+      
+      // Remove bullet points or dashes
+      cleanText = cleanText.replace(/^\s*[-•*]\s*/, '');
+      
+      return {
+        text: cleanText || line, // Use original if cleaning results in empty string
+        id: `bulk-instruction-${index}-${Date.now()}`,
+        groupName: ''
+      };
+    });
+  };
+
+  const handleBulkImport = () => {
+    let hasChanges = false;
+    
+    // Import ingredients
+    if (bulkIngredients.trim()) {
+      const newIngredients = parseBulkIngredients(bulkIngredients);
+      if (newIngredients.length > 0) {
+        setIngredients(prev => [...prev, ...newIngredients]);
+        hasChanges = true;
+      }
+    }
+    
+    // Import instructions
+    if (bulkInstructions.trim()) {
+      const newInstructions = parseBulkInstructions(bulkInstructions);
+      if (newInstructions.length > 0) {
+        setInstructions(prev => [...prev, ...newInstructions]);
+        hasChanges = true;
+      }
+    }
+    
+    if (hasChanges) {
+      toast.success('Ingredients and instructions imported successfully!');
+      setBulkIngredients('');
+      setBulkInstructions('');
+      setShowBulkImport(false);
+    } else {
+      toast.error('Please enter some ingredients or instructions to import');
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       {/* Recipe Image Scan Feature */}
       {showScanFeature && (
-      <div className={`rounded-lg p-6 mb-6 border ${scanMode ? 'bg-basil-50 border-basil shadow-md' : 'bg-amber-50 border-amber-200'} transition-colors`}>
+      <div className={`p-6 mb-6 border ${scanMode ? 'bg-basil-50 border-basil shadow-md' : 'bg-amber-50 border-amber-200'} transition-colors`}>
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
             <h3 className={`text-xl font-semibold mb-2 ${scanMode ? 'text-basil' : 'text-amber-800'}`}>
@@ -1333,7 +1409,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
         )}
         
         {extractedRecipeText && (
-          <div id="extracted-text-panel" className="mt-4 bg-white border border-light-grey rounded-lg p-3">
+          <div id="extracted-text-panel" className="mt-4 bg-white border border-light-grey p-3">
             <details>
               <summary className="cursor-pointer text-basil font-medium hover:text-basil-dark transition flex items-center">
                 <span>View extracted text</span>
@@ -1349,7 +1425,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
       )}
 
       {/* Regular Form Fields */}
-      <div className="space-y-6 md:bg-white md:rounded-xl md:p-8 md:shadow-sm md:border md:border-gray-100">
+      <div className="space-y-6 md:bg-light-grey md:p-8 md:border md:border-gray-100">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold bg-basil bg-clip-text text-transparent">Recipe Details</h2>
           
@@ -1401,7 +1477,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
             <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">Recipe Name</label>
             <input 
               id="name" 
-              className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base" 
+              className="mt-1 block w-full border-gray-300 bg-light-grey focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base" 
               placeholder="Enter recipe name" 
               type="text" 
               {...register('name', { required: true })}
@@ -1414,7 +1490,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
               <input 
                 id="servings" 
                 placeholder="e.g., 4" 
-                className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base" 
+                className="mt-1 block w-full border-gray-300  shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base" 
                 type="text" 
                 {...register('servings')}
               />
@@ -1424,7 +1500,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
               <input 
                 id="prepTime" 
                 placeholder="e.g., 15 mins" 
-                className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base" 
+                className="mt-1 block w-full border-gray-300  shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base" 
                 type="text" 
                 {...register('prepTime')}
               />
@@ -1435,7 +1511,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
               <input 
                 id="cookTime" 
                 placeholder="e.g., 30 mins" 
-                className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base" 
+                className="mt-1 block w-full border-gray-300  shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base" 
                 type="text" 
                 {...register('cookTime')}
               />
@@ -1447,14 +1523,14 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
             <input 
               id="sourceUrl" 
               placeholder="https://example.com/recipe" 
-              className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base" 
+              className="mt-1 block w-full border-gray-300  shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base" 
               type="url" 
               {...register('sourceUrl')}
             />
           </div>
         </div>
       </div>
-      <div className="md:bg-white md:rounded-xl md:p-8 md:shadow-sm md:border md:border-gray-100">
+      <div className="md:bg-light-grey md:p-8 md:border md:border-gray-100">
         <h2 className="text-2xl font-bold text-basil mb-6">Recipe Image</h2>
         <div className="space-y-6">
           <div className="flex flex-col space-y-4">
@@ -1463,7 +1539,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
               <button 
                 className="
                   inline-flex items-center justify-center gap-2
-                  rounded-lg font-medium
+                  font-medium
                   transition-colors duration-200
                   disabled:opacity-50 disabled:cursor-not-allowed
                   border-2 border-basil text-basil hover:bg-basil hover:text-white active:bg-basil active:text-white
@@ -1491,7 +1567,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
                   <button 
                     className="
                       inline-flex items-center justify-center gap-2
-                      rounded-lg font-medium
+                      font-medium
                       transition-colors duration-200
                       disabled:opacity-50 disabled:cursor-not-allowed
                       border-2 border-basil text-basil hover:bg-basil hover:text-white active:bg-basil active:text-white
@@ -1524,7 +1600,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
               <input 
                 id="imageUrl" 
                 placeholder="https://example.com/image.jpg" 
-                className="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base" 
+                className="flex-1 border-gray-300  shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base" 
                 type="text" 
                 value={imageUrl}
                 onChange={handleImageUrlChange}
@@ -1532,7 +1608,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
               <button 
                 className="
                   inline-flex items-center justify-center gap-2
-                  rounded-lg font-medium
+                  font-medium
                   transition-colors duration-200
                   disabled:opacity-50 disabled:cursor-not-allowed
                   bg-basil text-white hover:bg-basil-600 active:bg-basil-700
@@ -1549,14 +1625,108 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
           {isPreviewingImage && imageUrl && (
             <div className="mt-4">
               <h3 className="text-sm font-medium text-gray-700 mb-2">Image Preview</h3>
-              <div className="w-full h-48 rounded-lg overflow-hidden relative border border-gray-200">
+              <div className="w-full h-48 overflow-hidden relative border border-gray-200">
                 <img src={imageUrl} alt="Recipe preview" className="w-full h-full object-cover" />
               </div>
             </div>
           )}
         </div>
       </div>
-      <div className="md:bg-white md:rounded-xl md:p-8 md:shadow-sm md:border md:border-gray-100">
+      
+      {/* Bulk Import Section */}
+      <div className="md:bg-light-grey md:p-8 md:border md:border-gray-100">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold text-basil">Bulk Import</h2>
+          <button
+            type="button"
+            onClick={() => setShowBulkImport(!showBulkImport)}
+            className="text-basil hover:text-basil-600 text-sm font-medium"
+          >
+            {showBulkImport ? 'Hide Bulk Import' : 'Show Bulk Import'}
+          </button>
+        </div>
+        
+        {showBulkImport && (
+          <div className="space-y-6">
+            <p className="text-sm text-gray-600">
+              Copy and paste your ingredients and instructions from another source. Each line will be treated as a separate item.
+            </p>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Bulk Ingredients */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Ingredients (one per line)
+                </label>
+                <textarea
+                  value={bulkIngredients}
+                  onChange={(e) => setBulkIngredients(e.target.value)}
+                  placeholder={`Example:
+2 cups all-purpose flour
+1 tsp salt
+3 tbsp olive oil
+1/2 cup warm water`}
+                  rows={8}
+                  className="w-full border-gray-300 shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base resize-none"
+                />
+              </div>
+              
+              {/* Bulk Instructions */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Instructions (one per line)
+                </label>
+                <textarea
+                  value={bulkInstructions}
+                  onChange={(e) => setBulkInstructions(e.target.value)}
+                  placeholder={`Example:
+1. Mix flour and salt in a bowl
+2. Add olive oil and water
+3. Knead dough for 5 minutes
+4. Let rest for 30 minutes`}
+                  rows={8}
+                  className="w-full border-gray-300 shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base resize-none"
+                />
+              </div>
+            </div>
+            
+            <div className="flex gap-2 justify-center">
+              <button
+                type="button"
+                onClick={handleBulkImport}
+                className="
+                  inline-flex items-center justify-center gap-2
+                  font-medium
+                  transition-colors duration-200
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                  bg-basil text-white hover:bg-basil-600 active:bg-basil-700
+                  px-6 py-3 text-base
+                "
+              >
+                Import to Recipe
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setBulkIngredients('');
+                  setBulkInstructions('');
+                }}
+                className="
+                  inline-flex items-center justify-center gap-2
+                  font-medium
+                  transition-colors duration-200
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                  border-2 border-gray-300 text-gray-700 hover:bg-gray-50 active:bg-gray-100
+                  px-6 py-3 text-base
+                "
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+      <div className="md:bg-light-grey md:p-8 md:border md:border-gray-100">
         <h2 className="text-2xl font-bold text-basil mb-6">Ingredients</h2>
         
         {/* Ingredient Groups Management */}
@@ -1587,7 +1757,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
               placeholder="Enter group name (e.g., 'For the sauce')"
               value={newGroupName}
               onChange={(e) => setNewGroupName(e.target.value)}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-basil focus:border-transparent"
+              className="flex-1 px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-basil focus:border-transparent"
               onKeyPress={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
@@ -1600,7 +1770,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
               onClick={addIngredientGroup}
               className="
                 inline-flex items-center justify-center gap-2
-                rounded-lg font-medium
+                font-medium
                 transition-colors duration-200
                 disabled:opacity-50 disabled:cursor-not-allowed
                 border-2 border-basil text-basil hover:bg-basil hover:text-white active:bg-basil active:text-white
@@ -1656,13 +1826,13 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
                           <div className="col-span-12 md:col-span-4 grid grid-cols-2 gap-4">
                             <input 
                               placeholder="Amount" 
-                              className="rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-2 px-3 text-sm"
+                              className="border-gray-300  shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-2 px-3 text-sm"
                               value={ingredient.amount}
                               onChange={(e) => updateIngredient(globalIndex, 'amount', e.target.value)}
                             />
                             <input 
                               placeholder="Unit" 
-                              className="rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-2 px-3 text-sm"
+                              className="border-gray-300  shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-2 px-3 text-sm"
                               value={ingredient.unit}
                               onChange={(e) => updateIngredient(globalIndex, 'unit', e.target.value)}
                             />
@@ -1671,7 +1841,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
                             <input 
                               placeholder="Ingredient" 
                               required 
-                              className="w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-2 px-3 text-sm"
+                              className="w-full border-gray-300  shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-2 px-3 text-sm"
                               value={ingredient.item}
                               onChange={(e) => updateIngredient(globalIndex, 'item', e.target.value)}
                             />
@@ -1680,7 +1850,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
                             <select
                               value={ingredient.groupName || ''}
                               onChange={(e) => updateIngredient(globalIndex, 'groupName', e.target.value)}
-                              className="w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-2 px-3 text-sm"
+                              className="w-full border-gray-300  shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-2 px-3 text-sm"
                             >
                               <option value="">No group</option>
                               {ingredientGroups.filter(group => group !== '').map((group) => (
@@ -1718,7 +1888,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
             <button 
               className="
                 inline-flex items-center justify-center gap-2
-                rounded-lg font-medium
+                font-medium
                 transition-colors duration-200
                 disabled:opacity-50 disabled:cursor-not-allowed
                 border-2 border-basil text-basil hover:bg-basil hover:text-white active:bg-basil active:text-white
@@ -1737,7 +1907,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
                     e.target.value = '';
                   }
                 }}
-                className="rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base"
+                className="border-gray-300  shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base"
               >
                 <option value="">+ Add to group...</option>
                 {ingredientGroups.filter(group => group !== '').map((group) => (
@@ -1748,7 +1918,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
           </div>
         </div>
       </div>
-      <div className="md:bg-white md:rounded-xl md:p-8 md:shadow-sm md:border md:border-gray-100">
+      <div className="md:bg-light-grey md:p-8 md:border md:border-gray-100">
         <h2 className="text-2xl font-bold text-basil mb-6">Instructions</h2>
         
         {/* Instruction Groups Management */}
@@ -1779,7 +1949,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
               placeholder="Enter group name (e.g., 'For the sauce')"
               value={newInstructionGroupName}
               onChange={(e) => setNewInstructionGroupName(e.target.value)}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-basil focus:border-transparent"
+              className="flex-1 px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-basil focus:border-transparent"
               onKeyPress={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
@@ -1792,7 +1962,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
               onClick={addInstructionGroup}
               className="
                 inline-flex items-center justify-center gap-2
-                rounded-lg font-medium
+                font-medium
                 transition-colors duration-200
                 disabled:opacity-50 disabled:cursor-not-allowed
                 border-2 border-basil text-basil hover:bg-basil hover:text-white active:bg-basil active:text-white
@@ -1847,7 +2017,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
                               placeholder="Enter instruction step" 
                               required 
                               rows={1} 
-                              className="w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base resize-none overflow-hidden mb-2" 
+                              className="w-full border-gray-300  shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base resize-none overflow-hidden mb-2" 
                               value={instruction.text}
                               onChange={(e) => {
                                 updateInstruction(globalIndex, 'text', e.target.value);
@@ -1858,7 +2028,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
                             <select
                               value={instruction.groupName || ''}
                               onChange={(e) => updateInstruction(globalIndex, 'groupName', e.target.value)}
-                              className="w-full md:w-1/2 rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-2 px-3 text-sm"
+                              className="w-full md:w-1/2 border-gray-300  shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-2 px-3 text-sm"
                             >
                               <option value="">No group</option>
                               {instructionGroups.filter(group => group !== '').map((group) => (
@@ -1894,7 +2064,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
             <button 
               className="
                 inline-flex items-center justify-center gap-2
-                rounded-lg font-medium
+                font-medium
                 transition-colors duration-200
                 disabled:opacity-50 disabled:cursor-not-allowed
                 border-2 border-basil text-basil hover:bg-basil hover:text-white active:bg-basil active:text-white
@@ -1903,7 +2073,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
               " 
               type="button"
               onClick={() => addInstruction()}
-            >+ Add Instruction</button>
+            >+ Add Step</button>
             
             {instructionGroups.filter(group => group !== '').length > 0 && (
               <select
@@ -1913,7 +2083,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
                     e.target.value = '';
                   }
                 }}
-                className="rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base"
+                className="border-gray-300  shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base"
               >
                 <option value="">+ Add to group...</option>
                 {instructionGroups.filter(group => group !== '').map((group) => (
@@ -1924,7 +2094,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
           </div>
         </div>
       </div>
-      <div className="md:bg-white md:rounded-xl md:p-8 md:shadow-sm md:border md:border-gray-100 space-y-6">
+      <div className="md:bg-light-grey md:p-8 md:border md:border-gray-100 space-y-6">
         <h2 className="text-2xl font-bold text-basil mb-6">Categories</h2>
         <p className="text-sm text-gray-600">Select categories that apply to your recipe</p>
         
@@ -1958,7 +2128,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
         <div className="flex gap-2 mb-4 flex-col md:flex-row">
           <input 
             placeholder="Add a new category..." 
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500" 
+            className="flex-1 px-4 py-2 border bg-white border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500" 
             type="text" 
             value={newCategory}
             onChange={(e) => setNewCategory(e.target.value)}
@@ -1966,7 +2136,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
           <button 
             className="
               inline-flex items-center justify-center gap-2
-              rounded-lg font-medium
+              font-medium
               transition-colors duration-200
               disabled:opacity-50 disabled:cursor-not-allowed
               border-2 border-basil text-basil hover:bg-basil hover:text-white active:bg-basil active:text-white
@@ -1981,7 +2151,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
         <button 
           className="
             inline-flex items-center justify-center gap-2
-            rounded-lg font-medium
+            font-medium
             transition-colors duration-200
             disabled:opacity-50 disabled:cursor-not-allowed
             bg-basil text-white hover:bg-basil-600 active:bg-basil-700

@@ -11,13 +11,13 @@ export default function Header() {
     const isHomePage = pathname === '/';
     const [mounted, setMounted] = useState(false);
     
-    // Handle mounting
+
     useEffect(() => {
         setMounted(true);
         return () => setMounted(false);
     }, []);
 
-    // Don't render anything until mounted
+
     if (!mounted) {
         return (
             <header className={`w-full h-[var(--header-height)] p-4 z-[100] ${!isHomePage ? 'bg-white' : ''} ${isHomePage ? 'absolute' : ''}`}>
@@ -35,20 +35,18 @@ export default function Header() {
                 <Link href="/" className="flex items-center">
                     <div className="relative h-[57px] w-[100px]">
                         <Image
-                            src="/logo_syft_h.svg"
+                            src="/logo_syft.svg"
                             alt="Syft Logo"
                             width={100}
-                            height={57}
+                            height={40}
                             priority
-                            className={`h-[57px] w-auto ${isHomePage ? 'hidden' : ''}`}
-                            style={{ contain: 'paint' }}
+                            className={`h-[40px] w-auto`}
                             aria-label="Syft Logo"
                             data-extension-ignore="true"
                         />
                     </div>
                 </Link>
 
-                {/* Use the Navbar component for navigation */}
                 <Navbar />
             </div>
         </header>
