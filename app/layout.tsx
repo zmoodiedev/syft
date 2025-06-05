@@ -1,14 +1,21 @@
-import { Montserrat } from "next/font/google";
+import { Poppins } from "next/font/google";
+import { Baloo_2 } from "next/font/google";
 import "@/app/globals.css";
 import Script from "next/script";
 import { Metadata, Viewport } from 'next';
 import ClientLayout from './components/ClientLayout';
 import { FontAwesomeScript } from '@/app/components/FontAwesome';
 
-const montserrat = Montserrat({
-  variable: "--font-montserrat",
+const poppins = Poppins({
+  variable: "--font-poppins",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800", "900"],
+});
+
+const baloo_2 = Baloo_2({
+  variable: "--font-baloo_2",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_ID || '';
@@ -116,7 +123,7 @@ export default function RootLayout({
         <FontAwesomeScript />
       </head>
       <body
-        className={`${montserrat.variable} antialiased min-h-screen flex flex-col bg-background text-foreground overflow-x-hidden`}
+        className={`${poppins.variable} ${baloo_2.variable} antialiased min-h-screen flex flex-col bg-background text-foreground overflow-x-hidden`}
       >
         <ClientLayout>
           {children}

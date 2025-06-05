@@ -106,6 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 // Only redirect to login if we're not on a public route
                 if (pathname !== '/login' && 
                     pathname !== '/' && 
+                    pathname !== '/pricing' &&
                     !pathname.includes('/signup') && 
                     !pathname.includes('/recipes/') &&
                     !pathname.includes('/profile/')) {

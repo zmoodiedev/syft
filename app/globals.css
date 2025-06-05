@@ -8,7 +8,7 @@
 
   body {
     font-size: 18px;
-    font-family: var(--font-montserrat);
+    font-family: var(--font-poppins);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -16,21 +16,21 @@
   h1 {
     font-size: var(--text-4xl);
     font-weight: 700;
-    font-family: var(--font-montserrat);
+    font-family: var(--font-baloo_2);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
   h2 {
     font-size: var(--text-3xl);
     font-weight: 700;
-    font-family: var(--font-montserrat);
+    font-family: var(--font-baloo_2);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
   h3 {
     font-size: var(--text-2xl);
     font-weight: 700;
-    font-family: var(--font-montserrat);
+    font-family: var(--font-baloo_2);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -38,7 +38,7 @@
   h4 {
     font-size: var(--text-xl);
     font-weight: 600;
-    font-family: var(--font-montserrat);
+    font-family: var(--font-baloo_2);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -56,15 +56,15 @@
   --color-foreground: #181a24;
   --color-cast-iron: #181a24;
   --color-steel: #848484;
-  --color-basil: #3E9D61;
-  --color-green-apple: #99CA41;
-  --color-tomato: #EE4534;
-  --color-blue-sky: #C3DAE3;
+  --color-green: #0C3D1F;
+  --color-light-green: #46773A;
+  --color-tomato: #EB5D31;
+  --color-cream: #F9EFCD;
   --color-eggshell: #FAFBF7;
 
   --color-dark-grey: #353535;
   --color-medium-grey: #848484;
-  --color-light-grey: #F6F6F6;
+  --color-light-grey: #F3F3F3;
 
 }
 
