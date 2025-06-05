@@ -345,7 +345,7 @@ export default function Navbar() {
             ) : (
                 <div className="flex items-center">
                     <Button 
-                        variant="primary"
+                        variant="ghost"
                         href="/login"
                         className="text-sm"
                     >
@@ -353,7 +353,7 @@ export default function Navbar() {
                     </Button>
 
                 <Button 
-                    variant="primary"
+                    variant="secondary"
                     href="/login"
                     className="text-sm"
                 >

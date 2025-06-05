@@ -13,21 +13,13 @@ export default function Features() {
                 transition={{ duration: 0.6 }}
                 className="container mx-auto text-center mb-20 relative z-10"
             >
-                <motion.span 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: 0.2 }}
-                    className="inline-block text-transparent bg-clip-text bg-basil font-semibold mb-4 uppercase tracking-wider"
-                >
-                    Why Use Syft?
-                </motion.span>
                 <motion.h2 
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.3 }}
-                    className="text-4xl md:text-5xl font-bold mb-6 text-cast-iron"
+                    className="text-4xl md:text-5xl font-bold mb-6 text-green"
                 >
-                    Features You{"'"}ll Love
+                    So Many Reasons to Love Syft
                 </motion.h2>
                 <motion.p 
                     initial={{ opacity: 0, y: 10 }}
@@ -50,28 +42,35 @@ export default function Features() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.6 }}
                 id="features" 
-                className="container mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10"
+                className="container mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 relative z-10"
             >
                 <FeatureCard
-                    icon="book"
-                    title="Save Recipes from Anywhere"
-                    description="Import recipes from around the internet, without the added fluff."
+                    icon="ribbon"
+                    title="Save Recipes Instantly"
+                    description=""
                     index={0}
-                    color="basil"
+                    color="green"
                 />
                 <FeatureCard
-                    icon="filter"
-                    title="Organize with Categories"
-                    description="Filter and Syft through your recipes with categories based on ingredients or meal types."
+                    icon="chef"
+                    title="Organize Your Cookbook"
+                    description=""
                     index={1}
-                    color="basil"
+                    color="green"
                 />
                 <FeatureCard
                     icon="share"
                     title="Share with Friends"
-                    description="Share your recipes with friends, and let them add it to their own. Coming Soon."
+                    description=""
                     index={2}
-                    color="basil"
+                    color="green"
+                />
+                <FeatureCard
+                    icon="phone"
+                    title="Cook Without Distractions"
+                    description=""
+                    index={2}
+                    color="green"
                 />
             </motion.section>
         </div>
