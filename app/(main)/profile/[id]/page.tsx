@@ -57,7 +57,6 @@ export default function ProfilePage() {
         if (isOwnProfile) {
           setActiveTab(tabParam);
           
-          // Handle auto-scrolling to notifications when that tab is selected from query params
           if (tabParam === 'notifications') {
             // Use setTimeout to ensure the tab content is rendered before scrolling
             setTimeout(() => {
@@ -94,7 +93,6 @@ export default function ProfilePage() {
       setUnreadNotificationCount(0);
       
       try {
-        // Load user profile data
         let profileData = null;
         try {
           profileData = await getUserProfile(id as string);
@@ -104,26 +102,19 @@ export default function ProfilePage() {
           }
         } catch (profileError) {
           console.error('Error loading user profile:', profileError);
-          // If we can't load the profile, we'll show the "User Not Found" UI
         }
         
-        // If the profile exists, continue loading data based on visibility settings
         if (profileData) {
           const isOwnProfile = user?.uid === id;
           
-          // If this is NOT the user's own profile and profileVisibility is private
           if (!isOwnProfile && (profileData as UserProfile).profileVisibility === 'private') {
-            // Only show the profile if the current user is a friend or has special permissions
             if (!user) {
-              // If no user is logged in, don't show private profiles
               setProfile(null);
               setLoading(false);
               return;
             } else {
-              // Check if users are friends before showing a private profile
               const relationshipData = await getUserRelationship(user.uid, id as string);
               if (!relationshipData.isFriend) {
-                // If they're not friends, don't show the private profile
                 setProfile(null);
                 setLoading(false);
                 return;
@@ -280,12 +271,10 @@ export default function ProfilePage() {
       }
       
       if (!success) {
-        // Show a minimal local toast or message
         console.warn("Follow action couldn't be completed due to permissions");
       }
     } catch (error) {
       console.error('Error updating follow status:', error);
-      // Don't update UI state if the operation failed
     }
   };
   
@@ -373,7 +362,7 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-basil"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-light-green"></div>
       </div>
     );
   }
@@ -410,8 +399,8 @@ export default function ProfilePage() {
                   </div>
                 ) : (
                   <div className="absolute left-6 -bottom-12 h-24 w-24 rounded-full border-4 border-white overflow-hidden bg-white shadow">
-                    <div className="h-full w-full flex items-center justify-center bg-basil">
-                      <FiUser className="h-12 w-12 text-basil" />
+                    <div className="h-full w-full flex items-center justify-center bg-light-green">
+                      <FiUser className="h-12 w-12 text-white" />
                     </div>
                   </div>
                 )}
@@ -459,7 +448,7 @@ export default function ProfilePage() {
                 <div className="mt-6 space-y-3">
                   {isOwnProfile ? (
                     <Button 
-                      variant="primary"
+                      variant="secondary"
                       className="w-full flex items-center justify-center gap-2"
                       href="/profile/edit"
                     >
@@ -470,7 +459,7 @@ export default function ProfilePage() {
                     <>
                       {relationship && !relationship.isFriend && !relationship.isPendingFriend && (
                         <Button 
-                          variant="primary" 
+                          variant="secondary" 
                           className="w-full flex items-center justify-center gap-2"
                           onClick={handleSendFriendRequest}
                         >
@@ -481,7 +470,7 @@ export default function ProfilePage() {
                       
                       {relationship && relationship.isPendingFriend && (
                         <Button 
-                          variant="primary" 
+                          variant="secondary" 
                           className="w-full flex items-center justify-center gap-2"
                           disabled
                         >
@@ -492,7 +481,7 @@ export default function ProfilePage() {
                       
                       {relationship && (
                         <Button 
-                          variant={relationship.isFollowing ? "outline" : "primary"}
+                          variant={relationship.isFollowing ? "outline" : "secondary"}
                           className="w-full flex items-center justify-center gap-2"
                           onClick={handleFollow}
                         >
@@ -533,7 +522,7 @@ export default function ProfilePage() {
                     onClick={() => setActiveTab('recipes')}
                     className={`py-4 px-3 border-b-2 font-medium text-sm flex-shrink-0 ${
                       activeTab === 'recipes'
-                        ? 'border-basil text-basil'
+                        ? 'border-light-green text-light-green'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     }`}
                   >
@@ -551,7 +540,7 @@ export default function ProfilePage() {
                       onClick={() => setActiveTab('friends')}
                       className={`py-4 px-3 border-b-2 font-medium text-sm ml-4 flex-shrink-0 ${
                         activeTab === 'friends'
-                          ? 'border-emerald-500 text-emerald-600'
+                          ? 'border-light-green text-light-green'
                           : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                       }`}
                     >
@@ -567,7 +556,7 @@ export default function ProfilePage() {
                       onClick={() => setActiveTab('following')}
                       className={`py-4 px-3 border-b-2 font-medium text-sm ml-4 flex-shrink-0 ${
                         activeTab === 'following'
-                          ? 'border-emerald-500 text-emerald-600'
+                          ? 'border-light-green text-light-green'
                           : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                       }`}
                     >
@@ -584,7 +573,7 @@ export default function ProfilePage() {
                       onClick={() => setActiveTab('notifications')}
                       className={`py-4 px-3 border-b-2 font-medium text-sm ml-4 flex-shrink-0 ${
                         activeTab === 'notifications'
-                          ? 'border-basil text-basil'
+                          ? 'border-light-green text-light-green'
                           : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                       }`}
                     >
@@ -592,7 +581,7 @@ export default function ProfilePage() {
                         <FiBell className="mr-2" />
                         Notifications
                         {unreadNotificationCount > 0 && (
-                          <span className="ml-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-basil rounded-full">
+                          <span className="ml-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-light-green rounded-full">
                             {unreadNotificationCount}
                           </span>
                         )}
@@ -657,14 +646,14 @@ export default function ProfilePage() {
                         {hasMoreRecipes && (
                           <div className="w-full flex justify-center mt-4">
                             <Button 
-                              variant="primary" 
+                              variant="secondary" 
                               className="flex items-center gap-2 w-full"
                               onClick={loadMoreRecipes}
                               disabled={loadingMoreRecipes}
                             >
                               {loadingMoreRecipes ? (
                                 <>
-                                  <div className="animate-spin h-4 w-4 border-2 border-emerald-500 border-t-transparent rounded-full"></div>
+                                  <div className="animate-spin h-4 w-4 border-2 border-light-green border-t-transparent rounded-full"></div>
                                   Loading...
                                 </>
                               ) : (
@@ -681,10 +670,10 @@ export default function ProfilePage() {
                       <div className="text-center py-12 text-gray-500">
                         {isOwnProfile ? (
                           <div className="flex flex-col items-center">
-                            <FiPlusCircle className="w-12 h-12 mb-4 text-emerald-400" />
+                            <FiPlusCircle className="w-12 h-12 mb-4 text-light-green" />
                             <h3 className="text-lg font-medium mb-2">No recipes yet</h3>
                             <p className="mb-4 text-sm text-gray-500">Start building your collection by adding your first recipe</p>
-                            <Button variant="primary" href="/add-recipe">Add Recipe</Button>
+                            <Button variant="secondary" href="/add-recipe">Add Recipe</Button>
                           </div>
                         ) : (
                           <p>This user hasn&apos;t added any recipes yet.</p>
@@ -715,7 +704,7 @@ export default function ProfilePage() {
                                   />
                                 ) : (
                                   <div className="h-full w-full flex items-center justify-center bg-emerald-100">
-                                    <FiUser className="h-6 w-6 text-emerald-500" />
+                                    <FiUser className="h-6 w-6 text-light-green" />
                                   </div>
                                 )}
                               </div>
@@ -759,7 +748,7 @@ export default function ProfilePage() {
                                   />
                                 ) : (
                                   <div className="h-full w-full flex items-center justify-center bg-emerald-100">
-                                    <FiUser className="h-6 w-6 text-emerald-500" />
+                                    <FiUser className="h-6 w-6 text-light-green" />
                                   </div>
                                 )}
                               </div>
@@ -804,7 +793,7 @@ export default function ProfilePage() {
                               />
                             ) : (
                               <div className="h-full w-full flex items-center justify-center bg-emerald-100">
-                                <FiUser className="h-6 w-6 text-emerald-500" />
+                                <FiUser className="h-6 w-6 text-light-green" />
                               </div>
                             )}
                           </div>
@@ -840,7 +829,7 @@ export default function ProfilePage() {
                             setUnreadNotificationCount(0);
                             setNotifications(notifications.map(n => ({ ...n, isRead: true })));
                           }}
-                          className="text-sm text-emerald-600 hover:text-emerald-800"
+                          className="text-sm text-light-green hover:text-emerald-800"
                         >
                           Mark all as read
                         </button>

@@ -168,7 +168,7 @@ export default function EditProfilePage() {
                     name="displayName"
                     value={profile.displayName || ''}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-basil focus:border-basil"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-light-green focus:border-light-green"
                   />
                 </div>
                 
@@ -182,7 +182,7 @@ export default function EditProfilePage() {
                     value={profile.bio || ''}
                     onChange={handleInputChange}
                     rows={3}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-basil focus:border-basil"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-light-green focus:border-light-green"
                     placeholder="Tell others about yourself..."
                   />
                 </div>
@@ -203,7 +203,7 @@ export default function EditProfilePage() {
                         />
                       ) : (
                         <div className="h-full w-full flex items-center justify-center bg-white">
-                          <FiUser className="h-12 w-12 text-basil" />
+                          <FiUser className="h-12 w-12 text-light-green" />
                         </div>
                       )}
                     </div>
@@ -264,7 +264,7 @@ export default function EditProfilePage() {
                     name="profileVisibility"
                     value={profile.profileVisibility || 'public'}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 text-sm rounded-lg focus:ring-2 focus:ring-basil focus:border-basil"
+                    className="w-full px-4 py-2 border border-gray-300 text-sm rounded-lg focus:ring-2 focus:ring-light-green focus:border-light-green"
                   >
                     <option value="public">Public</option>
                     <option value="private">Private</option>
@@ -280,7 +280,7 @@ export default function EditProfilePage() {
                     name="friendsVisibility"
                     value={profile.friendsVisibility || 'public'}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 text-sm rounded-lg focus:ring-2 focus:ring-basil focus:border-basil"
+                    className="w-full px-4 py-2 border border-gray-300 text-sm rounded-lg focus:ring-2 focus:ring-light-green focus:border-light-green"
                   >
                     <option value="public">Public</option>
                     <option value="private">Private</option>
@@ -306,7 +306,7 @@ export default function EditProfilePage() {
                     <button 
                       type="button"
                       onClick={() => handleRemoveCategory(category)}
-                      className="ml-2 text-basil hover:text-white"
+                      className="ml-2 text-light-green hover:text-white"
                     >
                       <FiX size={14} />
                     </button>
@@ -320,12 +320,12 @@ export default function EditProfilePage() {
                   value={newCategory}
                   onChange={(e) => setNewCategory(e.target.value)}
                   placeholder="Add a category..."
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-basil focus:border-basil w-full md:w-auto"
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-light-green focus:border-light-green w-full md:w-auto"
                 />
                 <button
                   type="button"
                   onClick={handleAddCategory}
-                  className="px-4 py-2 bg-basil text-white rounded-r-lg hover:bg-basil"
+                  className="px-4 py-2 bg-light-green text-white rounded-r-lg hover:bg-light-green"
                 >
                   Add
                 </button>

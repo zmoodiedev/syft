@@ -13,7 +13,7 @@ export default function UserTierBadge({
 }: UserTierBadgeProps) {
   const tierColors = {
     'Free': 'bg-gray-100 text-gray-800',
-    'Pro': 'bg-basil text-white',
+    'Pro': 'bg-light-green text-white',
     'Beta Tester': 'bg-purple-100 text-purple-800'
   };
 

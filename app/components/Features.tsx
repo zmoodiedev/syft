@@ -17,7 +17,7 @@ export default function Features() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.3 }}
-                    className="text-4xl md:text-5xl font-bold mb-6 text-green"
+                    className="text-4xl md:text-5xl font-bold mb-6"
                 >
                     So Many Reasons to Love Syft
                 </motion.h2>
@@ -33,7 +33,7 @@ export default function Features() {
                     initial={{ scaleX: 0 }}
                     animate={{ scaleX: 1 }}
                     transition={{ duration: 0.6, delay: 0.5 }}
-                    className="w-16 h-1 bg-basil mx-auto mt-8 rounded-full"
+                    className="w-16 h-1 bg-light-green mx-auto mt-8 rounded-full"
                 ></motion.div>
             </motion.div>
             

@@ -16,12 +16,12 @@ export default function Footer() {
                             className="h-[80px] w-auto"
                         />
                     </div>
-                    <p className="font-thin text-sm">— Store and sort all of your favorite recipes—whether from cookbooks, websites, or handwritten cards. No ads, no distractions—just the recipes you love.</p>
+                    <p className="font-thin text-sm">— Store and sort all of your favorite recipes whether from cookbooks, websites, or handwritten cards. No ads, no distractions, just the recipes you love.</p>
                 </div>
                 <div className="w-full md:w-1/4">
                     <h5 className="text-lg font-bold">Syft — Recipe Manager</h5>
                     <ul className="text-sm">
-                        <li><Link href="/about">Who We Are</Link></li>
+                        <li><Link href="/who-we-are">Who We Are</Link></li>
                         <li><Link href="/pricing">Pricing</Link></li>
                         <li><Link href="/roadmap">Roadmap</Link></li>
                         <li><Link href="/contact">Contact</Link></li>

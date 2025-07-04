@@ -33,11 +33,6 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-screen relative">
-            {/* Background Image with Overlay */}
-            <div className="absolute inset-0 bg-[url('/images/bg_ingredients.png')] bg-repeat opacity-70"></div>
-            <div className="absolute inset-0 bg-gradient-to-b from-white/80 to-white/90"></div>
-
-            {/* Content */}
             <div className="relative min-h-screen flex items-center justify-center p-8">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -80,16 +75,15 @@ export default function LoginPage() {
                         >
                             Your personal recipe management system.
                         </motion.p>
-
-                        <motion.p
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.5, duration: 0.5 }}
-                            className="text-gray-600 mb-6 text-center bg-red-500 text-white p-2 rounded-md"
-                        >
-                            Make sure to use the &quot;Sign In with Google&quot; button for beta access.
-                        </motion.p>
                         <SignIn />
+                        <div className="text-center mt-8">
+                            <p className="text-sm text-gray-600">
+                                Don&apos;t have an account?{' '}
+                                <Link href="/signup" className="font-medium text-red-500 hover:text-red-600 transition-colors">
+                                    Sign Up
+                                </Link>
+                            </p>
+                        </div>
                     </motion.div>
                 </motion.div>
             </div>

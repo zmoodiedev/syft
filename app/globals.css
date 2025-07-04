@@ -19,6 +19,7 @@
     font-family: var(--font-baloo_2);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    color: var(--color-green);
   }
   h2 {
     font-size: var(--text-3xl);
@@ -26,6 +27,7 @@
     font-family: var(--font-baloo_2);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    color: var(--color-light-green);
   }
   h3 {
     font-size: var(--text-2xl);

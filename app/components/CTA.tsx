@@ -25,7 +25,7 @@ export default function CTA() {
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.6, delay: 0.3 }}
-                            className="text-3xl md:text-4xl font-bold"
+                            className="text-3xl md:text-4xl font-bold text-green"
                         >
                             Ready to cook smarter? Get started with Syft today!
                         </motion.h2>
@@ -39,7 +39,7 @@ export default function CTA() {
                         >
                             <ScrollToTopLink 
                                 href="/recipes" 
-                                className="inline-block px-8 py-4 bg-white text-basil font-semibold rounded-xl hover:shadow-lg transition-all duration-300 hover:scale-105 relative overflow-hidden"
+                                className="inline-block px-8 py-4 bg-white text-light-green font-semibold rounded-xl hover:shadow-lg transition-all duration-300 hover:scale-105 relative overflow-hidden"
                             >
                                 Get Started for Free
                             </ScrollToTopLink>

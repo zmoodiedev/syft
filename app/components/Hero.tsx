@@ -3,7 +3,6 @@
 import { motion } from 'framer-motion';
 import ScrollToTopLink from "./ScrollToTopLink";
 import Image from 'next/image';
-import Link from 'next/link';
 
 export default function Hero() {
     return (
@@ -42,11 +41,11 @@ export default function Hero() {
                         transition={{ duration: 0.5 }}
                         className="relative order-2 lg:order-1"
                     >
-                        <h1 className="text-5xl md:text-6xl font-bold mb-6 text-basil">
+                        <h1 className="text-5xl md:text-6xl font-bold mb-6">
                         Find it. Save it.<br/>
                         <span className="text-light-green">Cook it.</span> Share it.
                         </h1>
-                        <p className="text-xl text-gray-600 mb-8">
+                        <p className="text-xl mb-8">
                         A smarter way to manage your meals—<br/>
                         organize, cook, and connect from one simple app.
                         </p>
@@ -55,11 +54,9 @@ export default function Hero() {
                                 <motion.button
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
+                                    className="bg-light-green text-white px-8 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
                                 >
-                                    <Link
-                                        href="/login"
-                                        className="bg-light-green text-white px-8 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
-                                        >Start for free!</Link>
+                                    Start for free!
                                 </motion.button>
                             </ScrollToTopLink>
                         </div>

@@ -254,13 +254,13 @@ export default function BulkEntryForm() {
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8">
       {/* Header */}
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-basil mb-2">Bulk Entry</h1>
+        <h1 className="text-3xl font-bold text-light-green mb-2">Bulk Entry</h1>
         <p className="text-gray-600">Import ingredients and instructions from text sources</p>
       </div>
 
       {/* Bulk Text Import Section */}
       <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-        <h2 className="text-xl font-bold text-basil mb-4">Bulk Text Import</h2>
+        <h2 className="text-xl font-bold text-light-green mb-4">Bulk Text Import</h2>
         <p className="text-sm text-gray-600 mb-4">
           Copy and paste ingredients and instructions from any text source. Each line will be treated as a separate item.
         </p>
@@ -305,7 +305,7 @@ export default function BulkEntryForm() {
           <button
             type="button"
             onClick={handleBulkImport}
-            className="inline-flex items-center justify-center gap-2 font-medium transition-colors duration-200 bg-basil text-white hover:bg-basil-600 active:bg-basil-700 px-6 py-3 text-base rounded-md"
+            className="inline-flex items-center justify-center gap-2 font-medium transition-colors duration-200 bg-light-green text-white hover:bg-light-green-600 active:bg-light-green-700 px-6 py-3 text-base rounded-md"
           >
             Import to Recipe
           </button>
@@ -325,7 +325,7 @@ export default function BulkEntryForm() {
       {/* Recipe Details */}
       <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-basil">Recipe Details</h2>
+          <h2 className="text-xl font-bold text-light-green">Recipe Details</h2>
           
           <div className="flex items-center bg-gray-100 p-1 rounded-lg">
             <button
@@ -333,7 +333,7 @@ export default function BulkEntryForm() {
               onClick={() => setVisibility('public')}
               className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm transition-colors ${
                 visibility === 'public' 
-                  ? 'bg-white text-basil shadow-sm' 
+                  ? 'bg-white text-light-green shadow-sm' 
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -345,7 +345,7 @@ export default function BulkEntryForm() {
               onClick={() => setVisibility('friends')}
               className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm transition-colors ${
                 visibility === 'friends' 
-                  ? 'bg-white text-basil shadow-sm' 
+                  ? 'bg-white text-light-green shadow-sm' 
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -357,7 +357,7 @@ export default function BulkEntryForm() {
               onClick={() => setVisibility('private')}
               className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm transition-colors ${
                 visibility === 'private' 
-                  ? 'bg-white text-basil shadow-sm' 
+                  ? 'bg-white text-light-green shadow-sm' 
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -441,7 +441,7 @@ export default function BulkEntryForm() {
               <button 
                 type="button"
                 onClick={validateAndPreviewImage}
-                className="px-4 py-3 bg-basil text-white rounded-md hover:bg-basil-600 transition-colors"
+                className="px-4 py-3 bg-light-green text-white rounded-md hover:bg-light-green-600 transition-colors"
               >
                 Preview
               </button>
@@ -462,7 +462,7 @@ export default function BulkEntryForm() {
       {/* Imported Items Preview */}
       {(ingredients.length > 0 || instructions.length > 0) && (
         <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-          <h2 className="text-xl font-bold text-basil mb-4">Imported Recipe Content</h2>
+          <h2 className="text-xl font-bold text-light-green mb-4">Imported Recipe Content</h2>
           
           {ingredients.length > 0 && (
             <div className="mb-6">
@@ -500,7 +500,7 @@ export default function BulkEntryForm() {
       <div className="flex justify-center">
         <button 
           type="submit"
-          className="inline-flex items-center justify-center gap-2 font-medium transition-colors duration-200 bg-basil text-white hover:bg-basil-600 active:bg-basil-700 px-8 py-3 text-base rounded-md"
+          className="inline-flex items-center justify-center gap-2 font-medium transition-colors duration-200 bg-light-green text-white hover:bg-light-green-600 active:bg-light-green-700 px-8 py-3 text-base rounded-md"
         >
           Save Recipe
         </button>

@@ -93,8 +93,8 @@ export default function Navbar() {
                     <li>
                         <Link
                             href="/recipes"
-                            className={`text-cast-iron hover:text-basil px-3 py-2 transition-colors ${
-                                pathname === '/recipes' ? 'border-b-2 border-basil' : ''
+                            className={`text-cast-iron hover:text-light-green px-3 py-2 transition-colors ${
+                                pathname === '/recipes' ? 'border-b-2 border-light-green' : ''
                             }`}
                         >
                             My Recipes
@@ -103,8 +103,8 @@ export default function Navbar() {
                     <li>
                         <Link
                             href="/add-recipe"
-                            className={`text-cast-iron hover:text-basil px-3 py-2 transition-colors ${
-                                pathname === '/add-recipe' ? 'border-b-2 border-basil' : ''
+                            className={`text-cast-iron hover:text-light-green px-3 py-2 transition-colors ${
+                                pathname === '/add-recipe' ? 'border-b-2 border-light-green' : ''
                             }`}
                         >
                             Add Recipe
@@ -123,7 +123,7 @@ export default function Navbar() {
                     >
                         <i className={`fa-solid ${mobileMenuOpen ? 'fa-xmark' : 'fa-burger'}`}></i>
                         {(sharedRecipes.length > 0 || unreadNotificationCount > 0) && !mobileMenuOpen && (
-                            <span className="absolute -top-1 -right-1 bg-basil text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                            <span className="absolute -top-1 -right-1 bg-light-green text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                                 {sharedRecipes.length + unreadNotificationCount}
                             </span>
                         )}
@@ -159,7 +159,7 @@ export default function Navbar() {
                                         <div className="flex items-center">
                                             <Link 
                                                 href={`/profile/${user.uid}`} 
-                                                className="text-lg font-semibold block hover:text-basil"
+                                                className="text-lg font-semibold block hover:text-light-green"
                                                 onClick={() => setMobileMenuOpen(false)}
                                             >
                                                 {userProfile?.displayName || user.email || 'User'}
@@ -214,7 +214,7 @@ export default function Navbar() {
                                             <i className="fa-solid fa-bell mr-3 w-6 text-center"></i>
                                             Notifications
                                             {unreadNotificationCount > 0 && (
-                                                <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-basil rounded-full">
+                                                <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-light-green rounded-full">
                                                     {unreadNotificationCount}
                                                 </span>
                                             )}
@@ -257,7 +257,7 @@ export default function Navbar() {
                                             data-extension-ignore="true"
                                         />
                                         {(sharedRecipes.length > 0 || unreadNotificationCount > 0) && (
-                                            <span className="absolute -top-1 -right-1 bg-basil text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                            <span className="absolute -top-1 -right-1 bg-light-green text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                                                 {sharedRecipes.length + unreadNotificationCount}
                                             </span>
                                         )}
@@ -268,7 +268,7 @@ export default function Navbar() {
                                             {userProfile?.displayName ? userProfile.displayName.charAt(0).toUpperCase() : user.email?.charAt(0).toUpperCase()}
                                         </div>
                                         {(sharedRecipes.length > 0 || unreadNotificationCount > 0) && (
-                                            <span className="absolute -top-1 -right-1 bg-basil text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                            <span className="absolute -top-1 -right-1 bg-light-green text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                                                 {sharedRecipes.length + unreadNotificationCount}
                                             </span>
                                         )}
@@ -279,7 +279,7 @@ export default function Navbar() {
                                         {userProfile?.displayName || user.email}
                                     </Link>
                                     {(sharedRecipes.length > 0 || unreadNotificationCount > 0) && (
-                                        <span className="mr-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-basil rounded-full">
+                                        <span className="mr-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-light-green rounded-full">
                                             {sharedRecipes.length + unreadNotificationCount}
                                         </span>
                                     )}
@@ -322,7 +322,7 @@ export default function Navbar() {
                                             <i className="fa-solid fa-bell"></i>
                                             Notifications
                                             {unreadNotificationCount > 0 && (
-                                                <span className="ml-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-basil rounded-full">
+                                                <span className="ml-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-light-green rounded-full">
                                                     {unreadNotificationCount}
                                                 </span>
                                             )}
@@ -354,7 +354,7 @@ export default function Navbar() {
 
                 <Button 
                     variant="secondary"
-                    href="/login"
+                    href="/signup"
                     className="text-sm"
                 >
                     Sign Up
