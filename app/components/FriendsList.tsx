@@ -238,7 +238,7 @@ export default function FriendsList() {
                                                     <p className="font-medium text-gray-900">
                                                         {request.receiverName || 'Unknown User'}
                                                     </p>
-                                                    <span className="inline-flex items-center text-sm text-basil">
+                                                    <span className="inline-flex items-center text-sm text-light-green">
                                                         <FiClock className="mr-1" />
                                                         Pending response
                                                     </span>

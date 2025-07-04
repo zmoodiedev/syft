@@ -23,7 +23,7 @@ export default function Question({ question, answer }: QuestionProps) {
                 onClick={() => setIsOpen(!isOpen)}
                 className="flex justify-between items-center w-full text-left py-2 focus:outline-none focus:ring-2 focus:ring-light-green focus:ring-opacity-50 rounded-lg"
             >
-                <h3 className="text-xl font-semibold text-green pr-4">
+                <h3 className="text-xl font-semibold text-green pr-4 pl-4">
                     {question}
                 </h3>
                 <motion.div
@@ -44,7 +44,7 @@ export default function Question({ question, answer }: QuestionProps) {
                         transition={{ duration: 0.3 }}
                         className="overflow-hidden"
                     >
-                        <div className="pt-4 pb-2">
+                        <div className="pt-4 pb-2 pl-4 pr-4">
                             <p className="text-gray-600 leading-relaxed">
                                 {answer}
                             </p>

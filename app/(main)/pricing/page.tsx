@@ -162,7 +162,7 @@ export default function PricingPage() {
                 onClick={() => setCurrency('USD')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   currency === 'USD'
-                    ? 'bg-basil text-white'
+                    ? 'bg-light-green text-white'
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
@@ -172,7 +172,7 @@ export default function PricingPage() {
                 onClick={() => setCurrency('CAD')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   currency === 'CAD'
-                    ? 'bg-basil text-white'
+                    ? 'bg-light-green text-white'
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
@@ -189,14 +189,14 @@ export default function PricingPage() {
               key={tier.id}
               className={`relative bg-white rounded-2xl shadow-lg border-2 transition-all duration-200 hover:shadow-xl ${
                 tier.popular 
-                  ? 'border-basil scale-105' 
+                  ? 'border-light-green scale-105' 
                   : 'border-gray-200 hover:border-gray-300'
               }`}
             >
               {/* Popular Badge */}
               {tier.popular && (
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <span className="bg-basil text-white px-4 py-1 rounded-full text-sm font-medium">
+                  <span className="bg-light-green text-white px-4 py-1 rounded-full text-sm font-medium">
                     Most Popular
                   </span>
                 </div>

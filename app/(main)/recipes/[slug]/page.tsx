@@ -390,7 +390,7 @@ export default function RecipeDetail() {
       default:
         icon = <FiGlobe className="w-4 h-4 mr-1" />;
         label = "Public";
-        bgColor = "bg-emerald-500";
+        bgColor = "bg-light-green";
     }
     
     return (
@@ -405,7 +405,7 @@ export default function RecipeDetail() {
     <div className="min-h-screen bg-eggshell">
       {loading ? (
         <div className="flex justify-center items-center min-h-screen">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-basil"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-light-green"></div>
         </div>
       ) : error ? (
         <div className="container mx-auto px-4 py-20 text-center">
@@ -421,7 +421,7 @@ export default function RecipeDetail() {
           )}
           <ScrollToTopLink
             href="/recipes"
-            className="inline-block px-6 py-3 bg-basil text-white font-semibold rounded-lg hover:bg-basil transition-colors"
+            className="inline-block px-6 py-3 bg-light-green text-white font-semibold rounded-lg hover:bg-light-green transition-colors"
           >
             Back to Recipes
           </ScrollToTopLink>
@@ -663,7 +663,7 @@ export default function RecipeDetail() {
                           <ul className="space-y-3">
                             {groupIngredients.map((ingredient, index) => (
                               <li key={ingredient.id || index} className="flex items-start gap-2 mb-4">
-                                <span className="w-1.5 h-1.5 rounded-full bg-basil mt-2.5"></span>
+                                <span className="w-1.5 h-1.5 rounded-full bg-light-green mt-2.5"></span>
                                 <span className="text-gray-700">
                                   {ingredient.amount && <span className="font-medium">{ingredient.amount} </span>}
                                   {ingredient.unit && <span>{ingredient.unit} </span>}
@@ -756,7 +756,7 @@ export default function RecipeDetail() {
           <h2 className="text-2xl font-semibold text-gray-900 mb-4">Recipe not found</h2>
           <ScrollToTopLink
             href="/recipes"
-            className="inline-block px-6 py-3 bg-basil text-white font-semibold rounded-lg hover:bg-basil transition-colors"
+            className="inline-block px-6 py-3 bg-light-green text-white font-semibold rounded-lg hover:bg-light-green transition-colors"
           >
             Back to Recipes
           </ScrollToTopLink>
@@ -775,7 +775,7 @@ export default function RecipeDetail() {
                 value={searchQuery}
                 onChange={handleSearchChange}
                 placeholder="Search friends..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-basil focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-light-green focus:border-transparent"
               />
               <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                 <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -867,7 +867,7 @@ export default function RecipeDetail() {
           <div className="mt-4">
             <ScrollToTopLink
               href="/recipes"
-              className="inline-block px-6 py-3 bg-basil text-white font-semibold rounded-lg hover:bg-basil transition-colors"
+              className="inline-block px-6 py-3 bg-light-green text-white font-semibold rounded-lg hover:bg-light-green transition-colors"
             >
               Back to Recipes
             </ScrollToTopLink>

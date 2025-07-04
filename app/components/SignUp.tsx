@@ -60,28 +60,7 @@ export default function SignUp() {
     };
 
     return (
-        <div className="relative bg-white shadow-xl rounded-xl px-10 pt-12 pb-10 max-w-md w-full z-10">
-            {/* Decorative corner shapes */}
-            <div className="absolute top-0 right-0">
-                <div className="w-16 h-16 border-t-2 border-r-2 border-red-500 opacity-80"></div>
-            </div>
-            <div className="absolute bottom-0 left-0">
-                <div className="w-16 h-16 border-b-2 border-l-2 border-red-500 opacity-80"></div>
-            </div>
-            
-            {/* Decorative dots pattern */}
-            <div className="absolute top-6 right-6 grid grid-cols-3 gap-1">
-                {[...Array(6)].map((_, i) => (
-                    <div key={i} className="w-1 h-1 bg-gray-500 rounded-full"></div>
-                ))}
-            </div>
-            
-            {/* Decorative floating blobs */}
-            <div className="absolute -bottom-5 -left-10 w-20 h-20 rounded-full bg-red-500/5"></div>
-            <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-red-500/5"></div>
-            
-            <h2 className="text-3xl font-bold mb-2 text-center">Create Account</h2>
-            <div className="h-[2px] w-12 bg-gradient-to-r from-red-400 to-rose-500 mx-auto mb-6"></div>
+        <div className="relative px-10pb-10 max-w-md w-full z-10">
             
             {error && (
                 <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">

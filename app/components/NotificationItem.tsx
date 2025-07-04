@@ -125,15 +125,15 @@ export default function NotificationItem({ notification, onDelete }: Notificatio
   const renderIcon = () => {
     switch (notification.type) {
       case 'follow':
-        return <FiUser className="text-basil" />;
+        return <FiUser className="text-light-green" />;
       case 'friend_request':
-        return <FiUserPlus className="text-basil" />;
+        return <FiUserPlus className="text-light-green" />;
       case 'friend_accept':
-        return <FiUserCheck className="text-basil" />;
+        return <FiUserCheck className="text-light-green" />;
       case 'recipe_share':
-        return <FiBook className="text-basil" />;
+        return <FiBook className="text-light-green" />;
       default:
-        return <FiUser className="text-basil" />;
+        return <FiUser className="text-light-green" />;
     }
   };
   
@@ -177,7 +177,7 @@ export default function NotificationItem({ notification, onDelete }: Notificatio
       case 'follow':
         return (
           <p className="text-sm text-gray-700">
-            <Link href={`/profile/${notification.fromUserId}`} className="font-medium hover:text-basil">
+            <Link href={`/profile/${notification.fromUserId}`} className="font-medium hover:text-light-green">
               {userName}
             </Link>{' '}
             started following you.
@@ -186,7 +186,7 @@ export default function NotificationItem({ notification, onDelete }: Notificatio
       case 'friend_request':
         return (
           <p className="text-sm text-gray-700">
-            <Link href={`/profile/${notification.fromUserId}`} className="font-medium hover:text-basil">
+            <Link href={`/profile/${notification.fromUserId}`} className="font-medium hover:text-light-green">
               {userName}
             </Link>{' '}
             sent you a friend request.
@@ -195,7 +195,7 @@ export default function NotificationItem({ notification, onDelete }: Notificatio
       case 'friend_accept':
         return (
           <p className="text-sm text-gray-700">
-            <Link href={`/profile/${notification.fromUserId}`} className="font-medium hover:text-basil">
+            <Link href={`/profile/${notification.fromUserId}`} className="font-medium hover:text-light-green">
               {userName}
             </Link>{' '}
             accepted your friend request.
@@ -204,11 +204,11 @@ export default function NotificationItem({ notification, onDelete }: Notificatio
       case 'recipe_share':
         return (
           <p className="text-sm text-gray-700">
-            <Link href={`/profile/${notification.fromUserId}`} className="font-medium hover:text-basil">
+            <Link href={`/profile/${notification.fromUserId}`} className="font-medium hover:text-light-green">
               {userName}
             </Link>{' '}
             shared a recipe with you:{' '}
-            <Link href={`/recipes/${notification.relatedItemId}`} className="font-medium hover:text-basil">
+            <Link href={`/recipes/${notification.relatedItemId}`} className="font-medium hover:text-light-green">
               {notification.relatedItemName || 'a recipe'}
             </Link>
           </p>
@@ -230,7 +230,7 @@ export default function NotificationItem({ notification, onDelete }: Notificatio
           <button
             onClick={handleAcceptFriendRequest}
             disabled={isLoading}
-            className="px-3 py-1 bg-basil text-white text-xs rounded flex items-center gap-1 hover:bg-basil"
+            className="px-3 py-1 bg-light-green text-white text-xs rounded flex items-center gap-1 hover:bg-light-green"
           >
             <FiThumbsUp size={12} />
             Accept
@@ -253,7 +253,7 @@ export default function NotificationItem({ notification, onDelete }: Notificatio
           <button
             onClick={handleAcceptRecipe}
             disabled={isLoading}
-            className="px-3 py-1 bg-basil text-white text-xs rounded flex items-center gap-1 hover:bg-basil"
+            className="px-3 py-1 bg-light-green text-white text-xs rounded flex items-center gap-1 hover:bg-light-green"
           >
             <FiThumbsUp size={12} />
             Add to Collection
@@ -288,7 +288,7 @@ export default function NotificationItem({ notification, onDelete }: Notificatio
               />
             </div>
           ) : (
-            <div className="h-10 w-10 rounded-full flex items-center justify-center bg-basil text-white">
+            <div className="h-10 w-10 rounded-full flex items-center justify-center bg-light-green text-white">
               {renderIcon()}
             </div>
           )}
@@ -311,7 +311,7 @@ export default function NotificationItem({ notification, onDelete }: Notificatio
             <button
               onClick={handleMarkAsRead}
               disabled={isLoading}
-              className="p-1 text-basil hover:bg-basil hover:text-white rounded-full transition-colors"
+              className="p-1 text-light-green hover:bg-light-green hover:text-white rounded-full transition-colors"
               title="Mark as read"
             >
               <FiCheck size={16} />

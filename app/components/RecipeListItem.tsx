@@ -39,11 +39,11 @@ export default function RecipeListItem({ recipe, index }: RecipeListItemProps) {
           }}
         >
           {/* Recipe card top edge effect */}
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-basil to-emerald-600 rounded-t-lg"></div>
+          <div className="absolute top-0 left-0 right-0 h-1 rounded-t-lg"></div>
           
           
           <div className="text-left">
-            <h3 className="text-lg font-semibold text-gray-900 group-hover:text-basil transition-colors duration-200">
+            <h3 className="text-lg font-semibold text-gray-900 group-hover:text-light-green transition-colors duration-200">
               {recipe.name}
             </h3>
           </div>

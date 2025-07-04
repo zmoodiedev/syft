@@ -86,7 +86,7 @@ export default function AddFriend() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                     placeholder="Search by email or name..."
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg md:rounded-r-none md:rounded-l-lg focus:outline-none focus:ring-2 focus:ring-basil"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg md:rounded-r-none md:rounded-l-lg focus:outline-none focus:ring-2 focus:ring-light-green"
                 />
                 <Button
                     variant="primary"
@@ -111,7 +111,7 @@ export default function AddFriend() {
                         className="flex items-center justify-between p-4 bg-gray-50 rounded-lg flex-col md:flex-row"
                     >
                         <div className="flex items-center gap-3 mb-6">
-                            <div className="w-10 h-10 bg-basil/10 rounded-full flex items-center justify-center overflow-hidden">
+                            <div className="w-10 h-10 bg-light-green/10 rounded-full flex items-center justify-center overflow-hidden">
                                 {result.photoURL ? (
                                     <Image 
                                         src={result.photoURL} 
@@ -121,7 +121,7 @@ export default function AddFriend() {
                                         className="h-full w-full object-cover"
                                     />
                                 ) : (
-                                    <span className="text-basil font-medium">
+                                    <span className="text-light-green font-medium">
                                         {result.displayName?.charAt(0) || result.email?.charAt(0) || '?'}
                                     </span>
                                 )}

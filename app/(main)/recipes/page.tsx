@@ -138,7 +138,7 @@ export default function RecipesPage() {
                                     onClick={() => setViewMode('cards')}
                                     className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm transition-colors ${
                                         viewMode === 'cards' 
-                                            ? 'bg-white text-basil shadow-sm' 
+                                            ? 'bg-white text-light-green shadow-sm' 
                                             : 'text-gray-600 hover:text-gray-900'
                                     }`}
                                     title="Card view"
@@ -150,7 +150,7 @@ export default function RecipesPage() {
                                     onClick={() => setViewMode('list')}
                                     className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm transition-colors ${
                                         viewMode === 'list' 
-                                            ? 'bg-white text-basil shadow-sm' 
+                                            ? 'bg-white text-light-green shadow-sm' 
                                             : 'text-gray-600 hover:text-gray-900'
                                     }`}
                                     title="List view"
@@ -174,7 +174,7 @@ export default function RecipesPage() {
                             placeholder="Search recipes..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-basil focus:border-basil"
+                            className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-light-green focus:border-light-green"
                         />
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -201,7 +201,7 @@ export default function RecipesPage() {
                                         transition-all duration-150 
                                         focus:outline-none 
                                         ${selectedCategories.includes(category)
-                                            ? 'bg-basil text-white hover:bg-basil hover:text-white' 
+                                            ? 'bg-light-green text-white hover:bg-light-green hover:text-white' 
                                             : 'bg-white text-steel hover:bg-gray-100'
                                         }
                                         active:shadow-inner active:scale-95
@@ -235,12 +235,6 @@ export default function RecipesPage() {
                                     ? 'Try selecting different categories or clear the filters'
                                     : 'Start by adding your first recipe!'}
                         </p>
-                        <Button
-                            href="/add-recipe" 
-                            className="mx-auto" 
-                        >
-                            Add Recipe
-                        </Button>
                     </div>
                 ) : (
                     <>

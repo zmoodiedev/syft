@@ -76,7 +76,7 @@ export default function NotFound() {
     <div className="min-h-screen bg-eggshell flex items-center justify-center p-4">
       <div className="max-w-3xl w-full bg-white rounded-2xl overflow-hidden shadow-xl">
         {/* Recipe Card Header */}
-        <div className="relative h-40 bg-gradient-to-r from-basil to-green-apple">
+        <div className="relative h-40">
           <div className="absolute inset-0 bg-[url('/images/bg_ingredients.png')] bg-repeat opacity-20 bg-[length:200px_200px]"></div>
           <div className="relative h-full flex items-center justify-center z-10">
             <motion.h1 
@@ -111,7 +111,7 @@ export default function NotFound() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.3 + (index * 0.1), duration: 0.5 }}
                   >
-                    <span className="w-1.5 h-1.5 rounded-full bg-basil mt-2.5"></span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-light-green mt-2.5"></span>
                     <span className="text-gray-600">{ingredient}</span>
                   </motion.li>
                 ))}
@@ -129,7 +129,7 @@ export default function NotFound() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.3 + (index * 0.1), duration: 0.5 }}
                   >
-                    <div className="w-6 h-6 flex items-center justify-center flex-shrink-0 bg-basil rounded-full text-white font-medium">
+                    <div className="w-6 h-6 flex items-center justify-center flex-shrink-0 bg-light-green rounded-full text-white font-medium">
                       {index + 1}
                     </div>
                     <p className="text-gray-600">{instruction}</p>
@@ -146,7 +146,7 @@ export default function NotFound() {
               >
                 <Link 
                   href="/" 
-                  className="inline-block px-8 py-3 bg-basil text-white font-semibold rounded-lg hover:bg-opacity-90 transition-colors"
+                  className="inline-block px-8 py-3 bg-light-green text-white font-semibold rounded-lg hover:bg-opacity-90 transition-colors"
                 >
                   Back to Home
                 </Link>

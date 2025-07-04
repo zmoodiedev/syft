@@ -32,8 +32,8 @@ export default function Header() {
     return (
         <header className={`w-full h-[var(--header-height)] p-4 z-[100] ${!isHomePage ? 'bg-white' : ''} ${isHomePage ? 'absolute' : ''}`}>
             <div className="w-full container mx-auto flex flex-row justify-between items-center h-full">
-                <Link href="/" className="flex items-center">
-                    <div className="relative h-[57px] w-[100px]">
+                <Link href="/">
+                    <div className="flex items-center relative h-[57px] w-[100px]">
                         <Image
                             src="/logo_syft.svg"
                             alt="Syft Logo"

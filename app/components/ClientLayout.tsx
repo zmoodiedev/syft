@@ -43,7 +43,7 @@ function ClientLayoutContent({ children }: { children: React.ReactNode }) {
           // Custom styles for different toast types
           success: {
             style: {
-              background: '#3E9D61', // basil color
+              background: '#3E9D61', // light-green color
               color: 'white',
             },
             iconTheme: {

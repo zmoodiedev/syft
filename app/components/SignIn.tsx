@@ -28,13 +28,11 @@ export default function SignIn() {
         try {
             await signInWithGoogle();
             setError('');
-            // Add a small delay to ensure auth state is updated
             setTimeout(() => {
                 router.push('/');
             }, 100);
         } catch (error) {
             console.error('Google sign-in error:', error);
-            // Show a specific error if it's an access denied error
             if (error instanceof Error && error.message.includes('Access denied')) {
                 setError(error.message);
             } else {
@@ -89,7 +87,7 @@ export default function SignIn() {
                 </Button>
             </form>
             
-            <div className="mt-8">
+            <div>
                 <div className="relative">
                     <div className="absolute inset-0 flex items-center">
                         <div className="w-full border-t border-gray-300"></div>
