@@ -44,9 +44,9 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/favicon.ico', sizes: 'any' },
-      { url: '/favicon-16x16.png', sizes: '16x16' },
-      { url: '/favicon-32x32.png', sizes: '32x32' }
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
     ],
     apple: '/apple-touch-icon.png',
   },
@@ -60,7 +60,7 @@ export const metadata: Metadata = {
     description: 'Save, organize, and enjoy your favorite recipes, all in one place. No ads, no distractions—just the recipes you love.',
     images: [
       {
-        url: '/og-image.jpg',
+        url: '/og-image.png',
         width: 1200,
         height: 630,
         alt: 'Syft - Your Personal Recipe Vault',
@@ -71,7 +71,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Syft - Your Personal Recipe Vault',
     description: 'Save, organize, and enjoy your favorite recipes, all in one place. No ads, no distractions—just the recipes you love.',
-    images: ['/twitter-image.jpg'],
+    images: ['/twitter-image.png'],
     creator: '@syft_app',
   },
   robots: {
