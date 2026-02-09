@@ -3,8 +3,11 @@
 import { motion } from 'framer-motion';
 import ScrollToTopLink from "./ScrollToTopLink";
 import Image from 'next/image';
+import { useAuth } from '../context/AuthContext';
 
 export default function Hero() {
+    const { enterDemoMode } = useAuth();
+
     return (
         <section className="relative overflow-hidden">
             <div className="absolute inset-0 bg-cover bg-bottom bg-no-repeat" style={{ backgroundImage: 'url(/images/hero_bg.svg)'}}></div>
@@ -59,6 +62,14 @@ export default function Hero() {
                                     Start for free!
                                 </motion.button>
                             </ScrollToTopLink>
+                            <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={enterDemoMode}
+                                className="border-2 border-light-green text-light-green px-8 py-3 rounded-lg hover:bg-light-green hover:text-white transition-all duration-300"
+                            >
+                                Try Demo
+                            </motion.button>
                         </div>
                     </motion.div>
                 </div>

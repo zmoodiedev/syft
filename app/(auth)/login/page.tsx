@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 
 export default function LoginPage() {
-    const { user } = useAuth();
+    const { user, enterDemoMode } = useAuth();
     const router = useRouter();
     const [mounted, setMounted] = useState(false);
 
@@ -84,6 +84,17 @@ export default function LoginPage() {
                                 </Link>
                             </p>
                         </div> */}
+                        <div className="text-center mt-6">
+                            <p className="text-sm text-gray-500">
+                                Just want to look around?{' '}
+                                <button
+                                    onClick={enterDemoMode}
+                                    className="font-medium text-light-green hover:underline transition-colors"
+                                >
+                                    Try the demo
+                                </button>
+                            </p>
+                        </div>
                     </motion.div>
                 </motion.div>
             </div>

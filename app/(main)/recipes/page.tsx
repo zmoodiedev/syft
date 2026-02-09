@@ -9,6 +9,7 @@ import RecipeListItem from '@/app/components/RecipeListItem';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import Button from '@/app/components/Button';
 import { FiGrid, FiList } from 'react-icons/fi';
+import { DEMO_RECIPES } from '@/app/lib/demoData';
 
 interface Recipe {
     id: string;
@@ -24,7 +25,7 @@ interface Recipe {
 }
 
 export default function RecipesPage() {
-    const { user } = useAuth();
+    const { user, isDemo } = useAuth();
     const [recipes, setRecipes] = useState<Recipe[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -39,12 +40,31 @@ export default function RecipesPage() {
     }, [selectedCategories]);
 
     useEffect(() => {
+        if (isDemo) {
+            // In demo mode, use hardcoded data
+            const demoData = DEMO_RECIPES.map(r => ({
+                ...r,
+                createdAt: new Date(),
+            })) as Recipe[];
+            setRecipes(demoData);
+
+            const usedCategories = new Set<string>();
+            demoData.forEach(recipe => {
+                if (recipe.categories && Array.isArray(recipe.categories)) {
+                    recipe.categories.forEach(cat => usedCategories.add(cat));
+                }
+            });
+            setAvailableCategories(Array.from(usedCategories).sort());
+            setLoading(false);
+            return;
+        }
+
         const fetchRecipes = async () => {
             if (!user) return;
 
             try {
                 const recipesRef = collection(db, 'recipes');
-                
+
                 // Create query to get only the user's own recipes
                 // This ensures private recipes are only visible to their owner
                 const q = query(
@@ -52,7 +72,7 @@ export default function RecipesPage() {
                     where('userId', '==', user.uid),
                     orderBy('__name__', 'desc')
                 );
-                
+
                 const querySnapshot = await getDocs(q);
                 const recipesData = querySnapshot.docs.map(doc => ({
                     id: doc.id,
@@ -61,7 +81,7 @@ export default function RecipesPage() {
                 })) as Recipe[];
 
                 setRecipes(recipesData);
-                
+
                 // Extract unique categories from user's recipes
                 const usedCategories = new Set<string>();
                 recipesData.forEach(recipe => {
@@ -72,7 +92,7 @@ export default function RecipesPage() {
                         });
                     }
                 });
-                
+
                 setAvailableCategories(Array.from(usedCategories).sort());
             } catch (error) {
                 console.error('Error fetching recipes:', error);
@@ -82,7 +102,7 @@ export default function RecipesPage() {
         };
 
         fetchRecipes();
-    }, [user]);
+    }, [user, isDemo]);
 
     const handleCategoryToggle = (category: string): void => {
         setSelectedCategories(prev => 
@@ -130,15 +150,15 @@ export default function RecipesPage() {
             <div className="container mx-auto px-4 py-12 md:py-20">
                 <div className="flex flex-col md:flex-row justify-between md:items-center mb-8 flex-wrap lg:flex-nowrap">
                     <div className="flex flex-row gap-4 w-full mb-6 lg:mb-0 flex-wrap md:nowrap justify-between md:justify-start">
-                        <h1 className="text-4xl font-bold">My Recipes</h1>
+                        <h1 className="text-4xl font-bold">{isDemo ? 'Demo Recipes' : 'My Recipes'}</h1>
                         <div className="flex items-center gap-2">
                             {/* View Toggle */}
                             <div className="flex items-center bg-gray-100 p-1 rounded-lg mr-2">
                                 <button
                                     onClick={() => setViewMode('cards')}
                                     className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm transition-colors ${
-                                        viewMode === 'cards' 
-                                            ? 'bg-white text-light-green shadow-sm' 
+                                        viewMode === 'cards'
+                                            ? 'bg-white text-light-green shadow-sm'
                                             : 'text-gray-600 hover:text-gray-900'
                                     }`}
                                     title="Card view"
@@ -149,8 +169,8 @@ export default function RecipesPage() {
                                 <button
                                     onClick={() => setViewMode('list')}
                                     className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm transition-colors ${
-                                        viewMode === 'list' 
-                                            ? 'bg-white text-light-green shadow-sm' 
+                                        viewMode === 'list'
+                                            ? 'bg-white text-light-green shadow-sm'
                                             : 'text-gray-600 hover:text-gray-900'
                                     }`}
                                     title="List view"
@@ -159,12 +179,14 @@ export default function RecipesPage() {
                                     <span className="hidden sm:inline">List</span>
                                 </button>
                             </div>
-                            <Button
-                                href="/add-recipe"
-                                className="w-auto"
-                            >
-                                Add New Recipe
-                            </Button>
+                            {!isDemo && (
+                                <Button
+                                    href="/add-recipe"
+                                    className="w-auto"
+                                >
+                                    Add New Recipe
+                                </Button>
+                            )}
                         </div>
                     </div>
                     {/* Search Bar */}

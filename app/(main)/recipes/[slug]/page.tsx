@@ -13,6 +13,7 @@ import { deleteImage } from '@/lib/cloudinary';
 import { useFriends } from '@/app/context/FriendsContext';
 import { FiEdit, FiClock, FiUsers, FiShare2, FiTrash2, FiGlobe, FiLock } from 'react-icons/fi';
 import { getUserRelationship } from '@/app/lib/user';
+import { getDemoRecipeBySlug, isDemoRecipeSlug } from '@/app/lib/demoData';
 
 interface FriendItem {
   id: string;
@@ -56,7 +57,7 @@ interface Recipe {
 export default function RecipeDetail() {
   const params = useParams();
   const slug = typeof params.slug === 'string' ? params.slug : params.slug?.[0];
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isDemo } = useAuth();
   const { friends, shareRecipeWithFriend } = useFriends();
   const router = useRouter();
   const [recipe, setRecipe] = useState<Recipe | null>(null);
@@ -76,6 +77,19 @@ export default function RecipeDetail() {
   useEffect(() => {
     // Wait until auth state is resolved
     if (authLoading) return;
+
+    // In demo mode, load from hardcoded data
+    if (isDemo && slug && isDemoRecipeSlug(slug)) {
+      const demoRecipe = getDemoRecipeBySlug(slug);
+      if (demoRecipe) {
+        setRecipe(demoRecipe);
+        setError('');
+      } else {
+        setError('Recipe not found');
+      }
+      setLoading(false);
+      return;
+    }
 
     const fetchRecipe = async () => {
       if (!slug) return;
@@ -205,7 +219,7 @@ export default function RecipeDetail() {
     };
 
     fetchRecipe();
-  }, [slug, user, authLoading]);
+  }, [slug, user, authLoading, isDemo]);
 
   // Filter friends based on search query
   useEffect(() => {
@@ -564,9 +578,10 @@ export default function RecipeDetail() {
           </div>
 
           {/* Action Buttons */}
+          {!isDemo && (
           <div className="container max-w-8xl mx-auto px-4 flex lg:justify-end">
             <div className="flex justify-between items-center mb-8">
-              
+
               <div className="flex gap-3 flex-wrap">
                 {/* Add the Save to My Recipes button when user is not the owner and is logged in */}
                 {!isOwner && user && (
@@ -622,6 +637,7 @@ export default function RecipeDetail() {
               </div>
             </div>
           </div>
+          )}
 
           {/* Ingredients and Instructions */}
           <div className="container max-w-8xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-2 gap-12">
