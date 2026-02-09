@@ -1,6 +1,5 @@
 'use client';
 
-import DevOnlyRoute from '@/app/components/DevOnlyRoute';
 import Link from 'next/link';
 import Image from 'next/image';
 import SignUp from '../../components/SignUp';
