@@ -21,7 +21,7 @@ export default function FeatureCard({ icon, title, description, index }: Feature
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 + index * 0.1 }}
-            className="p-10"
+            className="p-4 md:p-10"
         >
             <div className="flex flex-col items-center text-center">
                 <div className={`mb-3 flex items-center justify-center`}>

@@ -2,7 +2,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import RecipeStats from './RecipeStats';
-import Button from './Button';
 import { useAuth } from '@/app/context/AuthContext';
 import { FiGlobe, FiLock, FiUsers } from 'react-icons/fi';
 
@@ -108,13 +107,9 @@ export default function RecipeCard({ recipe, priority = false }: RecipeCardProps
             />
             
             {/* View Button */}
-            <Button
-              className="mt-3 text-white border-none pl-0"
-              variant="secondary"
-              size="sm"
-            >
-              View Recipe
-            </Button>
+            <span className="mt-3 inline-block text-sm font-medium text-white/90 hover:text-white transition-colors duration-200">
+              View Recipe &rarr;
+            </span>
           </div>
         </div>
       </Link>

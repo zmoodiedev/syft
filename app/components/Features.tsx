@@ -42,7 +42,7 @@ export default function Features() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.6 }}
                 id="features" 
-                className="container mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 relative z-10"
+                className="container mx-auto grid grid-cols-1 md:grid-cols-4 gap-2 md:gap-8 relative z-10"
             >
                 <FeatureCard
                     icon="ribbon"

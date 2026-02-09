@@ -352,13 +352,13 @@ export default function Navbar() {
                         Log In
                     </Button>
 
-                <Button 
+                {/* <Button
                     variant="secondary"
                     href="/signup"
                     className="text-sm"
                 >
                     Sign Up
-                </Button>
+                </Button> */}
             </div>
             )}
         </nav>

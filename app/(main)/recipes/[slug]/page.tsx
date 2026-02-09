@@ -427,9 +427,9 @@ export default function RecipeDetail() {
           </ScrollToTopLink>
         </div>
       ) : recipe ? (
-        <div className="mx-auto py-8">
+        <div className="mx-auto pb-16 md:pb-24">
           {/* Full-width Image Header with Overlay Text */}
-          <div className="relative w-full h-[50vh] mb-8 -mt-8">
+          <div className="relative w-full h-[50vh] mb-8">
             {/* Visibility badge - only shown to owner */}
             <VisibilityBadge />
             
@@ -449,8 +449,8 @@ export default function RecipeDetail() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
                 </div>
                 <div className="container max-w-8xl mx-auto absolute bottom-0 left-0 right-0 py-6 px-4 text-white z-10">
-                  <h1 className="text-4xl lg:text-5xl font-bold mb-3 drop-shadow-lg">{recipe.name}</h1>
-                  
+                  <h1 className="text-4xl lg:text-5xl font-bold mb-3 drop-shadow-lg text-eggshell">{recipe.name}</h1>
+
                   {/* Time and servings info */}
                   <div className="flex flex-wrap gap-4 text-white/90 text-sm">
                     {recipe.prepTime && (
@@ -477,10 +477,10 @@ export default function RecipeDetail() {
                   {recipe.sourceUrl && (
                     <div className="mt-2 text-white/80 text-xs">
                       <span className="font-medium">Original Source: </span>
-                      <a 
-                        href={recipe.sourceUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
+                      <a
+                        href={recipe.sourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="underline hover:text-white transition-colors"
                       >
                         {recipe.sourceUrl}
@@ -506,8 +506,8 @@ export default function RecipeDetail() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
                 </div>
                 <div className="container max-w-8xl mx-auto absolute bottom-0 left-0 right-0 py-6 px-4 text-white z-10">
-                  <h1 className="text-4xl lg:text-5xl font-bold mb-3 drop-shadow-lg">{recipe.name}</h1>
-                  
+                  <h1 className="text-4xl lg:text-5xl font-bold mb-3 drop-shadow-lg text-eggshell">{recipe.name}</h1>
+
                   {/* Categories */}
                   {recipe.categories && recipe.categories.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-3">

@@ -76,14 +76,14 @@ export default function LoginPage() {
                             Your personal recipe management system.
                         </motion.p>
                         <SignIn />
-                        <div className="text-center mt-8">
+                        {/* <div className="text-center mt-8">
                             <p className="text-sm text-gray-600">
                                 Don&apos;t have an account?{' '}
                                 <Link href="/signup" className="font-medium text-red-500 hover:text-red-600 transition-colors">
                                     Sign Up
                                 </Link>
                             </p>
-                        </div>
+                        </div> */}
                     </motion.div>
                 </motion.div>
             </div>

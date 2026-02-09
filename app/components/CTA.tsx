@@ -20,7 +20,7 @@ export default function CTA() {
                 >
                     
                     {/* Content container */}
-                    <div className="container mx-auto relative md:p-16 text-green flex flex-row items-center justify-between gap-10">
+                    <div className="container mx-auto relative p-6 md:p-16 text-green flex flex-col md:flex-row items-center justify-between gap-6 md:gap-10 text-center md:text-left">
                         <motion.h2 
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}

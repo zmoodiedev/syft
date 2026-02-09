@@ -29,7 +29,7 @@ export default function Hero() {
                                     alt="Tom"
                                     width={400}
                                     height={100}
-                                    className="w-full h-auto"
+                                    className="w-full h-auto max-w-[250px] md:max-w-[350px] lg:max-w-none mx-auto"
                                     priority
                                 />
                             </motion.div>
