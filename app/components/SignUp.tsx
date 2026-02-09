@@ -25,7 +25,7 @@ export default function SignUp() {
             router.push('/recipes');
         } catch (error) {
             console.error('Sign up error:', error);
-            // Check if the error message is a Firebase auth error
+
             if (error instanceof Error) {
                 const errorMessage = error.message;
                 if (errorMessage.includes('email-already-in-use')) {
@@ -50,7 +50,7 @@ export default function SignUp() {
             router.push('/recipes');
         } catch (error) {
             console.error('Google sign-up error:', error);
-            // Show a specific error if it's an access denied error
+
             if (error instanceof Error && error.message.includes('Access denied')) {
                 setError(error.message);
             } else {
