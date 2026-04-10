@@ -1,53 +1,70 @@
 'use client'
 
 import { motion } from "framer-motion";
-import ScrollToTopLink from "./ScrollToTopLink";
+import Link from "next/link";
 
 export default function CTA() {
-    return (
-        <div className="w-full py-1 lg:py-1 relative z-1 bg-light-grey">
-            <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                className="text-center relative z-10"
-            >
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: 0.2 }}
-                    className="relative overflow-hidden"
-                >
-                    
-                    {/* Content container */}
-                    <div className="container mx-auto relative p-6 md:p-16 text-green flex flex-col md:flex-row items-center justify-between gap-6 md:gap-10 text-center md:text-left">
-                        <motion.h2 
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6, delay: 0.3 }}
-                            className="text-3xl md:text-4xl font-bold text-green"
-                        >
-                            Ready to cook smarter? Get started with Syft today!
-                        </motion.h2>
-                        
-                        
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6, delay: 0.5 }}
-                            className="space-y-4"
-                        >
-                            <ScrollToTopLink 
-                                href="/recipes" 
-                                className="inline-block px-8 py-4 bg-white text-light-green font-semibold rounded-xl hover:shadow-lg transition-all duration-300 hover:scale-105 relative overflow-hidden"
-                            >
-                                Get Started for Free
-                            </ScrollToTopLink>
+  return (
+    <>
+      {/* Wave: cast-iron → tomato. Owned here so the fill always matches the section below */}
+      <div className="bg-cast-iron">
+        <svg
+          viewBox="0 0 1440 80"
+          fill="#EB5D31"
+          xmlns="http://www.w3.org/2000/svg"
+          preserveAspectRatio="none"
+          className="w-full block"
+          style={{ height: '80px', display: 'block', marginBottom: '-1px' }}
+        >
+          <path d="M0,40 C360,0 1080,80 1440,40 L1440,80 L0,80 Z" />
+        </svg>
+      </div>
 
-                        </motion.div>
-                    </div>
-                </motion.div>
+      <section className="bg-tomato pt-12 lg:pt-16 relative">
+        <div className="container mx-auto px-6 pb-24 lg:pb-32 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+              Ready to cook smarter?
+            </h2>
+            <p className="text-white/75 text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
+              Join home cooks who&apos;ve ditched the recipe chaos. Organize everything in one place — it&apos;s free to start.
+            </p>
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <Link href="/login">
+                <motion.button
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="bg-white text-tomato px-10 py-4 rounded-2xl text-lg font-bold shadow-xl hover:shadow-2xl transition-shadow"
+                >
+                  Get started for free →
+                </motion.button>
+              </Link>
             </motion.div>
+          </motion.div>
         </div>
-    )
+
+        {/* Wave: tomato → eggshell */}
+        <svg
+          viewBox="0 0 1440 80"
+          fill="#FAFAF9"
+          xmlns="http://www.w3.org/2000/svg"
+          preserveAspectRatio="none"
+          className="w-full block"
+          style={{ height: '80px', display: 'block', marginBottom: '-1px' }}
+        >
+          <path d="M0,40 C360,80 1080,0 1440,40 L1440,80 L0,80 Z" />
+        </svg>
+      </section>
+    </>
+  );
 }

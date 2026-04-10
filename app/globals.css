@@ -1,14 +1,10 @@
 @import "tailwindcss";
 
-/*:root {
-
-}*/
-
 @layer base {
 
   body {
-    font-size: 18px;
-    font-family: var(--font-poppins);
+    font-size: 16px;
+    font-family: var(--font-jakarta), sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -19,7 +15,7 @@
     font-family: var(--font-baloo_2);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    color: var(--color-green);
+    color: var(--color-cast-iron);
   }
   h2 {
     font-size: var(--text-3xl);
@@ -27,7 +23,7 @@
     font-family: var(--font-baloo_2);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    color: var(--color-light-green);
+    color: var(--color-cast-iron);
   }
   h3 {
     font-size: var(--text-2xl);
@@ -44,7 +40,7 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  
+
   a,
   button {
     &:hover {
@@ -54,19 +50,19 @@
 }
 
 @theme inline {
-  --color-background: #FFF;
-  --color-foreground: #181a24;
-  --color-cast-iron: #181a24;
-  --color-steel: #848484;
-  --color-green: #0C3D1F;
-  --color-light-green: #46773A;
+  --color-background: #ffffff;
+  --color-foreground: #1C1917;
+  --color-cast-iron: #1C1917;
+  --color-steel: #78716C;
+  --color-green: #14532D;
+  --color-light-green: #16A34A;
   --color-tomato: #EB5D31;
-  --color-cream: #F9EFCD;
-  --color-eggshell: #FAFBF7;
+  --color-cream: #FDF6EC;
+  --color-eggshell: #FAFAF9;
 
-  --color-dark-grey: #353535;
-  --color-medium-grey: #848484;
-  --color-light-grey: #F3F3F3;
+  --color-dark-grey: #292524;
+  --color-medium-grey: #78716C;
+  --color-light-grey: #F5F5F4;
 
 }
 
@@ -89,6 +85,19 @@
     --foreground: var(--white);
   }
 }*/
+
+/* Marquee animation */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee 35s linear infinite;
+  display: inline-flex;
+  width: max-content;
+  will-change: transform;
+}
 
 /* Feature card grid pattern */
 .bg-grid-pattern {

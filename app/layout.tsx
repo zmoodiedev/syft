@@ -1,15 +1,14 @@
-import { Poppins } from "next/font/google";
-import { Baloo_2 } from "next/font/google";
+import { Plus_Jakarta_Sans, Baloo_2 } from "next/font/google";
 import "@/app/globals.css";
 import Script from "next/script";
 import { Metadata, Viewport } from 'next';
 import ClientLayout from './components/ClientLayout';
 import { FontAwesomeScript } from '@/app/components/FontAwesome';
 
-const poppins = Poppins({
-  variable: "--font-poppins",
+const jakarta = Plus_Jakarta_Sans({
+  variable: "--font-jakarta",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800", "900"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 const baloo_2 = Baloo_2({
@@ -123,7 +122,7 @@ export default function RootLayout({
         <FontAwesomeScript />
       </head>
       <body
-        className={`${poppins.variable} ${baloo_2.variable} antialiased min-h-screen flex flex-col bg-background text-foreground overflow-x-hidden`}
+        className={`${jakarta.variable} ${baloo_2.variable} antialiased min-h-screen flex flex-col bg-background text-foreground overflow-x-hidden`}
       >
         <ClientLayout>
           {children}

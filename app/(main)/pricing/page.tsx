@@ -1,9 +1,10 @@
 'use client';
 
-import Button from '@/app/components/Button';
 import { FiCheck, FiX } from 'react-icons/fi';
 import { useAuth } from '@/app/context/AuthContext';
 import { useState } from 'react';
+import { motion } from 'framer-motion';
+import Link from 'next/link';
 
 type Currency = 'USD' | 'CAD';
 
@@ -60,7 +61,7 @@ const pricingTiers: PricingTier[] = [
     priceUSD: 23.00,
     priceCAD: 32.00,
     period: 'per year',
-    description: 'Best value - save 17% with annual billing',
+    description: 'Best value — save 17% with annual billing',
     features: [
       { name: 'Recipe Storage', included: true, value: 'Unlimited recipes' },
       { name: 'Premium Recipe Features', included: true },
@@ -71,248 +72,213 @@ const pricingTiers: PricingTier[] = [
   }
 ];
 
+const faqItems = [
+  {
+    q: 'Can I change my plan anytime?',
+    a: 'Yes! You can upgrade, downgrade, or cancel your subscription at any time. Changes take effect at your next billing cycle.',
+  },
+  {
+    q: 'What happens to my recipes if I downgrade?',
+    a: "Your recipes are always safe. If you exceed the free tier limits, you'll have read-only access to extra recipes until you upgrade again.",
+  },
+  {
+    q: 'Is there a free trial?',
+    a: 'The free tier gives you full access to core features. Upgrade anytime to unlock unlimited storage and social features.',
+  },
+  {
+    q: 'How secure is my payment information?',
+    a: 'We use industry-standard encryption and never store your payment details. All transactions are processed securely through our payment partners.',
+  },
+];
+
 export default function PricingPage() {
   const { user } = useAuth();
   const [currency, setCurrency] = useState<Currency>('USD');
-  
-  // For now, assume all authenticated users are on the free plan
-  // In the future, this would come from user profile or subscription data
+
   const currentPlan = user ? 'free' : null;
 
   const formatPrice = (tier: PricingTier) => {
     const price = currency === 'USD' ? tier.priceUSD : tier.priceCAD;
     const symbol = currency === 'USD' ? '$' : 'C$';
-    
-    if (price === 0) {
-      return '$0';
-    }
-    
+    if (price === 0) return '$0';
     return `${symbol}${price.toFixed(2)}`;
   };
 
   const getButtonText = (tierId: string) => {
-    if (!user) {
-      return 'Choose Plan';
-    }
-    
-    if (currentPlan === tierId) {
-      return 'Current Plan';
-    }
-    
+    if (!user) return 'Get started';
+    if (currentPlan === tierId) return 'Current Plan';
     switch (tierId) {
-      case 'free':
-        return 'Downgrade to Free';
-      case 'monthly':
-        return 'Upgrade to Monthly';
-      case 'yearly':
-        return 'Upgrade to Yearly';
-      default:
-        return 'Choose Plan';
+      case 'free':     return 'Downgrade to Free';
+      case 'monthly':  return 'Upgrade to Monthly';
+      case 'yearly':   return 'Upgrade to Yearly';
+      default:         return 'Get started';
     }
   };
 
-  const getButtonVariant = (tierId: string): 'primary' | 'secondary' | 'outline' => {
-    if (!user) {
-      // For unauthenticated users, make paid plans primary and free plan outline
-      return tierId === 'free' ? 'outline' : 'primary';
-    }
-    
-    if (currentPlan === tierId) {
-      return 'outline';
-    }
-    
-    // For authenticated users, make monthly primary and others outline
-    return tierId === 'monthly' ? 'primary' : 'outline';
-  };
-
-  const isButtonDisabled = (tierId: string) => {
-    return Boolean(user && currentPlan === tierId);
-  };
+  const isButtonDisabled = (tierId: string) => Boolean(user && currentPlan === tierId);
 
   const handleUpgrade = (tierId: string) => {
-    if (!user) {
-      // Redirect to sign up if not authenticated
-      window.location.href = '/login';
-      return;
-    }
-    
-    // TODO: Implement payment processing
+    if (!user) { window.location.href = '/login'; return; }
     console.log(`Upgrading to ${tierId}`);
-    // This would typically integrate with Stripe or another payment processor
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Simple Header for Public Page */}
+    <div className="min-h-screen bg-eggshell">
+      <div className="container mx-auto px-6 py-16 md:py-24">
 
-      <div className="container mx-auto px-4 py-12 md:py-20">
         {/* Header */}
-        <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Choose Your Plan
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-14"
+        >
+          <span className="inline-block bg-light-green/10 text-light-green font-semibold text-xs px-3 py-1.5 rounded-full mb-6 border border-light-green/20 uppercase tracking-wider">
+            Pricing
+          </span>
+          <h1 className="text-4xl md:text-5xl font-bold text-cast-iron mb-4">
+            Simple, honest pricing
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
-            Unlock the full potential of your recipe collection with our flexible pricing options
+          <p className="text-steel text-lg max-w-xl mx-auto mb-10">
+            Free to start. Upgrade when you&apos;re ready for more.
           </p>
-          
-          {/* Currency Toggle */}
-          <div className="flex justify-center mb-8">
-            <div className="bg-white rounded-lg p-1 shadow-sm border border-gray-200">
-              <button
-                onClick={() => setCurrency('USD')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  currency === 'USD'
-                    ? 'bg-light-green text-white'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                USD ($)
-              </button>
-              <button
-                onClick={() => setCurrency('CAD')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  currency === 'CAD'
-                    ? 'bg-light-green text-white'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                CAD (C$)
-              </button>
-            </div>
-          </div>
-        </div>
 
-        {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {pricingTiers.map((tier) => (
-            <div
+          {/* Currency toggle */}
+          <div className="inline-flex bg-white border border-gray-200 rounded-xl p-1 shadow-sm">
+            {(['USD', 'CAD'] as Currency[]).map((c) => (
+              <button
+                key={c}
+                onClick={() => setCurrency(c)}
+                className={`px-5 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                  currency === c
+                    ? 'bg-cast-iron text-white'
+                    : 'text-steel hover:text-cast-iron'
+                }`}
+              >
+                {c === 'USD' ? 'USD ($)' : 'CAD (C$)'}
+              </button>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Pricing cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto items-start">
+          {pricingTiers.map((tier, i) => (
+            <motion.div
               key={tier.id}
-              className={`relative bg-white rounded-2xl shadow-lg border-2 transition-all duration-200 hover:shadow-xl ${
-                tier.popular 
-                  ? 'border-light-green scale-105' 
-                  : 'border-gray-200 hover:border-gray-300'
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: i * 0.1 }}
+              className={`relative rounded-2xl p-8 flex flex-col ${
+                tier.popular
+                  ? 'bg-cast-iron shadow-xl ring-1 ring-light-green/40 md:-mt-4'
+                  : 'bg-white shadow-sm border border-gray-100'
               }`}
             >
-              {/* Popular Badge */}
+              {/* Popular badge */}
               {tier.popular && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <span className="bg-light-green text-white px-4 py-1 rounded-full text-sm font-medium">
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+                  <span className="bg-light-green text-white text-xs font-semibold px-4 py-1.5 rounded-full">
                     Most Popular
                   </span>
                 </div>
               )}
 
-              <div className="p-8">
-                {/* Tier Header */}
-                <div className="text-center mb-8">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                    {tier.name}
-                  </h3>
-                  <div className="mb-4">
-                    <span className="text-4xl font-bold text-gray-900">
-                      {formatPrice(tier)}
-                    </span>
-                    <span className="text-gray-600 ml-2">
-                      {tier.period}
-                    </span>
-                  </div>
-                  <p className="text-gray-600">
-                    {tier.description}
-                  </p>
+              {/* Header */}
+              <div className="mb-8">
+                <h3 className={`text-lg font-bold mb-4 ${tier.popular ? 'text-white' : 'text-cast-iron'}`}>
+                  {tier.name}
+                </h3>
+                <div className="flex items-baseline gap-1 mb-2">
+                  <span className={`text-5xl font-bold ${tier.popular ? 'text-white' : 'text-cast-iron'}`}>
+                    {formatPrice(tier)}
+                  </span>
+                  <span className={`text-sm ${tier.popular ? 'text-white/50' : 'text-steel'}`}>
+                    /{tier.period}
+                  </span>
                 </div>
-
-                {/* Features List */}
-                <div className="space-y-4 mb-8">
-                  {tier.features.map((feature, index) => (
-                    <div key={index} className="flex items-start">
-                      <div className="flex-shrink-0 mt-1">
-                        {feature.included ? (
-                          <FiCheck className="h-5 w-5 text-green-500" />
-                        ) : (
-                          <FiX className="h-5 w-5 text-gray-400" />
-                        )}
-                      </div>
-                      <div className="ml-3">
-                        <span className={`text-sm ${
-                          feature.included ? 'text-gray-900' : 'text-gray-500'
-                        }`}>
-                          {feature.name}
-                        </span>
-                        {feature.value && (
-                          <span className={`block text-xs ${
-                            feature.included ? 'text-gray-600' : 'text-gray-400'
-                          }`}>
-                            {feature.value}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* CTA Button */}
-                <Button
-                  variant={getButtonVariant(tier.id)}
-                  className="w-full"
-                  onClick={() => handleUpgrade(tier.id)}
-                  disabled={isButtonDisabled(tier.id)}
-                >
-                  {getButtonText(tier.id)}
-                </Button>
+                <p className={`text-sm leading-relaxed ${tier.popular ? 'text-white/55' : 'text-steel'}`}>
+                  {tier.description}
+                </p>
               </div>
-            </div>
+
+              {/* Features */}
+              <ul className="space-y-3.5 mb-8 flex-1">
+                {tier.features.map((feature, j) => (
+                  <li key={j} className="flex items-start gap-3">
+                    <span className="flex-shrink-0 mt-0.5">
+                      {feature.included
+                        ? <FiCheck className={`h-4 w-4 ${tier.popular ? 'text-light-green' : 'text-light-green'}`} />
+                        : <FiX className={`h-4 w-4 ${tier.popular ? 'text-white/25' : 'text-gray-300'}`} />
+                      }
+                    </span>
+                    <span className={`text-sm ${
+                      feature.included
+                        ? tier.popular ? 'text-white/85' : 'text-cast-iron'
+                        : tier.popular ? 'text-white/30' : 'text-gray-400'
+                    }`}>
+                      {feature.value ?? feature.name}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+
+              {/* CTA */}
+              <button
+                onClick={() => handleUpgrade(tier.id)}
+                disabled={isButtonDisabled(tier.id)}
+                className={`w-full py-3 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                  tier.popular
+                    ? 'bg-light-green text-white hover:bg-green'
+                    : tier.id === 'free'
+                      ? 'bg-eggshell text-cast-iron border border-gray-200 hover:bg-gray-100'
+                      : 'bg-cast-iron text-white hover:bg-cast-iron/80'
+                }`}
+              >
+                {getButtonText(tier.id)}
+              </button>
+            </motion.div>
           ))}
         </div>
 
-        {/* FAQ Section */}
-        <div className="mt-20 max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
-            Frequently Asked Questions
+        {/* FAQ */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="mt-24 max-w-4xl mx-auto"
+        >
+          <h2 className="text-3xl font-bold text-cast-iron text-center mb-12">
+            Questions &amp; answers
           </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Can I change my plan anytime?
-              </h3>
-              <p className="text-gray-600">
-                Yes! You can upgrade, downgrade, or cancel your subscription at any time. 
-                Changes take effect at your next billing cycle.
-              </p>
-            </div>
-            
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                What happens to my recipes if I downgrade?
-              </h3>
-              <p className="text-gray-600">
-                Your recipes are always safe. If you exceed the free tier limits, 
-                you&apos;ll have read-only access to extra recipes until you upgrade again.
-              </p>
-            </div>
-            
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Is there a free trial?
-              </h3>
-              <p className="text-gray-600">
-                The free tier gives you full access to core features. You can upgrade 
-                anytime to unlock additional storage and social features.
-              </p>
-            </div>
-            
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                How secure is my payment information?
-              </h3>
-              <p className="text-gray-600">
-                We use industry-standard encryption and never store your payment details. 
-                All transactions are processed securely through our payment partners.
-              </p>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {faqItems.map((item, i) => (
+              <div key={i} className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+                <h3 className="text-base font-semibold text-cast-iron mb-2">{item.q}</h3>
+                <p className="text-steel text-sm leading-relaxed">{item.a}</p>
+              </div>
+            ))}
           </div>
-        </div>
+        </motion.div>
+
+        {/* Bottom CTA */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="text-center mt-16"
+        >
+          <p className="text-steel text-sm">
+            Still have questions?{' '}
+            <Link href="/contact" className="text-light-green font-semibold hover:underline">
+              Get in touch →
+            </Link>
+          </p>
+        </motion.div>
+
       </div>
     </div>
   );
-} 
+}

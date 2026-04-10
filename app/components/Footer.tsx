@@ -2,46 +2,89 @@ import Image from "next/image";
 import Link from "next/link";
 
 export default function Footer() {
-    return (
-        <footer className="bg-green text-white mt-auto z-10">
-            <div id="megaFooter" className="container mx-auto px-4 py-10 md:py-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12 lg:gap-16">
-                <div className="sm:col-span-2 lg:col-span-1">
-                    <div className="mb-4">
-                        <Image
-                            src="/logo_syft_h_white.svg"
-                            alt="Syft logo"
-                            width={0}
-                            height={0}
-                            priority
-                            className="h-[60px] md:h-[80px] w-auto"
-                        />
-                    </div>
-                    <p className="font-thin text-sm">— Store and sort all of your favorite recipes whether from cookbooks, websites, or handwritten cards. No ads, no distractions, just the recipes you love.</p>
-                </div>
-                <div>
-                    <h5 className="text-lg font-bold">Syft — Recipe Manager</h5>
-                    <ul className="text-sm">
-                        <li><Link href="/who-we-are">Who We Are</Link></li>
-                        <li><Link href="/pricing">Pricing</Link></li>
-                        <li><Link href="/roadmap">Roadmap</Link></li>
-                        <li><Link href="/contact">Contact</Link></li>
-                    </ul>
-                </div>
-                <div>
-                    <h5 className="text-lg font-bold">Connect with Syft</h5>
-                    <p className="text-sm">Follow us online for recipes and more!</p>
-                </div>
-                <div>
-                    <h5 className="text-lg font-bold">Join our newsletter</h5>
-                    <p className="text-sm">Get notified of new features, and more!</p>
-                </div>
+  return (
+    <>
+      {/* Wave divider: white → cast-iron */}
+      <div className="bg-eggshell w-full">
+        <svg
+          viewBox="0 0 1440 80"
+          fill="#1C1917"
+          xmlns="http://www.w3.org/2000/svg"
+          preserveAspectRatio="none"
+          className="w-full block"
+          style={{ height: '80px', display: 'block' }}
+        >
+          <path d="M0,0 C480,80 960,80 1440,0 L1440,80 L0,80 Z" />
+        </svg>
+      </div>
+
+      <footer className="bg-cast-iron text-white">
+        <div className="container mx-auto px-6 pt-4 pb-12 md:pb-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 md:gap-12">
+
+            {/* Brand */}
+            <div className="sm:col-span-2 lg:col-span-1">
+              <div className="mb-4">
+                <Image
+                  src="/logo_syft.svg"
+                  alt="Syft logo"
+                  width={0}
+                  height={0}
+                  priority
+                  className="h-[40px] w-auto brightness-0 invert"
+                />
+              </div>
+              <p className="text-white/45 text-sm leading-relaxed">
+                Save, organize, and share your favorite recipes — no ads, no distractions, just the food you love.
+              </p>
             </div>
-            <div id="copyright" className="text-sm font-thin py-4 px-4 bg-light-green">
-                <div className="container mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-                    <span>© {new Date().getFullYear()} Syft. All rights reserved.</span>
-                    <span><Link href="/terms-of-service">Terms</Link> | <Link href="/privacy-policy">Privacy</Link> | <Link href="/cookie-preferences">Cookies</Link></span>
-                </div>
+
+            {/* Product */}
+            <div>
+              <p className="text-xs font-semibold text-white/35 uppercase tracking-widest mb-5">Product</p>
+              <ul className="space-y-3 text-sm">
+                <li><Link href="/pricing"     className="text-white/60 hover:text-white transition-colors">Pricing</Link></li>
+                <li><Link href="/who-we-are"  className="text-white/60 hover:text-white transition-colors">Who We Are</Link></li>
+                <li><Link href="/roadmap"     className="text-white/60 hover:text-white transition-colors">Roadmap</Link></li>
+                <li><Link href="/contact"     className="text-white/60 hover:text-white transition-colors">Contact</Link></li>
+              </ul>
             </div>
-        </footer>
-    )
+
+            {/* Legal */}
+            <div>
+              <p className="text-xs font-semibold text-white/35 uppercase tracking-widest mb-5">Legal</p>
+              <ul className="space-y-3 text-sm">
+                <li><Link href="/terms-of-service"   className="text-white/60 hover:text-white transition-colors">Terms of Service</Link></li>
+                <li><Link href="/privacy-policy"     className="text-white/60 hover:text-white transition-colors">Privacy Policy</Link></li>
+                <li><Link href="/cookie-preferences" className="text-white/60 hover:text-white transition-colors">Cookie Preferences</Link></li>
+              </ul>
+            </div>
+
+            {/* CTA */}
+            <div>
+              <p className="text-xs font-semibold text-white/35 uppercase tracking-widest mb-5">Get Started</p>
+              <p className="text-white/45 text-sm mb-5 leading-relaxed">
+                Your recipe collection is waiting. Free to start, no credit card needed.
+              </p>
+              <Link
+                href="/login"
+                className="inline-block bg-light-green text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-green transition-colors"
+              >
+                Sign up free →
+              </Link>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Copyright bar */}
+        <div className="border-t border-white/8 py-5 px-6">
+          <div className="container mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-white/30">
+            <span>© {new Date().getFullYear()} Syft. All rights reserved.</span>
+            <span>Made for home cooks, by home cooks.</span>
+          </div>
+        </div>
+      </footer>
+    </>
+  );
 }
