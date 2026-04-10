@@ -70,9 +70,10 @@ service cloud.firestore {
     // Recipes collection
     match /recipes/{recipeId} {
       // Anyone can read public recipes, authenticated users can read any recipe
-      allow read: if isAuthenticated() || 
-                   (resource.data.visibility is string && 
-                    resource.data.visibility.lower() == 'public');
+      // resource.data.get() returns the default if the field is missing,
+      // so recipes with no visibility field are treated as public.
+      allow read: if isAuthenticated() ||
+                   resource.data.get('visibility', 'public').lower() == 'public';
       
       // Users can create their own recipes
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;

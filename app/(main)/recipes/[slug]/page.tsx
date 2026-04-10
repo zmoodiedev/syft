@@ -6,12 +6,12 @@ import { db } from '@/app/lib/firebase';
 import { doc, getDoc, deleteDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '@/app/context/AuthContext';
 import Image from 'next/image';
-import ScrollToTopLink from '@/app/components/ScrollToTopLink';
+import Link from 'next/link';
 import Button from '@/app/components/Button';
 import { toast } from 'react-hot-toast';
 import { deleteImage } from '@/lib/cloudinary';
 import { useFriends } from '@/app/context/FriendsContext';
-import { FiEdit, FiClock, FiUsers, FiShare2, FiTrash2, FiGlobe, FiLock } from 'react-icons/fi';
+import { FiEdit, FiClock, FiUsers, FiShare2, FiTrash2, FiGlobe, FiLock, FiChevronLeft, FiExternalLink } from 'react-icons/fi';
 import { getUserRelationship } from '@/app/lib/user';
 import { getDemoRecipeBySlug, isDemoRecipeSlug } from '@/app/lib/demoData';
 
@@ -27,13 +27,13 @@ interface Ingredient {
   unit: string;
   item: string;
   id: string;
-  groupName?: string; // Optional group name for organizing ingredients
+  groupName?: string;
 }
 
 interface Instruction {
   text: string;
   id: string;
-  groupName?: string; // Optional group name for organizing instructions
+  groupName?: string;
 }
 
 interface Recipe {
@@ -43,15 +43,33 @@ interface Recipe {
   prepTime: string;
   cookTime: string;
   ingredients: Ingredient[];
-  instructions: Instruction[] | string[]; // Support both old string[] and new Instruction[] formats
+  instructions: Instruction[] | string[];
   categories?: string[];
   imageUrl?: string;
   userId: string;
   sourceUrl?: string;
-  originalRecipeId?: string;  // Reference to the original recipe
-  originalCreator?: string;   // Reference to the original creator's user ID
-  originalCreatorName?: string; // Name of the original creator
-  visibility?: string;  // Recipe visibility (public, private, friends)
+  originalRecipeId?: string;
+  originalCreator?: string;
+  originalCreatorName?: string;
+  visibility?: string;
+}
+
+const FRACTION_MAP: Record<string, string> = {
+  '1/2': '½', '1/4': '¼', '3/4': '¾',
+  '1/3': '⅓', '2/3': '⅔',
+  '1/8': '⅛', '3/8': '⅜', '5/8': '⅝', '7/8': '⅞',
+  '1/5': '⅕', '2/5': '⅖', '3/5': '⅗', '4/5': '⅘',
+  '1/6': '⅙', '5/6': '⅚',
+};
+
+function formatFraction(value: string): string {
+  let result = value;
+  for (const [frac, unicode] of Object.entries(FRACTION_MAP)) {
+    result = result.replaceAll(frac, unicode);
+  }
+  // Collapse "1 ½" → "1½" for mixed numbers
+  result = result.replace(/(\d)\s+([\u00BC-\u00BE\u2150-\u215E])/g, '$1$2');
+  return result;
 }
 
 export default function RecipeDetail() {
@@ -73,12 +91,11 @@ export default function RecipeDetail() {
   const [filteredFriends, setFilteredFriends] = useState<FriendItem[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [needsAuthentication, setNeedsAuthentication] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
 
   useEffect(() => {
-    // Wait until auth state is resolved
     if (authLoading) return;
 
-    // In demo mode, load from hardcoded data
     if (isDemo && slug && isDemoRecipeSlug(slug)) {
       const demoRecipe = getDemoRecipeBySlug(slug);
       if (demoRecipe) {
@@ -93,41 +110,27 @@ export default function RecipeDetail() {
 
     const fetchRecipe = async () => {
       if (!slug) return;
-      
       try {
         setLoading(true);
-        
         const recipeRef = doc(db, 'recipes', slug);
         let recipeSnap;
-        
         try {
-          // First try to get the document without requiring auth
           recipeSnap = await getDoc(recipeRef);
-          
           if (recipeSnap.exists()) {
-            const recipeData = {
-              id: recipeSnap.id,
-              ...recipeSnap.data()
-            } as Recipe;
-            
-            // Check if the recipe has a visibility field directly
-            if (recipeData.visibility === 'public' || 
-                (typeof recipeData.visibility === 'string' && recipeData.visibility.toLowerCase() === 'public')) {
+            const recipeData = { id: recipeSnap.id, ...recipeSnap.data() } as Recipe;
 
+            if (recipeData.visibility === 'public' ||
+                (typeof recipeData.visibility === 'string' && recipeData.visibility.toLowerCase() === 'public')) {
               setRecipe(recipeData);
               setError('');
               setLoading(false);
               return;
             }
-            
-            // Continue with normal processing for authenticated users
+
             const isOwner = user ? recipeData.userId === user.uid : false;
-            
-            // If the recipe has an explicit visibility setting, use it
+
             if (recipeData.visibility) {
-              console.log('Using explicit visibility:', recipeData.visibility);
               const visibilityStr = String(recipeData.visibility).toLowerCase();
-              
               if (visibilityStr === 'public' || isOwner) {
                 setRecipe(recipeData);
                 setError('');
@@ -145,56 +148,36 @@ export default function RecipeDetail() {
               setLoading(false);
               return;
             }
-            
-            // If the recipe doesn't have visibility field, fall back to the owner's settings
+
             const ownerRef = doc(db, 'users', recipeData.userId);
             const ownerSnap = await getDoc(ownerRef);
-            
             if (ownerSnap.exists()) {
               const ownerData = ownerSnap.data();
               const recipeVisibility = ownerData.recipeVisibility || 'public';
-              
-              setRecipeOwnerInfo({
-                displayName: ownerData.displayName || null,
-                recipeVisibility: recipeVisibility
-              });
-              
-              // Check visibility permissions
+              setRecipeOwnerInfo({ displayName: ownerData.displayName || null, recipeVisibility });
+
               if (recipeVisibility === 'public') {
-                // Public recipes are visible to everyone
                 setNeedsAuthentication(false);
                 setRecipe(recipeData);
                 setError('');
-              } 
-              else if (isOwner) {
-                // Owner can always see their own recipes
+              } else if (isOwner) {
                 setRecipe(recipeData);
                 setError('');
-              }
-              else if (recipeVisibility === 'friends' && user) {
-                // Check if user is a friend of the recipe owner
+              } else if (recipeVisibility === 'friends' && user) {
                 const relationshipData = await getUserRelationship(user.uid, recipeData.userId);
-                
                 if (!relationshipData.isFriend) {
                   setError('This recipe is only visible to friends of the owner');
                 } else {
                   setRecipe(recipeData);
                   setError('');
                 }
-              }
-              else if (recipeVisibility === 'private' && !isOwner) {
+              } else if (recipeVisibility === 'private' && !isOwner) {
                 setError('This recipe is private');
                 if (!user) setNeedsAuthentication(true);
-              }
-              else {
-                // If not public, not the owner, and no user - need authentication
-                if (!user) {
-                  setNeedsAuthentication(true);
-                }
+              } else {
+                if (!user) setNeedsAuthentication(true);
               }
             } else {
-              // If we can't find the owner data, default to showing the recipe
-              // This could happen if a user is deleted but their recipes remain
               setRecipe(recipeData);
             }
           } else {
@@ -202,7 +185,6 @@ export default function RecipeDetail() {
           }
         } catch (error) {
           console.error('Firebase error when fetching recipe:', error);
-          // If there's an error (likely permission denied), check authentication
           if (!user) {
             setNeedsAuthentication(true);
             setLoading(false);
@@ -221,51 +203,29 @@ export default function RecipeDetail() {
     fetchRecipe();
   }, [slug, user, authLoading, isDemo]);
 
-  // Filter friends based on search query
   useEffect(() => {
     if (!friends.length) return;
-    
     if (!searchQuery.trim()) {
-      // Limit to 3 friends when no search query
       setFilteredFriends((friends as FriendItem[]).slice(0, 3));
       return;
     }
-    
-    const query = searchQuery.toLowerCase().trim();
-    const filtered = (friends as FriendItem[]).filter(friend => 
-      (friend.displayName?.toLowerCase() || '').includes(query) || 
-      (friend.email?.toLowerCase() || '').includes(query)
-    ).slice(0, 3); // Limit search results to 3
-    
+    const q = searchQuery.toLowerCase().trim();
+    const filtered = (friends as FriendItem[]).filter(friend =>
+      (friend.displayName?.toLowerCase() || '').includes(q) ||
+      (friend.email?.toLowerCase() || '').includes(q)
+    ).slice(0, 3);
     setFilteredFriends(filtered);
   }, [searchQuery, friends]);
 
   const handleDelete = async () => {
     if (!user || !recipe || !slug) return;
-
-    // Show confirmation dialog
-    if (!window.confirm('Are you sure you want to delete this recipe? This action cannot be undone.')) {
-      return;
-    }
-
+    if (!window.confirm('Are you sure you want to delete this recipe? This action cannot be undone.')) return;
     setIsDeleting(true);
-
     try {
-      // First try to delete the image if it exists
       if (recipe.imageUrl) {
-        try {
-          await deleteImage(recipe.imageUrl);
-        } catch (error) {
-          console.error('Error deleting image:', error);
-          // Continue with recipe deletion even if image deletion fails
-          // Do not show an error to the user for this, just log it
-        }
+        try { await deleteImage(recipe.imageUrl); } catch (error) { console.error('Error deleting image:', error); }
       }
-
-      // Then delete the recipe document
-      const recipeRef = doc(db, 'recipes', slug);
-      await deleteDoc(recipeRef);
-
+      await deleteDoc(doc(db, 'recipes', slug));
       toast.success('Recipe deleted successfully');
       router.push('/recipes');
     } catch (error) {
@@ -280,95 +240,42 @@ export default function RecipeDetail() {
 
   const handleShareRecipe = async (friendId: string) => {
     if (!recipe) return;
-    
     try {
-      console.log('Attempting to share recipe', recipe.id, 'with friend', friendId);
-      
-      await shareRecipeWithFriend(
-        recipe.id,
-        recipe.name,
-        recipe.imageUrl,
-        friendId
-      );
-      
+      await shareRecipeWithFriend(recipe.id, recipe.name, recipe.imageUrl, friendId);
       toast.success('Recipe shared successfully!');
       setIsShareModalOpen(false);
       setSearchQuery('');
     } catch (error: unknown) {
       console.error('Error sharing recipe in component:', error);
-      
-      // Detailed error information
-      const errorMessage = error instanceof Error 
-        ? error.message
-        : 'Unknown error occurred';
-        
-      // Log additional context
-      console.error('Error context:', { 
-        recipeId: recipe.id,
-        recipeName: recipe.name,
-        friendId,
-        errorDetails: error
-      });
-      
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast.error(`Failed to share recipe: ${errorMessage}`);
     }
   };
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
+  const handleCopyLink = () => {
+    const url = `${window.location.origin}/recipes/${recipe?.id}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    });
   };
 
-  // Show recipe creator info if it's not the current user or show attribution for saved recipes
-  const RecipeCreator = () => {
-    if (!recipe) return null;
-    
-    // If the recipe has attribution information
-    if (recipe.originalCreatorName) {
-      return (
-        <div className="text-sm text-white flex items-center mt-2">
-          <span>Saved from: {recipe.originalCreatorName}</span>
-        </div>
-      );
-    }
-    
-    // If viewing someone else's recipe
-    if (!isOwner && recipeOwnerInfo) {
-      return (
-        <div className="text-sm text-white flex items-center mt-2">
-          <span>Created by: {recipeOwnerInfo.displayName || 'Unknown user'}</span>
-        </div>
-      );
-    }
-    
-    return null;
-  };
-
-  // Add a new function to handle saving the recipe to the user's collection
   const handleSaveRecipe = async () => {
     if (!user || !recipe) return;
-    
     setIsSaving(true);
-    
     try {
-      // Create a new recipe in the user's collection
       const { id, ...recipeWithoutId } = recipe;
-      
       const newRecipe = {
         ...recipeWithoutId,
-        userId: user.uid, // Set the new owner
-        originalRecipeId: id, // Reference to the original recipe
-        originalCreator: recipe.userId, // Reference to the original creator
-        originalCreatorName: recipeOwnerInfo?.displayName || 'Unknown user', // Name of the original creator
+        userId: user.uid,
+        originalRecipeId: id,
+        originalCreator: recipe.userId,
+        originalCreatorName: recipeOwnerInfo?.displayName || 'Unknown user',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       };
-      
-      // Add the recipe to the user's collection
       const recipeRef = await addDoc(collection(db, 'recipes'), newRecipe);
-      
       toast.success('Recipe saved to your collection');
-      
-      // Navigate to the new recipe
       router.push(`/recipes/${recipeRef.id}`);
     } catch (error) {
       console.error('Error saving recipe:', error);
@@ -378,483 +285,400 @@ export default function RecipeDetail() {
     }
   };
 
-  const handleLoginPrompt = () => {
-    toast.error('Please log in to save this recipe');
-    router.push('/login?redirect=' + encodeURIComponent(`/recipes/${slug}`));
-  };
-
-  // Function to render visibility badge
-  const VisibilityBadge = () => {
-    if (!recipe || !user || user.uid !== recipe.userId) return null;
-    
-    const visibilityStr = String(recipe.visibility || 'public').toLowerCase();
-    let icon, label, bgColor;
-    
-    switch(visibilityStr) {
-      case 'private':
-        icon = <FiLock className="w-4 h-4 mr-1" />;
-        label = "Private";
-        bgColor = "bg-red-500";
-        break;
-      case 'friends':
-        icon = <FiUsers className="w-4 h-4 mr-1" />;
-        label = "Friends Only";
-        bgColor = "bg-orange-500";
-        break;
-      default:
-        icon = <FiGlobe className="w-4 h-4 mr-1" />;
-        label = "Public";
-        bgColor = "bg-light-green";
-    }
-    
+  // Auth required state
+  if (needsAuthentication && !user && !loading) {
     return (
-      <div className={`absolute top-4 right-4 ${bgColor} text-white text-xs font-medium px-2.5 py-1.5 rounded-full z-20 flex items-center`}>
-        {icon}
-        {label}
+      <div className="min-h-screen bg-eggshell flex items-center justify-center">
+        <div className="text-center px-6 max-w-sm">
+          <span className="text-5xl block mb-6">🔒</span>
+          <h2 className="text-2xl font-bold text-cast-iron mb-2">Sign in to view this recipe</h2>
+          <p className="text-steel text-sm mb-8">This recipe may be public once you sign in.</p>
+          <div className="flex flex-col gap-3">
+            <Button
+              variant="primary"
+              onClick={() => router.push('/login?redirect=' + encodeURIComponent(`/recipes/${slug}`))}
+            >
+              Sign in
+            </Button>
+            <Link href="/recipes" className="text-sm text-steel hover:text-cast-iron transition-colors">
+              Back to recipes
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Ingredients renderer
+  const renderIngredients = (ingredients: Ingredient[]) => {
+    const grouped: { [key: string]: Ingredient[] } = {};
+    ingredients.forEach(ing => {
+      const group = ing.groupName || '';
+      if (!grouped[group]) grouped[group] = [];
+      grouped[group].push(ing);
+    });
+    const groups = Object.keys(grouped).sort((a, b) => {
+      if (a === '') return -1;
+      if (b === '') return 1;
+      return a.localeCompare(b);
+    });
+    return (
+      <div className="space-y-6">
+        {groups.map(groupName => (
+          <div key={groupName || 'ungrouped'}>
+            {groupName && (
+              <p className="text-xs font-semibold text-steel/50 uppercase tracking-widest mb-3 mt-2">
+                {groupName}
+              </p>
+            )}
+            <ul className="space-y-3">
+              {grouped[groupName].map((ing, i) => (
+                <li key={ing.id || i} className="flex items-start gap-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-light-green mt-2 flex-shrink-0" />
+                  <span className="text-steel leading-snug">
+                    {(ing.amount || ing.unit) && (
+                      <span className="font-medium text-cast-iron">
+                        {formatFraction([ing.amount, ing.unit].filter(Boolean).join(' '))}{' '}
+                      </span>
+                    )}
+                    {ing.item}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </div>
     );
   };
 
-  const pageContent = (
+  // Instructions renderer
+  const renderInstructions = (raw: Instruction[] | string[]) => {
+    let instructions: Instruction[] = [];
+    if (raw.length > 0) {
+      if (typeof raw[0] === 'string') {
+        instructions = (raw as string[]).map((text, i) => ({ text, id: `step-${i}`, groupName: '' }));
+      } else {
+        instructions = raw as Instruction[];
+      }
+    }
+    const grouped: { [key: string]: Instruction[] } = {};
+    instructions.forEach(ins => {
+      const group = ins.groupName || '';
+      if (!grouped[group]) grouped[group] = [];
+      grouped[group].push(ins);
+    });
+    const groups = Object.keys(grouped).sort((a, b) => {
+      if (a === '') return -1;
+      if (b === '') return 1;
+      return a.localeCompare(b);
+    });
+    return (
+      <div className="space-y-8">
+        {groups.map(groupName => (
+          <div key={groupName || 'ungrouped'}>
+            {groupName && (
+              <p className="text-xs font-semibold text-steel/50 uppercase tracking-widest mb-4 mt-2">
+                {groupName}
+              </p>
+            )}
+            <ol className="space-y-5">
+              {grouped[groupName].map((ins, i) => (
+                <li key={ins.id} className="flex gap-4">
+                  <div className="w-7 h-7 rounded-full bg-light-green/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-xs font-bold text-light-green">{i + 1}</span>
+                  </div>
+                  <p className="text-steel leading-relaxed pt-0.5">{ins.text}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  return (
     <div className="min-h-screen bg-eggshell">
       {loading ? (
         <div className="flex justify-center items-center min-h-screen">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-light-green"></div>
+          <div className="animate-spin rounded-full h-10 w-10 border-2 border-gray-200 border-t-light-green" />
         </div>
       ) : error ? (
-        <div className="container mx-auto px-4 py-20 text-center">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-4">{error}</h2>
-          {error === 'Please log in to view this recipe' && (
-            <Button 
-              variant="primary"
-              onClick={handleLoginPrompt}
-              className="mb-4"
-            >
-              Log In
-            </Button>
-          )}
-          <ScrollToTopLink
-            href="/recipes"
-            className="inline-block px-6 py-3 bg-light-green text-white font-semibold rounded-lg hover:bg-light-green transition-colors"
-          >
-            Back to Recipes
-          </ScrollToTopLink>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center">
+          <span className="text-5xl block mb-6">🍽️</span>
+          <h2 className="text-xl font-bold text-cast-iron mb-2">{error}</h2>
+          <Link href="/recipes" className="mt-6 text-sm text-steel hover:text-cast-iron transition-colors flex items-center gap-1">
+            <FiChevronLeft className="h-4 w-4" /> Back to recipes
+          </Link>
         </div>
       ) : recipe ? (
-        <div className="mx-auto pb-16 md:pb-24">
-          {/* Full-width Image Header with Overlay Text */}
-          <div className="relative w-full h-[50vh] mb-8">
-            {/* Visibility badge - only shown to owner */}
-            <VisibilityBadge />
-            
-            {recipe.imageUrl ? (
-              <>
-                <div className="absolute inset-0">
-                  <Image
-                    src={recipe.imageUrl}
-                    alt={recipe.name}
-                    fill
-                    sizes="100vw"
-                    priority
-                    quality={90}
-                    className="object-cover"
-                  />
-                  {/* Gradient overlay for text readability */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
-                </div>
-                <div className="container max-w-8xl mx-auto absolute bottom-0 left-0 right-0 py-6 px-4 text-white z-10">
-                  <h1 className="text-4xl lg:text-5xl font-bold mb-3 drop-shadow-lg text-eggshell">{recipe.name}</h1>
-
-                  {/* Time and servings info */}
-                  <div className="flex flex-wrap gap-4 text-white/90 text-sm">
-                    {recipe.prepTime && (
-                      <div className="flex items-center">
-                        <FiClock className="mr-1" />
-                        <span>Prep: {recipe.prepTime}</span>
-                      </div>
-                    )}
-                    {recipe.cookTime && (
-                      <div className="flex items-center">
-                        <FiClock className="mr-1" />
-                        <span>Cook: {recipe.cookTime}</span>
-                      </div>
-                    )}
-                    {recipe.servings && (
-                      <div className="flex items-center">
-                        <FiUsers className="mr-1" />
-                        <span>Serves: {recipe.servings}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Display source URL if available */}
-                  {recipe.sourceUrl && (
-                    <div className="mt-2 text-white/80 text-xs">
-                      <span className="font-medium">Original Source: </span>
-                      <a
-                        href={recipe.sourceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="underline hover:text-white transition-colors"
-                      >
-                        {recipe.sourceUrl}
-                      </a>
-                    </div>
-                  )}
-                  <RecipeCreator />
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="absolute inset-0">
-                  <Image
-                    src="/images/bg_ingredients.png"
-                    alt="Default recipe background"
-                    fill
-                    sizes="100vw"
-                    priority
-                    quality={90}
-                    className="object-cover opacity-75"
-                  />
-                  {/* Gradient overlay for text readability */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
-                </div>
-                <div className="container max-w-8xl mx-auto absolute bottom-0 left-0 right-0 py-6 px-4 text-white z-10">
-                  <h1 className="text-4xl lg:text-5xl font-bold mb-3 drop-shadow-lg text-eggshell">{recipe.name}</h1>
-
-                  {/* Categories */}
-                  {recipe.categories && recipe.categories.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {recipe.categories.map(category => (
-                        <span
-                          key={category}
-                          className="px-3 py-1 bg-white/20 backdrop-blur-sm text-white rounded-full text-sm font-medium"
-                        >
-                          {category}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {/* Time and servings info */}
-                  <div className="flex flex-wrap gap-4 text-white/90 text-sm">
-                    {recipe.prepTime && (
-                      <div className="flex items-center">
-                        <FiClock className="mr-1" />
-                        <span>Prep: {recipe.prepTime}</span>
-                      </div>
-                    )}
-                    {recipe.cookTime && (
-                      <div className="flex items-center">
-                        <FiClock className="mr-1" />
-                        <span>Cook: {recipe.cookTime}</span>
-                      </div>
-                    )}
-                    {recipe.servings && (
-                      <div className="flex items-center">
-                        <FiUsers className="mr-1" />
-                        <span>Serves: {recipe.servings}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Display source URL if available */}
-                  {recipe.sourceUrl && (
-                    <div className="mt-2 text-white/80 text-xs">
-                      <span className="font-medium">Original Source: </span>
-                      <a 
-                        href={recipe.sourceUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="underline hover:text-white transition-colors"
-                      >
-                        {recipe.sourceUrl}
-                      </a>
-                    </div>
-                  )}
-                </div>
-              </>
+        <>
+          {/* Hero */}
+          <div className="relative w-full h-[50vh] min-h-[300px]">
+            {/* Visibility badge */}
+            {isOwner && (
+              <div className={`absolute top-4 right-4 z-20 text-white text-xs font-medium px-2.5 py-1.5 rounded-full flex items-center gap-1.5 ${
+                String(recipe.visibility || 'public').toLowerCase() === 'private' ? 'bg-tomato' :
+                String(recipe.visibility || 'public').toLowerCase() === 'friends' ? 'bg-orange-500' :
+                'bg-light-green'
+              }`}>
+                {String(recipe.visibility || 'public').toLowerCase() === 'private' ? <FiLock className="w-3 h-3" /> :
+                 String(recipe.visibility || 'public').toLowerCase() === 'friends' ? <FiUsers className="w-3 h-3" /> :
+                 <FiGlobe className="w-3 h-3" />}
+                {String(recipe.visibility || 'public').toLowerCase() === 'private' ? 'Private' :
+                 String(recipe.visibility || 'public').toLowerCase() === 'friends' ? 'Friends only' : 'Public'}
+              </div>
             )}
-          </div>
 
-          {/* Action Buttons */}
-          {!isDemo && (
-          <div className="container max-w-8xl mx-auto px-4 flex lg:justify-end">
-            <div className="flex justify-between items-center mb-8">
+            <div className="absolute inset-0">
+              <Image
+                src={recipe.imageUrl || '/images/bg_ingredients.png'}
+                alt={recipe.name}
+                fill
+                sizes="100vw"
+                priority
+                quality={90}
+                className={`object-cover${!recipe.imageUrl ? ' opacity-75' : ''}`}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+            </div>
 
-              <div className="flex gap-3 flex-wrap">
-                {/* Add the Save to My Recipes button when user is not the owner and is logged in */}
-                {!isOwner && user && (
-                  <Button
-                    variant="primary"
-                    onClick={handleSaveRecipe}
-                    disabled={isSaving}
-                    className="flex items-center gap-2"
-                    size="sm"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                      <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                      <polyline points="7 3 7 8 15 8"></polyline>
-                    </svg>
-                    {isSaving ? 'Saving...' : 'Save to My Recipes'}
-                  </Button>
+            <div className="absolute bottom-0 left-0 right-0">
+              <div className="container max-w-6xl mx-auto px-6 pb-8">
+                {/* Categories */}
+                {recipe.categories && recipe.categories.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {[...new Set(recipe.categories)].map(cat => (
+                      <span key={cat} className="px-3 py-1 bg-white/20 backdrop-blur-sm text-white rounded-full text-xs font-medium">
+                        {cat}
+                      </span>
+                    ))}
+                  </div>
                 )}
-                {user && friends.length > 0 && (
-                  <Button
-                    variant="primary"
-                    onClick={() => setIsShareModalOpen(true)}
-                    className="flex items-center gap-2"
-                    size="sm"
-                  >
-                    <FiShare2 className="w-4 h-4" />
-                    Share
-                  </Button>
+
+                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 drop-shadow-md">
+                  {recipe.name}
+                </h1>
+
+                {/* Meta row */}
+                <div className="flex flex-wrap gap-4 text-white/80 text-sm">
+                  {recipe.prepTime && (
+                    <div className="flex items-center gap-1.5">
+                      <FiClock className="w-4 h-4" />
+                      <span>Prep: {recipe.prepTime}</span>
+                    </div>
+                  )}
+                  {recipe.cookTime && (
+                    <div className="flex items-center gap-1.5">
+                      <FiClock className="w-4 h-4" />
+                      <span>Cook: {recipe.cookTime}</span>
+                    </div>
+                  )}
+                  {recipe.servings && (
+                    <div className="flex items-center gap-1.5">
+                      <FiUsers className="w-4 h-4" />
+                      <span>Serves {recipe.servings}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Attribution */}
+                {recipe.originalCreatorName && (
+                  <p className="mt-2 text-white/60 text-xs">Saved from {recipe.originalCreatorName}</p>
                 )}
-                {isOwner && (
-                  <Button
-                    onClick={() => router.push(`/recipes/edit/${recipe.id}`)}
-                    variant="outline"
-                    className="flex items-center gap-2"
-                    size="sm"
-                  >
-                    <FiEdit className="w-4 h-4" />
-                    Edit
-                  </Button>
-                )}
-                {isOwner && (
-                  <Button
-                    onClick={handleDelete}
-                    disabled={isDeleting}
-                    className="flex items-center gap-2 text-tomato"
-                    variant="ghost"
-                    size="sm"
-                  >
-                    <FiTrash2 className="w-4 h-4" />
-                    {isDeleting ? 'Deleting' : 'Delete'}
-                  </Button>
+                {!isOwner && recipeOwnerInfo?.displayName && (
+                  <p className="mt-2 text-white/60 text-xs">By {recipeOwnerInfo.displayName}</p>
                 )}
               </div>
             </div>
           </div>
-          )}
 
-          {/* Ingredients and Instructions */}
-          <div className="container max-w-8xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Ingredients Section */}
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b border-gray-200">Ingredients</h2>
-              {(() => {
-                // Group ingredients by their groupName
-                const groupedIngredients: { [key: string]: Ingredient[] } = {};
-                
-                recipe.ingredients.forEach(ingredient => {
-                  const group = ingredient.groupName || '';
-                  if (!groupedIngredients[group]) {
-                    groupedIngredients[group] = [];
-                  }
-                  groupedIngredients[group].push(ingredient);
-                });
-                
-                // Get all group names, with empty string (ungrouped) first
-                const groups = Object.keys(groupedIngredients).sort((a, b) => {
-                  if (a === '') return -1;
-                  if (b === '') return 1;
-                  return a.localeCompare(b);
-                });
-                
-                return (
-                  <div className="space-y-6">
-                    {groups.map((groupName) => {
-                      const groupIngredients = groupedIngredients[groupName];
-                      
-                      return (
-                        <div key={groupName || 'ungrouped'} className="space-y-3">
-                          {groupName && (
-                            <h3 className="text-lg font-semibold text-gray-800 mt-6 mb-3 pb-1 border-b border-gray-100">
-                              {groupName}
-                            </h3>
-                          )}
-                          
-                          <ul className="space-y-3">
-                            {groupIngredients.map((ingredient, index) => (
-                              <li key={ingredient.id || index} className="flex items-start gap-2 mb-4">
-                                <span className="w-1.5 h-1.5 rounded-full bg-light-green mt-2.5"></span>
-                                <span className="text-gray-700">
-                                  {ingredient.amount && <span className="font-medium">{ingredient.amount} </span>}
-                                  {ingredient.unit && <span>{ingredient.unit} </span>}
-                                  <span>{ingredient.item}</span>
-                                </span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })()}
+          {/* Content */}
+          <div className="container max-w-6xl mx-auto px-6 py-8 pb-20">
+
+            {/* Action bar */}
+            <div className="flex items-center justify-between mb-8">
+              <Link
+                href="/recipes"
+                className="inline-flex items-center gap-1 text-sm font-medium text-steel hover:text-cast-iron transition-colors"
+              >
+                <FiChevronLeft className="h-4 w-4" />
+                My Recipes
+              </Link>
+
+              {!isDemo && (
+                <div className="flex items-center gap-2">
+                  {!isOwner && user && (
+                    <Button
+                      variant="primary"
+                      onClick={handleSaveRecipe}
+                      disabled={isSaving}
+                      size="sm"
+                      className="flex items-center gap-1.5"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                        <polyline points="17 21 17 13 7 13 7 21" />
+                        <polyline points="7 3 7 8 15 8" />
+                      </svg>
+                      {isSaving ? 'Saving...' : 'Save'}
+                    </Button>
+                  )}
+                  {user && friends.length > 0 && (
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsShareModalOpen(true)}
+                      size="sm"
+                      className="flex items-center gap-1.5"
+                    >
+                      <FiShare2 className="w-3.5 h-3.5" />
+                      Share
+                    </Button>
+                  )}
+                  {isOwner && (
+                    <Button
+                      onClick={() => router.push(`/recipes/edit/${recipe.id}`)}
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-1.5"
+                    >
+                      <FiEdit className="w-3.5 h-3.5" />
+                      Edit
+                    </Button>
+                  )}
+                  {isOwner && (
+                    <button
+                      onClick={handleDelete}
+                      disabled={isDeleting}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-tomato hover:bg-tomato/5 rounded-lg transition-colors"
+                    >
+                      <FiTrash2 className="w-3.5 h-3.5" />
+                      {isDeleting ? 'Deleting...' : 'Delete'}
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* Instructions Section */}
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b border-gray-200">Instructions</h2>
-              {(() => {
-                // Convert instructions to Instruction[] format if needed
-                let instructionData: Instruction[] = [];
-                if (recipe.instructions.length > 0) {
-                  if (typeof recipe.instructions[0] === 'string') {
-                    instructionData = (recipe.instructions as string[]).map((text, index) => ({
-                      text,
-                      id: `instruction-${index}`,
-                      groupName: ''
-                    }));
-                  } else {
-                    instructionData = recipe.instructions as Instruction[];
-                  }
-                }
-                
-                // Group instructions by their groupName
-                const groupedInstructions: { [key: string]: Instruction[] } = {};
-                
-                instructionData.forEach(instruction => {
-                  const group = instruction.groupName || '';
-                  if (!groupedInstructions[group]) {
-                    groupedInstructions[group] = [];
-                  }
-                  groupedInstructions[group].push(instruction);
-                });
-                
-                // Get all group names, with empty string (ungrouped) first
-                const groups = Object.keys(groupedInstructions).sort((a, b) => {
-                  if (a === '') return -1;
-                  if (b === '') return 1;
-                  return a.localeCompare(b);
-                });
-                
-                return (
-                  <div className="space-y-8">
-                    {groups.map((groupName) => {
-                      const groupInstructions = groupedInstructions[groupName];
-                      
-                      return (
-                        <div key={groupName || 'ungrouped'} className="space-y-4">
-                          {groupName && (
-                            <h3 className="text-lg font-semibold text-gray-800 mt-6 mb-4 pb-1 border-b border-gray-100">
-                              {groupName}
-                            </h3>
-                          )}
-                          
-                          <ol className="space-y-6">
-                            {groupInstructions.map((instruction, groupIndex) => {
-                              const stepNumber = groupIndex + 1; // Step number within the group
-                              return (
-                                <li key={instruction.id} className="flex gap-4">
-                                  <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
-                                    <span className="font-semibold">{stepNumber}</span>
-                                  </div>
-                                  <p className="text-gray-700 leading-relaxed">{instruction.text}</p>
-                                </li>
-                              );
-                            })}
-                          </ol>
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })()}
+            {/* Source URL */}
+            {recipe.sourceUrl && (
+              <div className="mb-6">
+                <a
+                  href={recipe.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs text-steel hover:text-light-green transition-colors"
+                >
+                  <FiExternalLink className="w-3.5 h-3.5" />
+                  View original source
+                </a>
+              </div>
+            )}
+
+            {/* Ingredients + Instructions */}
+            <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-6">
+              {/* Ingredients */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                <h2 className="text-lg font-bold text-cast-iron mb-5 pb-3 border-b border-gray-100">
+                  Ingredients
+                </h2>
+                {renderIngredients(recipe.ingredients)}
+              </div>
+
+              {/* Instructions */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                <h2 className="text-lg font-bold text-cast-iron mb-5 pb-3 border-b border-gray-100">
+                  Instructions
+                </h2>
+                {renderInstructions(recipe.instructions)}
+              </div>
             </div>
           </div>
-        </div>
+        </>
       ) : (
-        <div className="container mx-auto px-4 py-20 text-center">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-4">Recipe not found</h2>
-          <ScrollToTopLink
-            href="/recipes"
-            className="inline-block px-6 py-3 bg-light-green text-white font-semibold rounded-lg hover:bg-light-green transition-colors"
-          >
-            Back to Recipes
-          </ScrollToTopLink>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center">
+          <span className="text-5xl block mb-6">🍽️</span>
+          <h2 className="text-xl font-bold text-cast-iron mb-2">Recipe not found</h2>
+          <Link href="/recipes" className="mt-4 text-sm text-steel hover:text-cast-iron transition-colors flex items-center gap-1">
+            <FiChevronLeft className="h-4 w-4" /> Back to recipes
+          </Link>
         </div>
       )}
 
-      {/* Share Recipe Modal */}
+      {/* Share Modal */}
       {isShareModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-xl">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Share with Friends</h2>
-            
+            <h2 className="text-xl font-bold text-cast-iron mb-5">Share</h2>
+
+            {/* Copy link — public recipes only */}
+            {String(recipe?.visibility ?? 'public').toLowerCase() === 'public' && (
+              <div className="mb-6 p-4 bg-eggshell rounded-xl border border-gray-100">
+                <p className="text-xs font-semibold text-steel/50 uppercase tracking-wider mb-2">Public link</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm text-steel truncate flex-1">{`${typeof window !== 'undefined' ? window.location.origin : ''}/recipes/${recipe?.id}`}</p>
+                  <button
+                    onClick={handleCopyLink}
+                    className={`flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${
+                      isCopied
+                        ? 'bg-light-green text-white'
+                        : 'bg-cast-iron text-white hover:bg-cast-iron/80'
+                    }`}
+                  >
+                    {isCopied ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="relative mb-4">
               <input
                 type="text"
                 value={searchQuery}
-                onChange={handleSearchChange}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search friends..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-light-green focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm text-cast-iron placeholder:text-steel/50 focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors"
               />
-              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
             </div>
-            
-            <div className="max-h-60 overflow-y-auto mb-6">
+
+            <div className="max-h-60 overflow-y-auto mb-6 space-y-1">
               {filteredFriends.length > 0 ? (
                 <>
                   {filteredFriends.map(friend => (
-                    <div key={friend.id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+                    <div key={friend.id} className="flex items-center justify-between py-3 px-1 border-b border-gray-100 last:border-0">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                        <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                           {friend.photoURL ? (
-                            <Image 
-                              src={friend.photoURL} 
-                              alt={friend.displayName || 'Friend'} 
-                              width={40} 
-                              height={40}
-                              className="object-cover h-full w-full" 
-                            />
+                            <Image src={friend.photoURL} alt={friend.displayName || 'Friend'} width={36} height={36} className="object-cover h-full w-full" />
                           ) : (
-                            <span className="text-gray-700 font-medium">
+                            <span className="text-sm font-semibold text-steel">
                               {friend.displayName?.charAt(0) || 'U'}
                             </span>
                           )}
                         </div>
-                        <div>
-                          <span className="font-medium text-gray-900">{friend.displayName || 'Unknown User'}</span>
-                        </div>
+                        <span className="text-sm font-medium text-cast-iron">{friend.displayName || 'Unknown user'}</span>
                       </div>
-                      <Button
-                        variant="outline"
-                        onClick={() => handleShareRecipe(friend.id)}
-                        className="text-sm"
-                      >
+                      <Button variant="outline" onClick={() => handleShareRecipe(friend.id)} size="sm">
                         Share
                       </Button>
                     </div>
                   ))}
                   {friends.length > 3 && !searchQuery && (
-                    <div className="text-center py-2 italic text-sm text-gray-500">
-                      {friends.length - 3} more friends. Use search to find them.
-                    </div>
+                    <p className="text-center py-2 text-xs text-steel/60 italic">
+                      {friends.length - 3} more friends. Search to find them.
+                    </p>
                   )}
                 </>
               ) : (
-                <div className="text-center py-8 text-gray-500">
-                  {searchQuery ? 'No friends match your search' : 'No friends available to share with'}
+                <div className="text-center py-10 text-steel text-sm">
+                  {searchQuery ? 'No friends match your search.' : 'No friends to share with.'}
                 </div>
               )}
             </div>
 
             <div className="flex justify-end">
-              <Button 
-                variant="primary" 
-                onClick={() => {
-                  setIsShareModalOpen(false);
-                  setSearchQuery('');
-                }}
-              >
+              <Button variant="outline" onClick={() => { setIsShareModalOpen(false); setSearchQuery(''); setIsCopied(false); }}>
                 Close
               </Button>
             </div>
@@ -863,35 +687,4 @@ export default function RecipeDetail() {
       )}
     </div>
   );
-
-  // Show login prompt when authentication is required
-  if (needsAuthentication && !user) {
-    return (
-      <div className="min-h-screen bg-eggshell">
-        <div className="container mx-auto px-4 py-20 text-center">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-4">Login Required</h2>
-          <p className="mb-6 text-gray-700">
-            You need to be logged in to view recipes. This might be a public recipe that you can access after logging in.
-          </p>
-          <Button 
-            variant="primary"
-            onClick={() => router.push('/login?redirect=' + encodeURIComponent(`/recipes/${slug}`))}
-            className="mb-4"
-          >
-            Log In
-          </Button>
-          <div className="mt-4">
-            <ScrollToTopLink
-              href="/recipes"
-              className="inline-block px-6 py-3 bg-light-green text-white font-semibold rounded-lg hover:bg-light-green transition-colors"
-            >
-              Back to Recipes
-            </ScrollToTopLink>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return pageContent;
 }

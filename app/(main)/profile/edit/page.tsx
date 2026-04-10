@@ -4,7 +4,7 @@ import { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { toast } from 'react-hot-toast';
-import { FiUser, FiLock, FiImage, FiSave, FiX, FiTag, FiCamera } from 'react-icons/fi';
+import { FiUser, FiImage, FiSave, FiCamera, FiChevronLeft } from 'react-icons/fi';
 import { useAuth } from '@/app/context/AuthContext';
 import { getUserProfile, updateUserProfile } from '@/app/lib/user';
 import { UserProfile } from '@/app/models/User';
@@ -19,7 +19,6 @@ export default function EditProfilePage() {
   const [saving, setSaving] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [newCategory, setNewCategory] = useState('');
   const [isMobile, setIsMobile] = useState(false);
   
   // Check if the device is mobile
@@ -85,24 +84,6 @@ export default function EditProfilePage() {
     setImageFile(file);
   };
   
-  const handleAddCategory = () => {
-    if (!newCategory.trim()) return;
-    
-    setProfile(prev => ({
-      ...prev,
-      customCategories: [...(prev.customCategories || []), newCategory.trim()]
-    }));
-    
-    setNewCategory('');
-  };
-  
-  const handleRemoveCategory = (category: string) => {
-    setProfile(prev => ({
-      ...prev,
-      customCategories: (prev.customCategories || []).filter(c => c !== category)
-    }));
-  };
-  
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -140,233 +121,192 @@ export default function EditProfilePage() {
       setSaving(false);
     }
   };
-  
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-eggshell flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-2 border-gray-200 border-t-light-green" />
+      </div>
+    );
+  }
 
-  
   return (
-    <div className="w-full max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="px-6 py-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">Edit Profile</h1>
-          
-          <form onSubmit={handleSubmit}>
-            {/* Basic Information */}
-            <div className="mb-8">
-              <h2 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                <FiUser className="mr-2" />
-                Basic Information
-              </h2>
-              
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="displayName" className="block text-sm font-medium text-gray-700 mb-1">
-                    Display Name
-                  </label>
-                  <input
-                    type="text"
-                    id="displayName"
-                    name="displayName"
-                    value={profile.displayName || ''}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-light-green focus:border-light-green"
-                  />
-                </div>
-                
-                <div className="sm:col-span-2">
-                  <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-1">
-                    Bio
-                  </label>
-                  <textarea
-                    id="bio"
-                    name="bio"
-                    value={profile.bio || ''}
-                    onChange={handleInputChange}
-                    rows={3}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-light-green focus:border-light-green"
-                    placeholder="Tell others about yourself..."
-                  />
-                </div>
-                
-                <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Profile Photo
-                  </label>
-                  <div className="flex items-start space-x-4">
-                    <div className="h-24 w-24 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
-                      {(imagePreview || profile.photoURL) ? (
-                        <Image 
-                          src={imagePreview || profile.photoURL || ''}
-                          alt="Profile"
-                          width={96}
-                          height={96}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="h-full w-full flex items-center justify-center bg-white">
-                          <FiUser className="h-12 w-12 text-light-green" />
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <div className="flex flex-col space-y-2">
-                        <label htmlFor="photoUpload" className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                          <FiImage className="mr-2" />
-                          Choose Photo
-                        </label>
-                        <input 
-                          id="photoUpload" 
-                          type="file" 
-                          accept="image/*"
-                          onChange={handleImageChange}
-                          className="sr-only"
-                        />
-                        
-                        {isMobile && (
-                          <>
-                            <label htmlFor="cameraUpload" className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                              <FiCamera className="mr-2" />
-                              Take Photo
-                            </label>
-                            <input 
-                              id="cameraUpload" 
-                              type="file" 
-                              accept="image/*"
-                              capture="environment"
-                              onChange={handleImageChange}
-                              className="sr-only"
-                            />
-                          </>
-                        )}
-                      </div>
-                      <p className="mt-1 text-sm text-gray-500">
-                        JPG or PNG. Max 2MB.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+    <div className="min-h-screen bg-eggshell">
+      <div className="container mx-auto px-6 py-10 md:py-14 max-w-2xl">
+
+        {/* Page header */}
+        <div className="mb-6">
+          <button
+            type="button"
+            onClick={() => router.push(`/profile/${user?.uid}`)}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-steel hover:text-cast-iron transition-colors mb-4"
+          >
+            <FiChevronLeft className="w-4 h-4" />
+            Back to profile
+          </button>
+          <h1 className="text-2xl font-bold text-cast-iron">Edit Profile</h1>
+          <p className="text-sm text-steel mt-1">Update your display name, bio, and privacy settings.</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+
+          {/* Profile Photo */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="bg-cast-iron px-5 py-4">
+              <p className="text-sm font-semibold text-white">Profile Photo</p>
             </div>
-            
-            {/* Privacy Settings */}
-            <div className="mb-8">
-              <h2 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                <FiLock className="mr-2" />
-                Privacy Settings
-              </h2>
-              
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="profileVisibility" className="block text-sm font-medium text-gray-700 mb-1">
-                    Profile Visibility
-                  </label>
-                  <select
-                    id="profileVisibility"
-                    name="profileVisibility"
-                    value={profile.profileVisibility || 'public'}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 text-sm rounded-lg focus:ring-2 focus:ring-light-green focus:border-light-green"
-                  >
-                    <option value="public">Public</option>
-                    <option value="private">Private</option>
-                  </select>
+            <div className="p-5">
+              <div className="flex items-center gap-5">
+                <div className="h-20 w-20 rounded-full overflow-hidden border-2 border-gray-100 shadow-sm flex-shrink-0">
+                  {(imagePreview || profile.photoURL) ? (
+                    <Image
+                      src={imagePreview || profile.photoURL || ''}
+                      alt="Profile"
+                      width={80}
+                      height={80}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="h-full w-full flex items-center justify-center bg-light-green">
+                      <FiUser className="h-8 w-8 text-white" />
+                    </div>
+                  )}
                 </div>
-                
                 <div>
-                  <label htmlFor="friendsVisibility" className="block text-sm font-medium text-gray-700 mb-1">
-                    Friends List Visibility
-                  </label>
-                  <select
-                    id="friendsVisibility"
-                    name="friendsVisibility"
-                    value={profile.friendsVisibility || 'public'}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 text-sm rounded-lg focus:ring-2 focus:ring-light-green focus:border-light-green"
-                  >
-                    <option value="public">Public</option>
-                    <option value="private">Private</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-            
-            {/* Custom Categories */}
-            <div className="mb-8">
-              <h2 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                <FiTag className="mr-2" />
-                Custom Recipe Categories
-              </h2>
-              
-              <div className="flex flex-wrap items-center gap-2 mb-4">
-                {(profile.customCategories || []).map((category) => (
-                  <div 
-                    key={category}
-                    className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-sm flex items-center"
-                  >
-                    {category}
-                    <button 
-                      type="button"
-                      onClick={() => handleRemoveCategory(category)}
-                      className="ml-2 text-light-green hover:text-white"
+                  <div className="flex flex-wrap gap-2">
+                    <label
+                      htmlFor="photoUpload"
+                      className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium border border-gray-200 rounded-xl text-cast-iron bg-white hover:bg-gray-50 transition-colors"
                     >
-                      <FiX size={14} />
-                    </button>
+                      <FiImage className="w-3.5 h-3.5" />
+                      Choose photo
+                    </label>
+                    <input id="photoUpload" type="file" accept="image/*" onChange={handleImageChange} className="sr-only" />
+
+                    {isMobile && (
+                      <>
+                        <label
+                          htmlFor="cameraUpload"
+                          className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium border border-gray-200 rounded-xl text-cast-iron bg-white hover:bg-gray-50 transition-colors"
+                        >
+                          <FiCamera className="w-3.5 h-3.5" />
+                          Take photo
+                        </label>
+                        <input id="cameraUpload" type="file" accept="image/*" capture="environment" onChange={handleImageChange} className="sr-only" />
+                      </>
+                    )}
                   </div>
-                ))}
+                  <p className="mt-2 text-xs text-steel/50">JPG or PNG. Max 2MB.</p>
+                </div>
               </div>
-              
-              <div className="flex">
+            </div>
+          </div>
+
+          {/* Basic Information */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="bg-cast-iron px-5 py-4">
+              <p className="text-sm font-semibold text-white">Basic Information</p>
+            </div>
+            <div className="p-5 space-y-4">
+              <div>
+                <label htmlFor="displayName" className="block text-sm font-medium text-cast-iron mb-1.5">
+                  Display Name
+                </label>
                 <input
                   type="text"
-                  value={newCategory}
-                  onChange={(e) => setNewCategory(e.target.value)}
-                  placeholder="Add a category..."
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-light-green focus:border-light-green w-full md:w-auto"
+                  id="displayName"
+                  name="displayName"
+                  value={profile.displayName || ''}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-cast-iron placeholder:text-steel/40 focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors"
                 />
-                <button
-                  type="button"
-                  onClick={handleAddCategory}
-                  className="px-4 py-2 bg-light-green text-white rounded-r-lg hover:bg-light-green"
-                >
-                  Add
-                </button>
               </div>
-              <p className="mt-1 text-sm text-gray-500">
-                Create custom categories to organize your recipes.
-              </p>
+              <div>
+                <label htmlFor="bio" className="block text-sm font-medium text-cast-iron mb-1.5">
+                  Bio
+                </label>
+                <textarea
+                  id="bio"
+                  name="bio"
+                  value={profile.bio || ''}
+                  onChange={handleInputChange}
+                  rows={3}
+                  placeholder="Tell others about yourself..."
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-cast-iron placeholder:text-steel/40 focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors resize-none"
+                />
+              </div>
             </div>
-            
-            {/* Submit Button */}
-            <div className="flex justify-end">
-              <Button
-                type="button"
-                variant="outline"
-                className="mr-4"
-                onClick={() => router.push(`/profile/${user?.uid}`)}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                variant="primary"
-                className="flex items-center"
-                disabled={saving}
-              >
-                {saving ? (
-                  <>
-                    <div className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <FiSave className="mr-2" />
-                    Save Changes
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
+          </div>
 
-        </div>
+          {/* Privacy */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="bg-cast-iron px-5 py-4">
+              <p className="text-sm font-semibold text-white">Privacy</p>
+              <p className="text-xs text-white/50 mt-0.5">Control who can see your profile and friends list.</p>
+            </div>
+            <div className="p-5 space-y-4">
+              <div>
+                <label htmlFor="profileVisibility" className="block text-sm font-medium text-cast-iron mb-1.5">
+                  Profile Visibility
+                </label>
+                <select
+                  id="profileVisibility"
+                  name="profileVisibility"
+                  value={profile.profileVisibility || 'public'}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-cast-iron focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors bg-white"
+                >
+                  <option value="public">Public</option>
+                  <option value="private">Private</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="friendsVisibility" className="block text-sm font-medium text-cast-iron mb-1.5">
+                  Friends List Visibility
+                </label>
+                <select
+                  id="friendsVisibility"
+                  name="friendsVisibility"
+                  value={profile.friendsVisibility || 'public'}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-cast-iron focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors bg-white"
+                >
+                  <option value="public">Public</option>
+                  <option value="private">Private</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center justify-end gap-3 pt-2 pb-6">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push(`/profile/${user?.uid}`)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={saving}
+              className="flex items-center gap-2"
+            >
+              {saving ? (
+                <>
+                  <div className="animate-spin h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <FiSave className="w-3.5 h-3.5" />
+                  Save Changes
+                </>
+              )}
+            </Button>
+          </div>
+
+        </form>
       </div>
     </div>
   );

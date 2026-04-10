@@ -124,7 +124,7 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-eggshell">
-      <div className="container mx-auto px-6 py-16 md:py-24">
+      <div className="container mx-auto px-6 py-16 md:py-24 max-w-6xl">
 
         {/* Header */}
         <motion.div
@@ -162,7 +162,7 @@ export default function PricingPage() {
         </motion.div>
 
         {/* Pricing cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto items-start">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
           {pricingTiers.map((tier, i) => (
             <motion.div
               key={tier.id}
@@ -247,7 +247,7 @@ export default function PricingPage() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="mt-24 max-w-4xl mx-auto"
+          className="mt-24"
         >
           <h2 className="text-3xl font-bold text-cast-iron text-center mb-12">
             Questions &amp; answers

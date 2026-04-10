@@ -21,7 +21,7 @@ export default function CTA() {
       </div>
 
       <section className="bg-tomato pt-12 lg:pt-16 relative">
-        <div className="container mx-auto px-6 pb-24 lg:pb-32 text-center">
+        <div className="container mx-auto px-6 pb-24 lg:pb-32 max-w-6xl text-center">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -40,7 +40,7 @@ export default function CTA() {
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              <Link href="/login">
+              <Link href="/signup">
                 <motion.button
                   whileHover={{ scale: 1.04 }}
                   whileTap={{ scale: 0.97 }}

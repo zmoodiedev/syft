@@ -49,6 +49,7 @@ export default function SignUp() {
             setError('');
             router.push('/recipes');
         } catch (error) {
+            if ((error as { code?: string }).code === 'auth/cancelled-popup-request') return;
             console.error('Google sign-up error:', error);
 
             if (error instanceof Error && error.message.includes('Access denied')) {

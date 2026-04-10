@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { uploadImage } from '@/lib/cloudinary';
 import Button from './Button';
-import { FiGlobe, FiLock, FiUsers } from 'react-icons/fi';
+import { FiGlobe, FiLock, FiUsers, FiPlus, FiX } from 'react-icons/fi';
 
 // Default categories for new users
 export const DEFAULT_CATEGORIES = [
@@ -1339,685 +1339,261 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
   };
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
-      {/* Recipe Image Scan Feature */}
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5">
+
+      {/* Scan banner */}
       {showScanFeature && (
-      <div className={`p-6 mb-6 border ${scanMode ? 'bg-light-green-50 border-light-green shadow-md' : 'bg-amber-50 border-amber-200'} transition-colors`}>
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div>
-            <h3 className={`text-xl font-semibold mb-2 ${scanMode ? 'text-light-green' : 'text-amber-800'}`}>
-              {scanMode ? 'Scan Your Recipe' : 'Recipe Scanner'}
-            </h3>
-            <p className="text-cast-iron text-sm mb-2">
-              Upload a photo of a recipe card or a page from a cookbook to automatically extract the recipe details.
-            </p>
-            <p className="text-amber-700 text-xs italic mb-4">
-              Note: Scanned content may require manual adjustments. The extraction process isn&apos;t perfect and you may need to edit the results.
-            </p>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-base font-semibold text-cast-iron">
+                {scanMode ? 'Scan your recipe' : 'Recipe scanner'}
+              </h3>
+              <p className="text-sm text-steel mt-1">
+                Upload a photo of a recipe card or cookbook page to extract the details automatically.
+              </p>
+              <p className="text-xs text-steel/50 mt-1 italic">Review the results before saving.</p>
+            </div>
+            <div className="flex-shrink-0">
+              {isMobile ? (
+                <>
+                  <input type="file" accept="image/*" capture="environment" ref={recipeImageInputRef} onChange={handleRecipeImageUpload} className="hidden" />
+                  <Button onClick={handleRecipeImageClick} variant={scanMode ? 'primary' : 'outline'} disabled={isProcessingRecipe} className="flex items-center gap-2">
+                    <i className="fa-solid fa-camera"></i>
+                    {isProcessingRecipe ? 'Processing...' : 'Take photo'}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <input type="file" accept="image/*" ref={recipeImageInputRef} onChange={handleRecipeImageUpload} className="hidden" />
+                  <Button onClick={handleRecipeImageClick} variant={scanMode ? 'primary' : 'outline'} disabled={isProcessingRecipe} className="flex items-center gap-2">
+                    <i className="fa-solid fa-upload"></i>
+                    {isProcessingRecipe ? 'Processing...' : 'Upload image'}
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
-          <div className="flex items-center">
-            {isMobile ? (
-              <>
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  ref={recipeImageInputRef}
-                  onChange={handleRecipeImageUpload}
-                  className="hidden"
-                />
-                <Button 
-                  onClick={handleRecipeImageClick}
-                  variant={scanMode ? "primary" : "outline"}
-                  disabled={isProcessingRecipe}
-                  className="flex items-center gap-2"
-                >
-                  <i className="fa-solid fa-camera"></i>
-                  {isProcessingRecipe ? 'Processing...' : 'Take Recipe Photo'}
-                </Button>
-              </>
-            ) : (
-              <>
-                <input
-                  type="file"
-                  accept="image/*"
-                  ref={recipeImageInputRef}
-                  onChange={handleRecipeImageUpload}
-                  className="hidden"
-                />
-                <Button 
-                  onClick={handleRecipeImageClick}
-                  variant={scanMode ? "primary" : "outline"}
-                  disabled={isProcessingRecipe}
-                  className="flex items-center gap-2"
-                >
-                  <i className="fa-solid fa-upload"></i>
-                  {isProcessingRecipe ? 'Processing...' : 'Upload Recipe Image'}
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-        
-        {!scanMode && !isProcessingRecipe && !extractedRecipeText && (
-          <button 
-            onClick={() => setShowScanFeature(false)}
-            className="mt-2 text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
-          >
-            <i className="fa-solid fa-times"></i> Hide Scanner
-          </button>
-        )}
-        
-        {extractedRecipeText && (
-          <div id="extracted-text-panel" className="mt-4 bg-white border border-light-grey p-3">
-            <details>
-              <summary className="cursor-pointer text-light-green font-medium hover:text-light-green-dark transition flex items-center">
-                <span>View extracted text</span>
-                <span className="text-xs text-gray-500 ml-2">(Reference only)</span>
+          {!scanMode && !isProcessingRecipe && !extractedRecipeText && (
+            <button type="button" onClick={() => setShowScanFeature(false)} className="mt-3 text-xs text-steel/50 hover:text-steel transition-colors flex items-center gap-1">
+              <FiX className="w-3 h-3" /> Hide scanner
+            </button>
+          )}
+          {extractedRecipeText && (
+            <details className="mt-4">
+              <summary className="cursor-pointer text-sm font-medium text-light-green hover:text-green transition-colors list-none flex items-center gap-1">
+                View extracted text <span className="text-xs text-steel/50 font-normal">(reference only)</span>
               </summary>
-              <div className="mt-2 bg-gray-50 p-3 rounded-md overflow-auto max-h-60 whitespace-pre-wrap text-xs">
+              <div className="mt-2 bg-eggshell rounded-xl border border-gray-100 p-3 overflow-auto max-h-60 whitespace-pre-wrap text-xs text-steel">
                 {extractedRecipeText}
               </div>
             </details>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
       )}
 
-      {/* Regular Form Fields */}
-      <div className="space-y-6 md:bg-light-grey md:p-8 md:border md:border-gray-100">
-        <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold">Recipe Details</h2>
-          
-          {/* Recipe Visibility Toggle */}
-          <div className="flex items-center bg-gray-100 p-1 rounded-lg">
+      {/* Basics */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-cast-iron">Basics</h2>
+          <div className="flex items-center bg-gray-100 p-1 rounded-xl">
             <button
               type="button"
               onClick={() => setVisibility('public')}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm transition-colors ${
-                visibility === 'public' 
-                  ? 'bg-white text-light-green shadow-sm' 
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
               title="Anyone can view this recipe"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                visibility === 'public' ? 'bg-white text-light-green shadow-sm' : 'text-steel hover:text-cast-iron'
+              }`}
             >
-              <FiGlobe className="h-4 w-4" />
+              <FiGlobe className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Public</span>
             </button>
             <button
               type="button"
               onClick={() => setVisibility('friends')}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm transition-colors ${
-                visibility === 'friends' 
-                  ? 'bg-white text-light-green shadow-sm' 
-                  : 'text-gray-600 hover:text-gray-900'
+              title="Only your friends can view"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                visibility === 'friends' ? 'bg-white text-light-green shadow-sm' : 'text-steel hover:text-cast-iron'
               }`}
-              title="Only your friends can view this recipe"
             >
-              <FiUsers className="h-4 w-4" />
+              <FiUsers className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Friends</span>
             </button>
             <button
               type="button"
               onClick={() => setVisibility('private')}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm transition-colors ${
-                visibility === 'private' 
-                  ? 'bg-white text-light-green shadow-sm' 
-                  : 'text-gray-600 hover:text-gray-900'
+              title="Only you can view"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                visibility === 'private' ? 'bg-white text-light-green shadow-sm' : 'text-steel hover:text-cast-iron'
               }`}
-              title="Only you can view this recipe"
             >
-              <FiLock className="h-4 w-4" />
+              <FiLock className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Private</span>
             </button>
           </div>
         </div>
-        <div className="space-y-6">
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">Recipe Name</label>
-            <input 
-              id="name" 
-              className="mt-1 block w-full border-gray-300 bg-light-grey focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base" 
-              placeholder="Enter recipe name" 
-              type="text" 
-              {...register('name', { required: true })}
-            />
-            {errors.name && <p className="mt-1 text-sm text-red-500">Recipe name is required</p>}
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <label htmlFor="servings" className="block text-sm font-medium text-gray-700 mb-2">Servings</label>
-              <input 
-                id="servings" 
-                placeholder="e.g., 4" 
-                className="mt-1 block w-full border-gray-300  shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base" 
-                type="text" 
-                {...register('servings')}
-              />
-            </div>
-            <div>
-              <label htmlFor="prepTime" className="block text-sm font-medium text-gray-700 mb-2">Prep Time</label>
-              <input 
-                id="prepTime" 
-                placeholder="e.g., 15 mins" 
-                className="mt-1 block w-full border-gray-300  shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base" 
-                type="text" 
-                {...register('prepTime')}
-              />
-              {errors.prepTime && <p className="mt-1 text-sm text-red-500">Prep time is required</p>}
-            </div>
-            <div>
-              <label htmlFor="cookTime" className="block text-sm font-medium text-gray-700 mb-2">Cook Time</label>
-              <input 
-                id="cookTime" 
-                placeholder="e.g., 30 mins" 
-                className="mt-1 block w-full border-gray-300  shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base" 
-                type="text" 
-                {...register('cookTime')}
-              />
-              {errors.cookTime && <p className="mt-1 text-sm text-red-500">Cook time is required</p>}
-            </div>
-          </div>
-          <div>
-            <label htmlFor="sourceUrl" className="block text-sm font-medium text-gray-700 mb-2">Original Source</label>
-            <input 
-              id="sourceUrl" 
-              placeholder="https://example.com/recipe" 
-              className="mt-1 block w-full border-gray-300  shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base" 
-              type="url" 
-              {...register('sourceUrl')}
-            />
-          </div>
-        </div>
-      </div>
-      <div className="md:bg-light-grey md:p-8 md:border md:border-gray-100">
-        <h2 className="text-2xl font-bold text-light-green mb-6">Recipe Image</h2>
-        <div className="space-y-6">
-          <div className="flex flex-col space-y-4">
-            <input accept="image/*" className="hidden" type="file" ref={fileInputRef} onChange={handleFileChange} />
-            <div className="flex flex-col md:flex-row gap-2 justify-center items-center">
-              <button 
-                className="
-                  inline-flex items-center justify-center gap-2
-                  font-medium
-                  transition-colors duration-200
-                  disabled:opacity-50 disabled:cursor-not-allowed
-                  border-2 border-light-green text-light-green hover:bg-light-green hover:text-white active:bg-light-green active:text-white
-                  px-4 py-2 text-base
-                  w-full md:w-auto py-3
-                " 
-                type="button" 
-                onClick={handleUploadClick}
-                disabled={isUploading}
-              >
-                {isUploading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                    Uploading...
-                  </>
-                ) : <>
-                  <i className="fa-solid fa-upload mr-1"></i>
-                  Upload Image
-                </>}
-              </button>
-              
-              {isMobile && (
-                <>
-                  <input accept="image/*" capture="environment" className="hidden" type="file" ref={cameraCaptureRef} onChange={handleFileChange} />
-                  <button 
-                    className="
-                      inline-flex items-center justify-center gap-2
-                      font-medium
-                      transition-colors duration-200
-                      disabled:opacity-50 disabled:cursor-not-allowed
-                      border-2 border-light-green text-light-green hover:bg-light-green hover:text-white active:bg-light-green active:text-white
-                      px-4 py-2 text-base
-                      w-full md:w-auto py-3
-                    " 
-                    type="button" 
-                    onClick={handleCameraCaptureClick}
-                    disabled={isUploading}
-                  >
-                    {isUploading ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                        Uploading...
-                      </>
-                    ) : <>
-                      <i className="fa-solid fa-camera mr-1"></i>
-                      Take Photo
-                    </>}
-                  </button>
-                </>
-              )}
-            </div>
-            <div className="flex items-center justify-center my-4">
-              <div className="h-px bg-gray-200 flex-1"></div>
-              <span className="px-4 text-sm text-gray-500">or</span>
-              <div className="h-px bg-gray-200 flex-1"></div>
-            </div>
-            <div className="flex flex-col md:flex-row gap-4">
-              <input 
-                id="imageUrl" 
-                placeholder="https://example.com/image.jpg" 
-                className="flex-1 border-gray-300  shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base" 
-                type="text" 
-                value={imageUrl}
-                onChange={handleImageUrlChange}
-              />
-              <button 
-                className="
-                  inline-flex items-center justify-center gap-2
-                  font-medium
-                  transition-colors duration-200
-                  disabled:opacity-50 disabled:cursor-not-allowed
-                  bg-light-green text-white hover:bg-light-green-600 active:bg-light-green-700
-                  px-3 py-1.5 text-sm
-                  w-full md:w-auto py-3
-                " 
-                type="button"
-                onClick={validateAndPreviewImage}
-              >Preview</button>
-            </div>
-          </div>
-          <p className="text-xs text-gray-500 text-center">Upload an image file or enter a URL. Maximum file size: 5MB.</p>
-          
-          {isPreviewingImage && imageUrl && (
-            <div className="mt-4">
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Image Preview</h3>
-              <div className="w-full h-48 overflow-hidden relative border border-gray-200">
-                <img src={imageUrl} alt="Recipe preview" className="w-full h-full object-cover" />
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-      
-      {/* Bulk Import Section */}
-      <div className="md:bg-light-grey md:p-8 md:border md:border-gray-100">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold text-light-green">Bulk Import</h2>
-          <button
-            type="button"
-            onClick={() => setShowBulkImport(!showBulkImport)}
-            className="text-light-green hover:text-light-green-600 text-sm font-medium"
-          >
-            {showBulkImport ? 'Hide Bulk Import' : 'Show Bulk Import'}
-          </button>
-        </div>
-        
-        {showBulkImport && (
-          <div className="space-y-6">
-            <p className="text-sm text-gray-600">
-              Copy and paste your ingredients and instructions from another source. Each line will be treated as a separate item.
-            </p>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Bulk Ingredients */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Ingredients (one per line)
-                </label>
-                <textarea
-                  value={bulkIngredients}
-                  onChange={(e) => setBulkIngredients(e.target.value)}
-                  placeholder={`Example:
-2 cups all-purpose flour
-1 tsp salt
-3 tbsp olive oil
-1/2 cup warm water`}
-                  rows={8}
-                  className="w-full border-gray-300 shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base resize-none"
-                />
-              </div>
-              
-              {/* Bulk Instructions */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Instructions (one per line)
-                </label>
-                <textarea
-                  value={bulkInstructions}
-                  onChange={(e) => setBulkInstructions(e.target.value)}
-                  placeholder={`Example:
-1. Mix flour and salt in a bowl
-2. Add olive oil and water
-3. Knead dough for 5 minutes
-4. Let rest for 30 minutes`}
-                  rows={8}
-                  className="w-full border-gray-300 shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base resize-none"
-                />
-              </div>
-            </div>
-            
-            <div className="flex gap-2 justify-center">
-              <button
-                type="button"
-                onClick={handleBulkImport}
-                className="
-                  inline-flex items-center justify-center gap-2
-                  font-medium
-                  transition-colors duration-200
-                  disabled:opacity-50 disabled:cursor-not-allowed
-                  bg-light-green text-white hover:bg-light-green-600 active:bg-light-green-700
-                  px-6 py-3 text-base
-                "
-              >
-                Import to Recipe
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setBulkIngredients('');
-                  setBulkInstructions('');
-                }}
-                className="
-                  inline-flex items-center justify-center gap-2
-                  font-medium
-                  transition-colors duration-200
-                  disabled:opacity-50 disabled:cursor-not-allowed
-                  border-2 border-gray-300 text-gray-700 hover:bg-gray-50 active:bg-gray-100
-                  px-6 py-3 text-base
-                "
-              >
-                Clear
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-      <div className="md:bg-light-grey md:p-8 md:border md:border-gray-100">
-        <h2 className="text-2xl font-bold text-light-green mb-6">Ingredients</h2>
-        
-        {/* Ingredient Groups Management */}
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Ingredient Groups</h3>
-          <p className="text-sm text-gray-600 mb-4">
-            Create groups to organize your ingredients (e.g., &quot;For the sauce&quot;, &quot;For the main dish&quot;, &quot;For garnish&quot;)
-          </p>
-          
-          <div className="flex flex-wrap gap-2 mb-4">
-            {ingredientGroups.filter(group => group !== '').map((group) => (
-              <div key={group} className="flex items-center gap-2 bg-white px-3 py-1 rounded-full border">
-                <span className="text-sm font-medium">{group}</span>
-                <button
-                  type="button"
-                  onClick={() => removeIngredientGroup(group)}
-                  className="text-red-500 hover:text-red-700 text-xs"
-                >
-                  <i className="fa-solid fa-times"></i>
-                </button>
-              </div>
-            ))}
-          </div>
-          
-          <div className="flex gap-2 flex-col md:flex-row">
-            <input
-              type="text"
-              placeholder="Enter group name (e.g., 'For the sauce')"
-              value={newGroupName}
-              onChange={(e) => setNewGroupName(e.target.value)}
-              className="flex-1 px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-light-green focus:border-transparent"
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  addIngredientGroup();
-                }
-              }}
-            />
-            <button
-              type="button"
-              onClick={addIngredientGroup}
-              className="
-                inline-flex items-center justify-center gap-2
-                font-medium
-                transition-colors duration-200
-                disabled:opacity-50 disabled:cursor-not-allowed
-                border-2 border-light-green text-light-green hover:bg-light-green hover:text-white active:bg-light-green active:text-white
-                px-4 py-2 text-sm
-              "
-            >
-              + Add Group
-            </button>
-          </div>
+
+        <div>
+          <label htmlFor="name" className="block text-sm font-medium text-cast-iron mb-1.5">Recipe name</label>
+          <input
+            id="name"
+            type="text"
+            placeholder="e.g. Grandma's Lasagna"
+            className="block w-full border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-3 px-4 text-base"
+            {...register('name', { required: true })}
+          />
+          {errors.name && <p className="mt-1 text-sm text-red-500">Recipe name is required</p>}
         </div>
 
-        {/* Ingredients by Group */}
-        <div className="space-y-8">
-          {(() => {
-            const groupedIngredients = getIngredientsByGroup();
-            const groups = ['', ...ingredientGroups.filter(group => group !== '')];
-            
-            return groups.map((groupName) => {
-              const groupIngredients = groupedIngredients[groupName] || [];
-              
-              return (
-                <div key={groupName || 'ungrouped'} className="space-y-4">
-                  {groupName && (
-                    <div className="flex items-center gap-2">
-                      <h4 className="text-lg font-medium text-gray-900">{groupName}</h4>
-                      <button
-                        type="button"
-                        onClick={() => addIngredient(groupName)}
-                        className="text-light-green hover:text-light-green-600 text-sm"
-                      >
-                        + Add ingredient to this group
-                      </button>
-                    </div>
-                  )}
-                  
-                  {!groupName && groupIngredients.length > 0 && (
-                    <h4 className="text-lg font-medium text-gray-900">General Ingredients</h4>
-                  )}
-                  
-                  <div className="space-y-4">
-                    <div className="hidden md:grid grid-cols-12 gap-4 text-sm font-medium text-gray-500 border-b pb-2">
-                      <div className="col-span-2">Amount</div>
-                      <div className="col-span-2">Unit</div>
-                      <div className="col-span-4">Ingredient</div>
-                      <div className="col-span-3">Group</div>
-                      <div className="col-span-1"></div>
-                    </div>
-                    
-                    {groupIngredients.map((ingredient) => {
-                      const globalIndex = ingredients.findIndex(ing => ing.id === ingredient.id);
-                      return (
-                        <div key={ingredient.id} className="grid grid-cols-12 gap-4 items-center">
-                          <div className="col-span-12 md:col-span-4 grid grid-cols-2 gap-4">
-                            <input 
-                              placeholder="Amount" 
-                              className="border-gray-300  shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-2 px-3 text-sm"
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <label htmlFor="servings" className="block text-sm font-medium text-cast-iron mb-1.5">Servings</label>
+            <input id="servings" type="text" placeholder="e.g. 4" className="block w-full border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2.5 px-3 text-sm" {...register('servings')} />
+          </div>
+          <div>
+            <label htmlFor="prepTime" className="block text-sm font-medium text-cast-iron mb-1.5">Prep time</label>
+            <input id="prepTime" type="text" placeholder="e.g. 15 mins" className="block w-full border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2.5 px-3 text-sm" {...register('prepTime')} />
+          </div>
+          <div>
+            <label htmlFor="cookTime" className="block text-sm font-medium text-cast-iron mb-1.5">Cook time</label>
+            <input id="cookTime" type="text" placeholder="e.g. 30 mins" className="block w-full border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2.5 px-3 text-sm" {...register('cookTime')} />
+          </div>
+        </div>
+      </div>
+
+      {/* Ingredients + Instructions */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+
+        {/* Ingredients */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h2 className="text-lg font-bold text-cast-iron mb-4">Ingredients</h2>
+
+          <div className="space-y-1">
+            {(() => {
+              const groupedIngredients = getIngredientsByGroup();
+              const groups = ['', ...ingredientGroups.filter(g => g !== '')];
+              return groups.map((groupName) => {
+                const groupIngredients = groupedIngredients[groupName] || [];
+                return (
+                  <div key={groupName || 'ungrouped'}>
+                    {groupName && (
+                      <div className="flex items-center justify-between pt-4 pb-1.5">
+                        <span className="text-xs font-semibold text-steel/50 uppercase tracking-widest">{groupName}</span>
+                        <div className="flex items-center gap-3">
+                          <button type="button" onClick={() => addIngredient(groupName)} className="text-xs text-light-green hover:text-green transition-colors font-medium">
+                            + Add
+                          </button>
+                          <button type="button" onClick={() => removeIngredientGroup(groupName)} className="text-xs text-steel/40 hover:text-red-400 transition-colors">
+                            Remove section
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    {groupIngredients.length === 0 && groupName ? (
+                      <p className="text-xs text-steel/40 italic py-1.5 pl-1">No ingredients yet.</p>
+                    ) : (
+                      groupIngredients.map((ingredient) => {
+                        const globalIndex = ingredients.findIndex(ing => ing.id === ingredient.id);
+                        return (
+                          <div key={ingredient.id} className="flex items-center gap-2 py-1">
+                            <input
+                              placeholder="Amt"
+                              className="w-14 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2 px-2 text-sm text-center"
                               value={ingredient.amount}
                               onChange={(e) => updateIngredient(globalIndex, 'amount', e.target.value)}
                             />
-                            <input 
-                              placeholder="Unit" 
-                              className="border-gray-300  shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-2 px-3 text-sm"
+                            <input
+                              placeholder="Unit"
+                              className="w-[4.5rem] border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2 px-2 text-sm"
                               value={ingredient.unit}
                               onChange={(e) => updateIngredient(globalIndex, 'unit', e.target.value)}
                             />
-                          </div>
-                          <div className="col-span-11 md:col-span-4">
-                            <input 
-                              placeholder="Ingredient" 
-                              required 
-                              className="w-full border-gray-300  shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-2 px-3 text-sm"
+                            <input
+                              placeholder="Ingredient"
+                              required
+                              className="flex-1 min-w-0 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2 px-3 text-sm"
                               value={ingredient.item}
                               onChange={(e) => updateIngredient(globalIndex, 'item', e.target.value)}
                             />
-                          </div>
-                          <div className="col-span-12 md:col-span-3">
-                            <select
-                              value={ingredient.groupName || ''}
-                              onChange={(e) => updateIngredient(globalIndex, 'groupName', e.target.value)}
-                              className="w-full border-gray-300  shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-2 px-3 text-sm"
-                            >
-                              <option value="">No group</option>
-                              {ingredientGroups.filter(group => group !== '').map((group) => (
-                                <option key={group} value={group}>{group}</option>
-                              ))}
-                            </select>
-                          </div>
-                          <div className="col-span-1 flex justify-end">
                             {ingredients.length > 1 && (
-                              <button 
-                                type="button"
-                                className="text-red-500 hover:text-red-700"
-                                onClick={() => removeIngredient(globalIndex)}
-                              >
-                                <i className="fa-solid fa-times"></i>
+                              <button type="button" onClick={() => removeIngredient(globalIndex)} className="text-steel/30 hover:text-red-400 transition-colors flex-shrink-0 p-1">
+                                <FiX className="w-4 h-4" />
                               </button>
                             )}
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })
+                    )}
                   </div>
-                  
-                  {groupIngredients.length === 0 && groupName && (
-                    <div className="text-gray-500 text-sm italic py-2">
-                      No ingredients in this group yet.
-                    </div>
-                  )}
-                </div>
-              );
-            });
-          })()}
-          
-          <div className="flex gap-2 flex-wrap">
-            <button 
-              className="
-                inline-flex items-center justify-center gap-2
-                font-medium
-                transition-colors duration-200
-                disabled:opacity-50 disabled:cursor-not-allowed
-                border-2 border-light-green text-light-green hover:bg-light-green hover:text-white active:bg-light-green active:text-white
-                px-3 py-1.5 text-sm
-                w-full md:w-auto py-3
-              " 
-              type="button"
-              onClick={() => addIngredient()}
-            >+ Add Ingredient</button>
-            
-            {ingredientGroups.filter(group => group !== '').length > 0 && (
-              <select
-                onChange={(e) => {
-                  if (e.target.value) {
-                    addIngredient(e.target.value);
-                    e.target.value = '';
-                  }
-                }}
-                className="border-gray-300  shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base"
-              >
-                <option value="">+ Add to group...</option>
-                {ingredientGroups.filter(group => group !== '').map((group) => (
-                  <option key={group} value={group}>Add to {group}</option>
-                ))}
-              </select>
-            )}
+                );
+              });
+            })()}
           </div>
-        </div>
-      </div>
-      <div className="md:bg-light-grey md:p-8 md:border md:border-gray-100">
-        <h2 className="text-2xl font-bold text-light-green mb-6">Instructions</h2>
-        
-        {/* Instruction Groups Management */}
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Instruction Groups</h3>
-          <p className="text-sm text-gray-600 mb-4">
-            Create groups to organize your instructions (e.g., &quot;For the sauce&quot;, &quot;For assembly&quot;, &quot;For garnish&quot;)
-          </p>
-          
-          <div className="flex flex-wrap gap-2 mb-4">
-            {instructionGroups.filter(group => group !== '').map((group) => (
-              <div key={group} className="flex items-center gap-2 bg-white px-3 py-1 rounded-full border">
-                <span className="text-sm font-medium">{group}</span>
-                <button
-                  type="button"
-                  onClick={() => removeInstructionGroup(group)}
-                  className="text-red-500 hover:text-red-700 text-xs"
-                >
-                  <i className="fa-solid fa-times"></i>
-                </button>
-              </div>
-            ))}
-          </div>
-          
-          <div className="flex gap-2 flex-col md:flex-row">
-            <input
-              type="text"
-              placeholder="Enter group name (e.g., 'For the sauce')"
-              value={newInstructionGroupName}
-              onChange={(e) => setNewInstructionGroupName(e.target.value)}
-              className="flex-1 px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-light-green focus:border-transparent"
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  addInstructionGroup();
-                }
-              }}
-            />
-            <button
-              type="button"
-              onClick={addInstructionGroup}
-              className="
-                inline-flex items-center justify-center gap-2
-                font-medium
-                transition-colors duration-200
-                disabled:opacity-50 disabled:cursor-not-allowed
-                border-2 border-light-green text-light-green hover:bg-light-green hover:text-white active:bg-light-green active:text-white
-                px-4 py-2 text-sm
-              "
-            >
-              + Add Group
+
+          <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
+            <button type="button" onClick={() => addIngredient()} className="flex items-center gap-1.5 text-sm font-medium text-light-green hover:text-green transition-colors">
+              <FiPlus className="w-4 h-4" /> Add ingredient
             </button>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                placeholder="New section (e.g. For the sauce)"
+                value={newGroupName}
+                onChange={(e) => setNewGroupName(e.target.value)}
+                className="flex-1 text-sm border border-gray-200 rounded-lg py-1.5 px-3 focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') { e.preventDefault(); addIngredientGroup(); }
+                }}
+              />
+              <button type="button" onClick={addIngredientGroup} className="text-sm font-medium text-light-green hover:text-green transition-colors px-2 py-1.5 whitespace-nowrap">
+                + Add section
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Instructions by Group */}
-        <div className="space-y-8">
-          {(() => {
-            const groupedInstructions = getInstructionsByGroup();
-            const groups = ['', ...instructionGroups.filter(group => group !== '')];
-            
-            return groups.map((groupName) => {
-              const groupInstructions = groupedInstructions[groupName] || [];
-              
-              return (
-                <div key={groupName || 'ungrouped'} className="space-y-4">
-                  {groupName && (
-                    <div className="flex items-center gap-2">
-                      <h4 className="text-lg font-medium text-gray-900">{groupName}</h4>
-                      <button
-                        type="button"
-                        onClick={() => addInstruction(groupName)}
-                        className="text-light-green hover:text-light-green-600 text-sm"
-                      >
-                        + Add instruction to this group
-                      </button>
-                    </div>
-                  )}
-                  
-                  {!groupName && groupInstructions.length > 0 && (
-                    <h4 className="text-lg font-medium text-gray-900">General Instructions</h4>
-                  )}
-                  
-                  <div className="space-y-6">
-                    {groupInstructions.map((instruction, groupIndex) => {
-                      const globalIndex = instructions.findIndex(instr => instr.id === instruction.id);
-                      const stepNumber = groupIndex + 1; // Step number within the group
-                      
-                      return (
-                        <div key={instruction.id} className="flex items-start space-x-4 flex-col lg:flex-row">
-                          <div className="flex-shrink-0 w-20 h-10 flex items-center justify-center text-cast-iron font-medium">
-                            STEP {stepNumber}
-                          </div>
-                          <div className="flex-1 w-full">
-                            <textarea 
-                              placeholder="Enter instruction step" 
-                              required 
-                              rows={1} 
-                              className="w-full border-gray-300  shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base resize-none overflow-hidden mb-2" 
+        {/* Instructions */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h2 className="text-lg font-bold text-cast-iron mb-4">Instructions</h2>
+
+          <div className="space-y-1">
+            {(() => {
+              const groupedInstructions = getInstructionsByGroup();
+              const groups = ['', ...instructionGroups.filter(g => g !== '')];
+              return groups.map((groupName) => {
+                const groupInstructions = groupedInstructions[groupName] || [];
+                return (
+                  <div key={groupName || 'ungrouped'}>
+                    {groupName && (
+                      <div className="flex items-center justify-between pt-4 pb-1.5">
+                        <span className="text-xs font-semibold text-steel/50 uppercase tracking-widest">{groupName}</span>
+                        <div className="flex items-center gap-3">
+                          <button type="button" onClick={() => addInstruction(groupName)} className="text-xs text-light-green hover:text-green transition-colors font-medium">
+                            + Add
+                          </button>
+                          <button type="button" onClick={() => removeInstructionGroup(groupName)} className="text-xs text-steel/40 hover:text-red-400 transition-colors">
+                            Remove section
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    {groupInstructions.length === 0 && groupName ? (
+                      <p className="text-xs text-steel/40 italic py-1.5 pl-1">No steps yet.</p>
+                    ) : (
+                      groupInstructions.map((instruction, groupIndex) => {
+                        const globalIndex = instructions.findIndex(instr => instr.id === instruction.id);
+                        const stepNumber = groupIndex + 1;
+                        return (
+                          <div key={instruction.id} className="flex items-start gap-3 py-1.5">
+                            <div className="flex-shrink-0 w-7 h-7 rounded-full bg-light-green/10 text-light-green text-xs font-bold flex items-center justify-center mt-2">
+                              {stepNumber}
+                            </div>
+                            <textarea
+                              placeholder="Describe this step"
+                              required
+                              rows={1}
+                              className="flex-1 min-w-0 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2 px-3 text-sm resize-none overflow-hidden"
                               value={instruction.text}
                               onChange={(e) => {
                                 updateInstruction(globalIndex, 'text', e.target.value);
@@ -2025,144 +1601,162 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
                               }}
                               onFocus={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
                             />
-                            <select
-                              value={instruction.groupName || ''}
-                              onChange={(e) => updateInstruction(globalIndex, 'groupName', e.target.value)}
-                              className="w-full md:w-1/2 border-gray-300  shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-2 px-3 text-sm"
-                            >
-                              <option value="">No group</option>
-                              {instructionGroups.filter(group => group !== '').map((group) => (
-                                <option key={group} value={group}>{group}</option>
-                              ))}
-                            </select>
+                            {instructions.length > 1 && (
+                              <button type="button" onClick={() => removeInstruction(globalIndex)} className="text-steel/30 hover:text-red-400 transition-colors flex-shrink-0 mt-2 p-1">
+                                <FiX className="w-4 h-4" />
+                              </button>
+                            )}
                           </div>
-                          {instructions.length > 1 && (
-                            <button 
-                              type="button"
-                              className="text-red-500 hover:text-red-700 mt-2 lg:mt-0"
-                              onClick={() => removeInstruction(globalIndex)}
-                            >
-                              <i className="fa-solid fa-times"></i>
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })}
+                        );
+                      })
+                    )}
                   </div>
-                  
-                  {groupInstructions.length === 0 && groupName && (
-                    <div className="text-gray-500 text-sm italic py-2">
-                      No instructions in this group yet.
-                    </div>
-                  )}
-                </div>
-              );
-            });
-          })()}
-          
-          <div className="flex gap-2 flex-wrap">
-            <button 
-              className="
-                inline-flex items-center justify-center gap-2
-                font-medium
-                transition-colors duration-200
-                disabled:opacity-50 disabled:cursor-not-allowed
-                border-2 border-light-green text-light-green hover:bg-light-green hover:text-white active:bg-light-green active:text-white
-                px-3 py-1.5 text-sm
-                w-full md:w-auto py-3
-              " 
-              type="button"
-              onClick={() => addInstruction()}
-            >+ Add Step</button>
-            
-            {instructionGroups.filter(group => group !== '').length > 0 && (
-              <select
-                onChange={(e) => {
-                  if (e.target.value) {
-                    addInstruction(e.target.value);
-                    e.target.value = '';
-                  }
+                );
+              });
+            })()}
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
+            <button type="button" onClick={() => addInstruction()} className="flex items-center gap-1.5 text-sm font-medium text-light-green hover:text-green transition-colors">
+              <FiPlus className="w-4 h-4" /> Add step
+            </button>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                placeholder="New section (e.g. For the sauce)"
+                value={newInstructionGroupName}
+                onChange={(e) => setNewInstructionGroupName(e.target.value)}
+                className="flex-1 text-sm border border-gray-200 rounded-lg py-1.5 px-3 focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') { e.preventDefault(); addInstructionGroup(); }
                 }}
-                className="border-gray-300  shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base"
-              >
-                <option value="">+ Add to group...</option>
-                {instructionGroups.filter(group => group !== '').map((group) => (
-                  <option key={group} value={group}>Add to {group}</option>
-                ))}
-              </select>
-            )}
-          </div>
-        </div>
-      </div>
-      <div className="md:bg-light-grey md:p-8 md:border md:border-gray-100 space-y-6">
-        <h2 className="text-2xl font-bold text-light-green mb-6">Categories</h2>
-        <p className="text-sm text-gray-600">Select categories that apply to your recipe</p>
-        
-        {isLoadingCategories ? (
-          <div className="py-4 flex justify-center">
-            <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-light-green"></div>
-          </div>
-        ) : (
-        <div className="flex flex-wrap gap-3">
-          {userCategories.map((category) => (
-            <div key={category} className="relative group">
-              <button 
-                type="button" 
-                className={`
-                  touch-action-manipulation
-                  px-3 py-1 rounded-full text-sm font-medium 
-                  transition-all duration-150 
-                  focus:outline-none 
-                  ${selectedCategories.includes(category) 
-                    ? 'bg-light-green text-white' 
-                    : 'bg-white text-steel hover:bg-gray-100'}
-                  active:shadow-inner active:scale-95
-                `} 
-                aria-pressed={selectedCategories.includes(category)}
-                onClick={() => handleCategoryChange(category)}
-              >{category}</button>
+              />
+              <button type="button" onClick={addInstructionGroup} className="text-sm font-medium text-light-green hover:text-green transition-colors px-2 py-1.5 whitespace-nowrap">
+                + Add section
+              </button>
             </div>
-          ))}
-        </div>
-        )}
-        <div className="flex gap-2 mb-4 flex-col md:flex-row">
-          <input 
-            placeholder="Add a new category..." 
-            className="flex-1 px-4 py-2 border bg-white border-gray-300 focus:outline-none focus:ring-2 focus:ring-light-green" 
-            type="text" 
-            value={newCategory}
-            onChange={(e) => setNewCategory(e.target.value)}
-          />
-          <button 
-            className="
-              inline-flex items-center justify-center gap-2
-              font-medium
-              transition-colors duration-200
-              disabled:opacity-50 disabled:cursor-not-allowed
-              border-2 border-light-green text-light-green hover:bg-light-green hover:text-white active:bg-light-green active:text-white
-              px-4 py-2 text-base
-            " 
-            type="button"
-            onClick={handleAddNewCategory}
-          >+ Add Category</button>
+          </div>
         </div>
       </div>
-      <div className="flex justify-center">
-        <button 
-          className="
-            inline-flex items-center justify-center gap-2
-            font-medium
-            transition-colors duration-200
-            disabled:opacity-50 disabled:cursor-not-allowed
-            bg-light-green text-white hover:bg-light-green-600 active:bg-light-green-700
-            px-4 py-2 text-base
-            w-full md:w-auto py-3 px-8
-          " 
-          type="submit"
-        >
-          {submitButtonText || (isEditMode ? 'Update Recipe' : 'Save Recipe')}
-        </button>
-      </div>
+
+      {/* More options */}
+      <details className="group bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <summary className="flex items-center justify-between px-6 py-4 cursor-pointer select-none list-none">
+          <span className="text-sm font-medium text-cast-iron">More options</span>
+          <span className="text-steel/40 text-xs">▼</span>
+        </summary>
+        <div className="px-6 pb-6 pt-5 border-t border-gray-100 space-y-6">
+
+          {/* Image */}
+          <div>
+            <label className="block text-sm font-medium text-cast-iron mb-3">Recipe image</label>
+            <input accept="image/*" className="hidden" type="file" ref={fileInputRef} onChange={handleFileChange} />
+            <div className="flex flex-wrap gap-2 mb-3">
+              <button type="button" onClick={handleUploadClick} disabled={isUploading} className="inline-flex items-center gap-2 border border-light-green text-light-green hover:bg-light-green hover:text-white rounded-xl px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50">
+                {isUploading ? (
+                  <><div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" /> Uploading...</>
+                ) : (
+                  <><i className="fa-solid fa-upload" /> Upload</>
+                )}
+              </button>
+              {isMobile && (
+                <>
+                  <input accept="image/*" capture="environment" className="hidden" type="file" ref={cameraCaptureRef} onChange={handleFileChange} />
+                  <button type="button" onClick={handleCameraCaptureClick} disabled={isUploading} className="inline-flex items-center gap-2 border border-light-green text-light-green hover:bg-light-green hover:text-white rounded-xl px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50">
+                    {isUploading ? (
+                      <><div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" /> Uploading...</>
+                    ) : (
+                      <><i className="fa-solid fa-camera" /> Take photo</>
+                    )}
+                  </button>
+                </>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <input
+                id="imageUrl"
+                placeholder="Or paste an image URL"
+                className="flex-1 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2.5 px-4 text-sm"
+                type="text"
+                value={imageUrl}
+                onChange={handleImageUrlChange}
+              />
+              <button type="button" onClick={validateAndPreviewImage} className="border border-gray-200 text-steel hover:border-light-green hover:text-light-green rounded-xl px-4 py-2.5 text-sm font-medium transition-colors whitespace-nowrap">
+                Preview
+              </button>
+            </div>
+            {isPreviewingImage && imageUrl && (
+              <div className="mt-3 w-full h-40 rounded-xl overflow-hidden border border-gray-100">
+                <img src={imageUrl} alt="Recipe preview" className="w-full h-full object-cover" />
+              </div>
+            )}
+            <p className="text-xs text-steel/50 mt-2">Max file size: 5MB.</p>
+          </div>
+
+          {/* Source URL */}
+          <div>
+            <label htmlFor="sourceUrl" className="block text-sm font-medium text-cast-iron mb-1.5">Original source</label>
+            <input
+              id="sourceUrl"
+              placeholder="https://example.com/recipe"
+              className="block w-full border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2.5 px-4 text-sm"
+              type="url"
+              {...register('sourceUrl')}
+            />
+          </div>
+
+          {/* Categories */}
+          <div>
+            <label className="block text-sm font-medium text-cast-iron mb-3">Categories</label>
+            {isLoadingCategories ? (
+              <div className="py-4 flex justify-center">
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-200 border-t-light-green" />
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2 mb-3">
+                {userCategories.map((category) => (
+                  <button
+                    key={category}
+                    type="button"
+                    onClick={() => handleCategoryChange(category)}
+                    aria-pressed={selectedCategories.includes(category)}
+                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-150 focus:outline-none active:scale-95 ${
+                      selectedCategories.includes(category)
+                        ? 'bg-light-green text-white'
+                        : 'bg-eggshell text-steel hover:bg-gray-100 border border-gray-100'
+                    }`}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="New category..."
+                className="flex-1 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2 px-3 text-sm"
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+              />
+              <button type="button" onClick={handleAddNewCategory} className="inline-flex items-center gap-1.5 border border-light-green text-light-green hover:bg-light-green hover:text-white rounded-xl px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap">
+                <FiPlus className="w-3.5 h-3.5" /> Add
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </details>
+
+      {/* Submit */}
+      <button
+        type="submit"
+        className="w-full bg-light-green text-white hover:bg-green rounded-xl py-3.5 text-base font-semibold transition-colors disabled:opacity-50"
+      >
+        {submitButtonText || (isEditMode ? 'Update recipe' : 'Save recipe')}
+      </button>
+
     </form>
   );
 } 

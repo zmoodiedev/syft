@@ -259,15 +259,15 @@ export default function BulkEntryForm() {
       </div>
 
       {/* Bulk Text Import Section */}
-      <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-        <h2 className="text-xl font-bold text-light-green mb-4">Bulk Text Import</h2>
+      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+        <h2 className="text-lg font-bold text-cast-iron mb-4">Bulk Text Import</h2>
         <p className="text-sm text-gray-600 mb-4">
           Copy and paste ingredients and instructions from any text source. Each line will be treated as a separate item.
         </p>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-cast-iron mb-1.5">
               Ingredients (one per line)
             </label>
             <textarea
@@ -279,12 +279,12 @@ export default function BulkEntryForm() {
 3 tbsp olive oil
 1/2 cup warm water`}
               rows={8}
-              className="w-full border-gray-300 rounded-md shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base resize-none"
+              className="w-full border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-3 px-4 text-sm resize-none"
             />
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-cast-iron mb-1.5">
               Instructions (one per line)
             </label>
             <textarea
@@ -296,7 +296,7 @@ export default function BulkEntryForm() {
 3. Knead dough for 5 minutes
 4. Let rest for 30 minutes`}
               rows={8}
-              className="w-full border-gray-300 rounded-md shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base resize-none"
+              className="w-full border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-3 px-4 text-sm resize-none"
             />
           </div>
         </div>
@@ -305,7 +305,7 @@ export default function BulkEntryForm() {
           <button
             type="button"
             onClick={handleBulkImport}
-            className="inline-flex items-center justify-center gap-2 font-medium transition-colors duration-200 bg-light-green text-white hover:bg-light-green-600 active:bg-light-green-700 px-6 py-3 text-base rounded-md"
+            className="inline-flex items-center justify-center gap-2 font-medium text-sm bg-light-green text-white hover:bg-green transition-colors rounded-xl px-5 py-2.5"
           >
             Import to Recipe
           </button>
@@ -315,7 +315,7 @@ export default function BulkEntryForm() {
               setBulkIngredients('');
               setBulkInstructions('');
             }}
-            className="inline-flex items-center justify-center gap-2 font-medium transition-colors duration-200 border-2 border-gray-300 text-gray-700 hover:bg-gray-50 active:bg-gray-100 px-6 py-3 text-base rounded-md"
+            className="inline-flex items-center justify-center gap-2 font-medium text-sm border border-gray-200 text-steel hover:border-gray-300 hover:text-cast-iron transition-colors rounded-xl px-5 py-2.5"
           >
             Clear
           </button>
@@ -323,18 +323,18 @@ export default function BulkEntryForm() {
       </div>
 
       {/* Recipe Details */}
-      <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-light-green">Recipe Details</h2>
+          <h2 className="text-lg font-bold text-cast-iron">Recipe Details</h2>
           
-          <div className="flex items-center bg-gray-100 p-1 rounded-lg">
+          <div className="flex items-center bg-gray-100 p-1 rounded-xl">
             <button
               type="button"
               onClick={() => setVisibility('public')}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm transition-colors ${
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm transition-colors ${
                 visibility === 'public' 
                   ? 'bg-white text-light-green shadow-sm' 
-                  : 'text-gray-600 hover:text-gray-900'
+                  : 'text-steel hover:text-cast-iron'
               }`}
             >
               <FiGlobe className="h-4 w-4" />
@@ -343,10 +343,10 @@ export default function BulkEntryForm() {
             <button
               type="button"
               onClick={() => setVisibility('friends')}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm transition-colors ${
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm transition-colors ${
                 visibility === 'friends' 
                   ? 'bg-white text-light-green shadow-sm' 
-                  : 'text-gray-600 hover:text-gray-900'
+                  : 'text-steel hover:text-cast-iron'
               }`}
             >
               <FiUsers className="h-4 w-4" />
@@ -355,10 +355,10 @@ export default function BulkEntryForm() {
             <button
               type="button"
               onClick={() => setVisibility('private')}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm transition-colors ${
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm transition-colors ${
                 visibility === 'private' 
                   ? 'bg-white text-light-green shadow-sm' 
-                  : 'text-gray-600 hover:text-gray-900'
+                  : 'text-steel hover:text-cast-iron'
               }`}
             >
               <FiLock className="h-4 w-4" />
@@ -369,10 +369,10 @@ export default function BulkEntryForm() {
 
         <div className="space-y-6">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">Recipe Name</label>
+            <label htmlFor="name" className="block text-sm font-medium text-cast-iron mb-1.5">Recipe Name</label>
             <input 
               id="name" 
-              className="mt-1 block w-full border-gray-300 rounded-md bg-white focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base" 
+              className="mt-1 block w-full border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-3 px-4 text-sm" 
               placeholder="Enter recipe name" 
               type="text" 
               {...register('name', { required: true })}
@@ -382,32 +382,32 @@ export default function BulkEntryForm() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label htmlFor="servings" className="block text-sm font-medium text-gray-700 mb-2">Servings</label>
+              <label htmlFor="servings" className="block text-sm font-medium text-cast-iron mb-1.5">Servings</label>
               <input 
                 id="servings" 
                 placeholder="e.g., 4" 
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base" 
+                className="mt-1 block w-full border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-3 px-4 text-sm" 
                 type="text" 
                 {...register('servings')}
               />
             </div>
             <div>
-              <label htmlFor="prepTime" className="block text-sm font-medium text-gray-700 mb-2">Prep Time</label>
+              <label htmlFor="prepTime" className="block text-sm font-medium text-cast-iron mb-1.5">Prep Time</label>
               <input 
                 id="prepTime" 
                 placeholder="e.g., 15 mins" 
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base" 
+                className="mt-1 block w-full border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-3 px-4 text-sm" 
                 type="text" 
                 {...register('prepTime', { required: true })}
               />
               {errors.prepTime && <p className="mt-1 text-sm text-red-500">Prep time is required</p>}
             </div>
             <div>
-              <label htmlFor="cookTime" className="block text-sm font-medium text-gray-700 mb-2">Cook Time</label>
+              <label htmlFor="cookTime" className="block text-sm font-medium text-cast-iron mb-1.5">Cook Time</label>
               <input 
                 id="cookTime" 
                 placeholder="e.g., 30 mins" 
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base" 
+                className="mt-1 block w-full border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-3 px-4 text-sm" 
                 type="text" 
                 {...register('cookTime', { required: true })}
               />
@@ -416,11 +416,11 @@ export default function BulkEntryForm() {
           </div>
 
           <div>
-            <label htmlFor="sourceUrl" className="block text-sm font-medium text-gray-700 mb-2">Original Source</label>
+            <label htmlFor="sourceUrl" className="block text-sm font-medium text-cast-iron mb-1.5">Original Source</label>
             <input 
               id="sourceUrl" 
               placeholder="https://example.com/recipe" 
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base" 
+              className="mt-1 block w-full border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-3 px-4 text-sm" 
               type="url" 
               {...register('sourceUrl')}
             />
@@ -428,12 +428,12 @@ export default function BulkEntryForm() {
 
           {/* Image URL */}
           <div>
-            <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700 mb-2">Recipe Image URL (Optional)</label>
+            <label htmlFor="imageUrl" className="block text-sm font-medium text-cast-iron mb-1.5">Recipe Image URL (Optional)</label>
             <div className="flex flex-col md:flex-row gap-4">
               <input 
                 id="imageUrl" 
                 placeholder="https://example.com/image.jpg" 
-                className="flex-1 border-gray-300 rounded-md shadow-sm bg-white focus:border-red-500 focus:ring-red-500 py-3 px-4 text-base" 
+                className="flex-1 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-3 px-4 text-sm" 
                 type="text" 
                 value={imageUrl}
                 onChange={handleImageUrlChange}
@@ -441,7 +441,7 @@ export default function BulkEntryForm() {
               <button 
                 type="button"
                 onClick={validateAndPreviewImage}
-                className="px-4 py-3 bg-light-green text-white rounded-md hover:bg-light-green-600 transition-colors"
+                className="px-4 py-3 bg-light-green text-white rounded-xl hover:bg-green transition-colors text-sm font-medium"
               >
                 Preview
               </button>
@@ -449,8 +449,8 @@ export default function BulkEntryForm() {
             
             {isPreviewingImage && imageUrl && (
               <div className="mt-4">
-                <h3 className="text-sm font-medium text-gray-700 mb-2">Image Preview</h3>
-                <div className="w-full h-48 overflow-hidden relative border border-gray-200 rounded-md">
+                <h3 className="text-sm font-medium text-cast-iron mb-1.5">Image Preview</h3>
+                <div className="w-full h-48 overflow-hidden relative border border-gray-200 rounded-xl">
                   <img src={imageUrl} alt="Recipe preview" className="w-full h-full object-cover" />
                 </div>
               </div>
@@ -461,16 +461,16 @@ export default function BulkEntryForm() {
 
       {/* Imported Items Preview */}
       {(ingredients.length > 0 || instructions.length > 0) && (
-        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-          <h2 className="text-xl font-bold text-light-green mb-4">Imported Recipe Content</h2>
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+          <h2 className="text-lg font-bold text-cast-iron mb-4">Imported Recipe Content</h2>
           
           {ingredients.length > 0 && (
             <div className="mb-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-3">Ingredients ({ingredients.length})</h3>
-              <div className="bg-gray-50 p-4 rounded-md max-h-40 overflow-y-auto">
+              <h3 className="text-base font-semibold text-cast-iron mb-3">Ingredients ({ingredients.length})</h3>
+              <div className="bg-eggshell p-4 rounded-xl max-h-40 overflow-y-auto">
                 <ul className="space-y-1">
                   {ingredients.map((ingredient) => (
-                    <li key={ingredient.id} className="text-sm text-gray-700">
+                    <li key={ingredient.id} className="text-sm text-steel">
                       {ingredient.amount} {ingredient.unit} {ingredient.item}
                     </li>
                   ))}
@@ -481,11 +481,11 @@ export default function BulkEntryForm() {
           
           {instructions.length > 0 && (
             <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-3">Instructions ({instructions.length})</h3>
-              <div className="bg-gray-50 p-4 rounded-md max-h-40 overflow-y-auto">
+              <h3 className="text-base font-semibold text-cast-iron mb-3">Instructions ({instructions.length})</h3>
+              <div className="bg-eggshell p-4 rounded-xl max-h-40 overflow-y-auto">
                 <ol className="space-y-1">
                   {instructions.map((instruction, index) => (
-                    <li key={instruction.id} className="text-sm text-gray-700">
+                    <li key={instruction.id} className="text-sm text-steel">
                       <span className="font-medium">{index + 1}.</span> {instruction.text}
                     </li>
                   ))}
@@ -500,7 +500,7 @@ export default function BulkEntryForm() {
       <div className="flex justify-center">
         <button 
           type="submit"
-          className="inline-flex items-center justify-center gap-2 font-medium transition-colors duration-200 bg-light-green text-white hover:bg-light-green-600 active:bg-light-green-700 px-8 py-3 text-base rounded-md"
+          className="inline-flex items-center justify-center gap-2 font-semibold text-sm bg-light-green text-white hover:bg-green transition-colors rounded-xl px-8 py-3"
         >
           Save Recipe
         </button>

@@ -29,9 +29,10 @@ export default function SignIn() {
             await signInWithGoogle();
             setError('');
             setTimeout(() => {
-                router.push('/');
+                router.push('/recipes');
             }, 100);
         } catch (error) {
+            if ((error as { code?: string }).code === 'auth/cancelled-popup-request') return;
             console.error('Google sign-in error:', error);
             if (error instanceof Error && error.message.includes('Access denied')) {
                 setError(error.message);
@@ -82,7 +83,7 @@ export default function SignIn() {
                     className="w-full py-3 rounded-xl"
                     variant="primary"
                 >
-                    Sign In
+                    Sign in
                 </Button>
             </form>
 

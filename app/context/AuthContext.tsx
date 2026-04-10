@@ -183,6 +183,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
             // No need to redirect here as onAuthStateChanged will handle it
         } catch (error) {
+            // Ignore cancelled-popup-request — this fires when a second popup
+            // attempt cancels the first (e.g. double-click). Not a real failure.
+            if (
+                error instanceof Error &&
+                (error as { code?: string }).code === 'auth/cancelled-popup-request'
+            ) {
+                return;
+            }
             console.error('Authentication error:', error);
             throw error;
         }

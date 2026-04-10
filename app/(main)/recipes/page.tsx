@@ -1,15 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { db } from '@/app/lib/firebase';
-import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
+import {
+    collection, query, where, orderBy, getDocs,
+    limit, startAfter, QueryDocumentSnapshot, DocumentData
+} from 'firebase/firestore';
 import RecipeCard from '@/app/components/RecipeCard';
 import RecipeListItem from '@/app/components/RecipeListItem';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import Button from '@/app/components/Button';
 import { FiGrid, FiList } from 'react-icons/fi';
 import { DEMO_RECIPES } from '@/app/lib/demoData';
+
+const PAGE_SIZE = 12;
 
 interface Recipe {
     id: string;
@@ -28,26 +33,22 @@ export default function RecipesPage() {
     const { user, isDemo } = useAuth();
     const [recipes, setRecipes] = useState<Recipe[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [hasMore, setHasMore] = useState(false);
+    const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const [availableCategories, setAvailableCategories] = useState<string[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [viewMode, setViewMode] = useState<'cards' | 'list'>('cards');
-
-    // Add effect to handle styles update after category toggle
-    useEffect(() => {
-        // This empty dependency effect forces a re-render when selectedCategories changes
-        // It helps ensure the UI updates correctly, especially on mobile
-    }, [selectedCategories]);
+    const loaderRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (isDemo) {
-            // In demo mode, use hardcoded data
             const demoData = DEMO_RECIPES.map(r => ({
                 ...r,
                 createdAt: new Date(),
             })) as Recipe[];
             setRecipes(demoData);
-
             const usedCategories = new Set<string>();
             demoData.forEach(recipe => {
                 if (recipe.categories && Array.isArray(recipe.categories)) {
@@ -61,18 +62,14 @@ export default function RecipesPage() {
 
         const fetchRecipes = async () => {
             if (!user) return;
-
             try {
                 const recipesRef = collection(db, 'recipes');
-
-                // Create query to get only the user's own recipes
-                // This ensures private recipes are only visible to their owner
                 const q = query(
                     recipesRef,
                     where('userId', '==', user.uid),
-                    orderBy('__name__', 'desc')
+                    orderBy('__name__', 'desc'),
+                    limit(PAGE_SIZE)
                 );
-
                 const querySnapshot = await getDocs(q);
                 const recipesData = querySnapshot.docs.map(doc => ({
                     id: doc.id,
@@ -81,18 +78,15 @@ export default function RecipesPage() {
                 })) as Recipe[];
 
                 setRecipes(recipesData);
+                setLastDoc(querySnapshot.docs[querySnapshot.docs.length - 1] ?? null);
+                setHasMore(querySnapshot.docs.length === PAGE_SIZE);
 
-                // Extract unique categories from user's recipes
                 const usedCategories = new Set<string>();
                 recipesData.forEach(recipe => {
                     if (recipe.categories && Array.isArray(recipe.categories)) {
-                        recipe.categories.forEach(category => {
-                            // Include all categories that are actually used in recipes
-                            usedCategories.add(category);
-                        });
+                        recipe.categories.forEach(category => usedCategories.add(category));
                     }
                 });
-
                 setAvailableCategories(Array.from(usedCategories).sort());
             } catch (error) {
                 console.error('Error fetching recipes:', error);
@@ -104,203 +98,254 @@ export default function RecipesPage() {
         fetchRecipes();
     }, [user, isDemo]);
 
+    const loadMore = useCallback(async () => {
+        if (!user || !lastDoc || loadingMore || !hasMore) return;
+        setLoadingMore(true);
+        try {
+            const recipesRef = collection(db, 'recipes');
+            const q = query(
+                recipesRef,
+                where('userId', '==', user.uid),
+                orderBy('__name__', 'desc'),
+                startAfter(lastDoc),
+                limit(PAGE_SIZE)
+            );
+            const querySnapshot = await getDocs(q);
+            const newRecipes = querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                createdAt: doc.data().createdAt?.toDate()
+            })) as Recipe[];
+
+            setRecipes(prev => [...prev, ...newRecipes]);
+            setLastDoc(querySnapshot.docs[querySnapshot.docs.length - 1] ?? null);
+            setHasMore(querySnapshot.docs.length === PAGE_SIZE);
+
+            setAvailableCategories(prev => {
+                const updated = new Set(prev);
+                newRecipes.forEach(recipe => {
+                    if (recipe.categories && Array.isArray(recipe.categories)) {
+                        recipe.categories.forEach(cat => updated.add(cat));
+                    }
+                });
+                return Array.from(updated).sort();
+            });
+        } catch (error) {
+            console.error('Error loading more recipes:', error);
+        } finally {
+            setLoadingMore(false);
+        }
+    }, [user, lastDoc, loadingMore, hasMore]);
+
+    // Infinite scroll
+    useEffect(() => {
+        const el = loaderRef.current;
+        if (!el) return;
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) loadMore();
+            },
+            { threshold: 0.1 }
+        );
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, [loadMore]);
+
     const handleCategoryToggle = (category: string): void => {
-        setSelectedCategories(prev => 
+        setSelectedCategories(prev =>
             prev.includes(category)
                 ? prev.filter(c => c !== category)
                 : [...prev, category]
         );
     };
-    
+
     const filteredRecipes = recipes.filter(recipe => {
-        // First apply category filter
-        const matchesCategory = selectedCategories.length === 0 || 
-            selectedCategories.some(category => 
+        const matchesCategory = selectedCategories.length === 0 ||
+            selectedCategories.some(category =>
                 recipe.categories && recipe.categories.includes(category)
             );
-
-        // Then apply search filter
         const searchLower = searchQuery.toLowerCase();
-        const matchesSearch = searchQuery === '' || 
+        const matchesSearch = searchQuery === '' ||
             recipe.name.toLowerCase().includes(searchLower) ||
-            (recipe.categories && recipe.categories.some(cat => 
+            (recipe.categories && recipe.categories.some(cat =>
                 cat.toLowerCase().includes(searchLower)
             ));
-
         return matchesCategory && matchesSearch;
     });
 
-    // Sort recipes based on view mode
-    const sortedRecipes = viewMode === 'list' 
+    const sortedRecipes = viewMode === 'list'
         ? [...filteredRecipes].sort((a, b) => a.name.localeCompare(b.name))
         : filteredRecipes;
 
-    // Group recipes by first letter for list view
     const groupedRecipes = viewMode === 'list' ? sortedRecipes.reduce((groups, recipe) => {
         const firstLetter = recipe.name.charAt(0).toUpperCase();
-        if (!groups[firstLetter]) {
-            groups[firstLetter] = [];
-        }
+        if (!groups[firstLetter]) groups[firstLetter] = [];
         groups[firstLetter].push(recipe);
         return groups;
     }, {} as Record<string, Recipe[]>) : {};
 
     return (
         <ProtectedRoute>
-            <div className="container mx-auto px-4 py-12 md:py-20">
-                <div className="flex flex-col md:flex-row justify-between md:items-center mb-8 flex-wrap lg:flex-nowrap">
-                    <div className="flex flex-row gap-4 w-full mb-6 lg:mb-0 flex-wrap md:nowrap justify-between md:justify-start">
-                        <h1 className="text-4xl font-bold">{isDemo ? 'Demo Recipes' : 'My Recipes'}</h1>
-                        <div className="flex items-center gap-2">
-                            {/* View Toggle */}
-                            <div className="flex items-center bg-gray-100 p-1 rounded-lg mr-2">
-                                <button
-                                    onClick={() => setViewMode('cards')}
-                                    className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm transition-colors ${
-                                        viewMode === 'cards'
-                                            ? 'bg-white text-light-green shadow-sm'
-                                            : 'text-gray-600 hover:text-gray-900'
-                                    }`}
-                                    title="Card view"
-                                >
-                                    <FiGrid className="h-4 w-4" />
-                                    <span className="hidden sm:inline">Cards</span>
-                                </button>
-                                <button
-                                    onClick={() => setViewMode('list')}
-                                    className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm transition-colors ${
-                                        viewMode === 'list'
-                                            ? 'bg-white text-light-green shadow-sm'
-                                            : 'text-gray-600 hover:text-gray-900'
-                                    }`}
-                                    title="List view"
-                                >
-                                    <FiList className="h-4 w-4" />
-                                    <span className="hidden sm:inline">List</span>
-                                </button>
-                            </div>
-                            {!isDemo && (
-                                <Button
-                                    href="/add-recipe"
-                                    className="w-auto"
-                                >
-                                    Add New Recipe
-                                </Button>
+            <div className="min-h-screen bg-eggshell">
+                <div className="container mx-auto px-6 py-10 md:py-14">
+
+                    {/* Header */}
+                    <div className="flex items-center justify-between gap-4 mb-6">
+                        <div className="flex items-center gap-3">
+                            <h1 className="text-2xl font-bold text-cast-iron">
+                                {isDemo ? 'Demo Recipes' : 'My Recipes'}
+                            </h1>
+                            {!loading && (
+                                <span className="text-sm font-medium text-steel/50 tabular-nums">
+                                    {filteredRecipes.length}
+                                </span>
                             )}
                         </div>
+                        {!isDemo && (
+                            <Button href="/add-recipe">Add recipe</Button>
+                        )}
                     </div>
-                    {/* Search Bar */}
-                    <div className="relative w-full">
-                        <input
-                            type="text"
-                            placeholder="Search recipes..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-light-green focus:border-light-green"
-                        />
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-                            </svg>
+
+                    {/* Search + view toggle */}
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="relative flex-1">
+                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <svg className="h-4 w-4 text-steel/50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                                </svg>
+                            </div>
+                            <input
+                                type="text"
+                                placeholder="Search recipes..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-11 pr-4 py-2.5 border border-gray-200 rounded-xl text-cast-iron text-sm placeholder:text-steel/40 focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors bg-white"
+                            />
+                        </div>
+                        <div className="flex items-center bg-white border border-gray-200 rounded-xl p-1 flex-shrink-0">
+                            <button
+                                onClick={() => setViewMode('cards')}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                                    viewMode === 'cards' ? 'bg-cast-iron text-white' : 'text-steel hover:text-cast-iron'
+                                }`}
+                                title="Card view"
+                            >
+                                <FiGrid className="h-4 w-4" />
+                                <span className="hidden sm:inline">Cards</span>
+                            </button>
+                            <button
+                                onClick={() => setViewMode('list')}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                                    viewMode === 'list' ? 'bg-cast-iron text-white' : 'text-steel hover:text-cast-iron'
+                                }`}
+                                title="List view"
+                            >
+                                <FiList className="h-4 w-4" />
+                                <span className="hidden sm:inline">List</span>
+                            </button>
                         </div>
                     </div>
-                </div>
 
-
-                {/* Category Filter */}
-                {availableCategories.length > 0 && (
-                    <div className="mb-8">
-                        <h2 className="text-lg font-semibold mb-4">Filter by Category</h2>
-                        <div className="flex flex-wrap gap-3 p-4 bg-eggshell">
+                    {/* Category filters */}
+                    {availableCategories.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-6">
                             {availableCategories.map((category: string) => (
                                 <button
                                     key={category}
                                     onClick={() => handleCategoryToggle(category)}
-                                    // Improve touch behavior
-                                    className={`
-                                        touch-action-manipulation
-                                        px-3 py-1 rounded-full text-sm font-medium 
-                                        transition-all duration-150 
-                                        focus:outline-none 
-                                        ${selectedCategories.includes(category)
-                                            ? 'bg-light-green text-white hover:bg-light-green hover:text-white' 
-                                            : 'bg-white text-steel hover:bg-gray-100'
-                                        }
-                                        active:shadow-inner active:scale-95
-                                    `}
+                                    className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                                        selectedCategories.includes(category)
+                                            ? 'bg-light-green text-white'
+                                            : 'bg-white text-steel border border-gray-200 hover:border-light-green hover:text-light-green'
+                                    }`}
                                     aria-pressed={selectedCategories.includes(category)}
                                 >
                                     {category}
                                 </button>
                             ))}
+                            {selectedCategories.length > 0 && (
+                                <button
+                                    onClick={() => setSelectedCategories([])}
+                                    className="px-3 py-1 rounded-full text-xs font-medium text-steel/60 hover:text-cast-iron transition-colors"
+                                >
+                                    Clear
+                                </button>
+                            )}
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {loading ? (
-                    <div className="flex justify-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
-                    </div>
-                ) : sortedRecipes.length === 0 ? (
-                    <div className="text-center py-12">
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                            {searchQuery
-                                ? 'No recipes match your search'
-                                : selectedCategories.length > 0
-                                    ? 'No recipes match the selected categories'
-                                    : 'No recipes yet'}
-                        </h3>
-                        <p className="text-gray-600 mb-4">
-                            {searchQuery
-                                ? 'Try adjusting your search terms'
-                                : selectedCategories.length > 0
-                                    ? 'Try selecting different categories or clear the filters'
-                                    : 'Start by adding your first recipe!'}
-                        </p>
-                    </div>
-                ) : (
-                    <>
-                        {viewMode === 'cards' ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {sortedRecipes.map((recipe, index) => (
-                                    <RecipeCard 
-                                        key={recipe.id} 
-                                        recipe={recipe} 
-                                        priority={index < 3}
-                                    />
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="space-y-0 w-full pt-4">
-                                {Object.entries(groupedRecipes)
-                                    .sort(([a], [b]) => a.localeCompare(b))
-                                    .map(([letter, recipes]) => (
-                                        <div key={letter}>
-                                            {/* Letter section header */}
-                                            <div className="relative mb-[-4px] mt-6 first:mt-0 w-full" style={{ zIndex: 1000 }}>
-                                                <div className="bg-gray-100 rounded-t-lg px-4 py-2 border border-gray-200 shadow-sm">
-                                                    <h3 className="text-lg font-bold text-gray-700">
-                                                        {letter}
-                                                    </h3>
+                    {/* Content */}
+                    {loading ? (
+                        <div className="flex justify-center py-24">
+                            <div className="animate-spin rounded-full h-10 w-10 border-2 border-gray-200 border-t-light-green" />
+                        </div>
+                    ) : sortedRecipes.length === 0 ? (
+                        <div className="text-center py-24">
+                            <span className="text-5xl block mb-4">🍽️</span>
+                            <h3 className="text-xl font-bold text-cast-iron mb-2">
+                                {searchQuery
+                                    ? 'No recipes match your search'
+                                    : selectedCategories.length > 0
+                                        ? 'No recipes in those categories'
+                                        : 'No recipes yet'}
+                            </h3>
+                            <p className="text-steel text-sm mb-6">
+                                {searchQuery
+                                    ? 'Try different search terms.'
+                                    : selectedCategories.length > 0
+                                        ? 'Try different categories or clear the filter.'
+                                        : 'Add your first recipe to get started.'}
+                            </p>
+                            {!searchQuery && selectedCategories.length === 0 && !isDemo && (
+                                <Button href="/add-recipe">Add your first recipe</Button>
+                            )}
+                        </div>
+                    ) : (
+                        <>
+                            {viewMode === 'cards' ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                                    {sortedRecipes.map((recipe, index) => (
+                                        <RecipeCard
+                                            key={recipe.id}
+                                            recipe={recipe}
+                                            priority={index < 3}
+                                        />
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="space-y-6">
+                                    {Object.entries(groupedRecipes)
+                                        .sort(([a], [b]) => a.localeCompare(b))
+                                        .map(([letter, letterRecipes]) => (
+                                            <div key={letter}>
+                                                <p className="text-xs font-semibold text-steel/50 uppercase tracking-widest mb-2 px-1">
+                                                    {letter}
+                                                </p>
+                                                <div className="space-y-2">
+                                                    {letterRecipes.map((recipe, index) => (
+                                                        <RecipeListItem
+                                                            key={recipe.id}
+                                                            recipe={recipe}
+                                                            index={index}
+                                                        />
+                                                    ))}
                                                 </div>
                                             </div>
-                                            
-                                            {/* Recipes in this letter group */}
-                                            <div className="space-y-0  mb-[-4px]">
-                                                {recipes.map((recipe, index) => (
-                                                    <RecipeListItem 
-                                                        key={recipe.id} 
-                                                        recipe={recipe}
-                                                        index={index}
-                                                    />
-                                                ))}
-                                            </div>
-                                        </div>
-                                    ))}
-                            </div>
-                        )}
-                    </>
-                )}
+                                        ))}
+                                </div>
+                            )}
+
+                            {/* Infinite scroll sentinel */}
+                            {hasMore && (
+                                <div ref={loaderRef} className="py-8 flex justify-center">
+                                    {loadingMore && (
+                                        <div className="animate-spin rounded-full h-7 w-7 border-2 border-gray-200 border-t-light-green" />
+                                    )}
+                                </div>
+                            )}
+                        </>
+                    )}
+                </div>
             </div>
         </ProtectedRoute>
     );

@@ -1,10 +1,16 @@
+'use client';
+
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { FiChevronRight, FiClock } from 'react-icons/fi';
 
 interface Recipe {
   id: string;
   name: string;
   imageUrl?: string;
+  prepTime?: string;
+  cookTime?: string;
+  categories?: string[];
 }
 
 interface RecipeListItemProps {
@@ -13,42 +19,43 @@ interface RecipeListItemProps {
 }
 
 export default function RecipeListItem({ recipe, index }: RecipeListItemProps) {
+  const totalTime = recipe.prepTime || recipe.cookTime
+    ? [recipe.prepTime, recipe.cookTime].filter(Boolean).join(' + ')
+    : null;
+  const displayCategories = [...new Set(recipe.categories ?? [])].slice(0, 2);
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2, delay: index * 0.05 }}
-      className="group relative"
-      style={{ 
-        zIndex: 1000 + index,
-        marginTop: index === 0 ? '0' : '-8px'
-      }}
+      transition={{ duration: 0.2, delay: Math.min(index, 12) * 0.03 }}
     >
-      <Link href={`/recipes/${recipe.id}`} className="block">
-        <motion.div
-          whileHover={{ y: -4 }}
-          transition={{ duration: 0.1, ease: "easeOut" }}
-          className="relative bg-white rounded-t-lg shadow-md border border-gray-200 hover:shadow-lg transition-all duration-200 p-4 cursor-pointer w-full"
-          style={{
-            background: recipe.imageUrl 
-              ? `linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.9) 100%), url(${recipe.imageUrl})`
-              : 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-
-          }}
-        >
-          {/* Recipe card top edge effect */}
-          <div className="absolute top-0 left-0 right-0 h-1 rounded-t-lg"></div>
-          
-          
-          <div className="text-left">
-            <h3 className="text-lg font-semibold text-gray-900 group-hover:text-light-green transition-colors duration-200">
-              {recipe.name}
-            </h3>
-          </div>
-        </motion.div>
+      <Link
+        href={`/recipes/${recipe.id}`}
+        className="flex items-center justify-between bg-white border border-gray-100 rounded-2xl px-5 py-3.5 shadow-sm hover:shadow-md hover:border-gray-200 transition-all duration-200 group"
+      >
+        <div className="min-w-0 flex-1">
+          <h3 className="text-base font-bold text-cast-iron group-hover:text-light-green transition-colors duration-200 truncate">
+            {recipe.name}
+          </h3>
+          {(totalTime || displayCategories.length > 0) && (
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              {totalTime && (
+                <span className="flex items-center gap-1 text-xs text-steel/50">
+                  <FiClock className="w-3 h-3" />
+                  {totalTime}
+                </span>
+              )}
+              {displayCategories.map(cat => (
+                <span key={cat} className="text-[10px] font-medium bg-eggshell text-steel/60 border border-gray-100 rounded-full px-2 py-0.5">
+                  {cat}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+        <FiChevronRight className="h-4 w-4 text-steel/30 group-hover:text-light-green flex-shrink-0 ml-4 transition-colors duration-200" />
       </Link>
     </motion.div>
   );
-} 
+}

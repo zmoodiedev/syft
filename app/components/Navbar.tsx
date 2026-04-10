@@ -138,7 +138,7 @@ export default function Navbar() {
                                         className="py-3 border-b border-gray-100 flex items-center text-left"
                                     >
                                         <i className="fa-solid fa-user-plus mr-3 w-6 text-center"></i>
-                                        Sign Up
+                                        Sign up
                                     </button>
                                     <button
                                         onClick={() => {
@@ -148,7 +148,7 @@ export default function Navbar() {
                                         className="py-3 border-b border-gray-100 flex items-center text-left"
                                     >
                                         <i className="fa-solid fa-right-to-bracket mr-3 w-6 text-center"></i>
-                                        Log In
+                                        Sign in
                                     </button>
                                 </div>
                             </div>
@@ -163,14 +163,14 @@ export default function Navbar() {
                         className="text-sm"
                         onClick={() => exitDemoMode()}
                     >
-                        Log In
+                        Sign in
                     </Button>
                     <Button
                         variant="primary"
                         className="text-sm"
                         onClick={() => exitDemoMode('/signup')}
                     >
-                        Sign Up
+                        Sign up
                     </Button>
                 </div>
             </nav>
@@ -316,7 +316,7 @@ export default function Navbar() {
                                             data-extension-ignore="true"
                                         >
                                             <i className="fa-solid fa-right-from-bracket mr-3 w-6 text-center"></i>
-                                            Log Out
+                                            Sign out
                                         </button>
                                     </div>
                                 </div>
@@ -425,7 +425,7 @@ export default function Navbar() {
                                             data-extension-ignore="true"
                                         >
                                             <i className="fa-solid fa-right-from-bracket"></i>
-                                            Log Out
+                                            Sign out
                                         </button>
                                     </div>
                                 </motion.div>
@@ -452,14 +452,14 @@ export default function Navbar() {
                         href="/login"
                         className="text-sm"
                     >
-                        Log In
+                        Sign in
                     </Button>
                     <Button
                         variant="primary"
                         href="/signup"
                         className="text-sm"
                     >
-                        Sign Up
+                        Sign up
                     </Button>
                 </div>
             )}

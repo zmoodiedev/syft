@@ -30,7 +30,7 @@ export default function Features() {
   return (
     <section className="bg-cast-iron pt-20 lg:pt-32 relative">
 
-      <div className="container mx-auto px-6 pb-24 lg:pb-36 relative z-10">
+      <div className="container mx-auto px-6 pb-24 lg:pb-36 max-w-6xl relative z-10">
         {/* Section header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

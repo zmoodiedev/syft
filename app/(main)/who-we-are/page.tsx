@@ -25,7 +25,7 @@ export default function WhoWeAre() {
     <div className="min-h-screen bg-eggshell">
 
       {/* Hero */}
-      <div className="container mx-auto px-6 pt-20 pb-16 md:pt-28 md:pb-24 max-w-4xl">
+      <div className="container mx-auto px-6 pt-20 pb-16 md:pt-28 md:pb-24 max-w-6xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -56,7 +56,7 @@ export default function WhoWeAre() {
           >
             <div className="md:col-span-2">
               <p className="text-3xl md:text-4xl font-bold text-cast-iron leading-snug">
-                You know the drill.
+                You know<br/>the drill.
               </p>
             </div>
             <div className="md:col-span-3 space-y-5 text-steel leading-relaxed">
@@ -80,7 +80,7 @@ export default function WhoWeAre() {
 
       {/* Values */}
       <div className="bg-cast-iron">
-        <div className="container mx-auto px-6 py-16 md:py-20 max-w-5xl">
+        <div className="container mx-auto px-6 py-16 md:py-20 max-w-6xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
