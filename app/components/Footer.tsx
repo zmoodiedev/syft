@@ -1,5 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
+import Logo from "./Logo";
 
 export default function Footer() {
   return (
@@ -25,14 +25,7 @@ export default function Footer() {
             {/* Brand */}
             <div className="sm:col-span-2 lg:col-span-1">
               <div className="mb-4">
-                <Image
-                  src="/logo_syft.svg"
-                  alt="Syft logo"
-                  width={0}
-                  height={0}
-                  priority
-                  className="h-[40px] w-auto brightness-0 invert"
-                />
+                <Logo className="h-[36px] w-auto text-white" />
               </div>
               <p className="text-white/45 text-sm leading-relaxed">
                 Save, organize, and share your favorite recipes — no ads, no distractions, just the food you love.

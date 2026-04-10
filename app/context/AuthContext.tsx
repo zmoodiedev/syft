@@ -142,6 +142,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 } else if (pathname !== '/login' &&
                     pathname !== '/' &&
                     pathname !== '/pricing' &&
+                    pathname !== '/who-we-are' &&
+                    pathname !== '/contact' &&
+                    pathname !== '/terms-of-service' &&
+                    pathname !== '/privacy-policy' &&
+                    pathname !== '/cookie-preferences' &&
+                    pathname !== '/roadmap' &&
                     !pathname.includes('/signup') &&
                     !pathname.includes('/recipes/') &&
                     !pathname.includes('/profile/')) {

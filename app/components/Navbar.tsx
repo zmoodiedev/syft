@@ -434,23 +434,34 @@ export default function Navbar() {
                     </div>
                 </>
             ) : (
-                <div className="flex items-center">
-                    <Button 
+                <div className="flex items-center gap-3">
+                    <ul className="hidden md:flex items-center gap-6 mr-2 text-sm font-medium">
+                        <li>
+                            <Link href="/pricing" className={`transition-colors ${pathname === '/pricing' ? 'text-cast-iron' : 'text-cast-iron/60 hover:text-cast-iron'}`}>
+                                Pricing
+                            </Link>
+                        </li>
+                        <li>
+                            <Link href="/who-we-are" className={`transition-colors ${pathname === '/who-we-are' ? 'text-cast-iron' : 'text-cast-iron/60 hover:text-cast-iron'}`}>
+                                About
+                            </Link>
+                        </li>
+                    </ul>
+                    <Button
                         variant="ghost"
                         href="/login"
                         className="text-sm"
                     >
                         Log In
                     </Button>
-
-                {/* <Button
-                    variant="secondary"
-                    href="/signup"
-                    className="text-sm"
-                >
-                    Sign Up
-                </Button> */}
-            </div>
+                    <Button
+                        variant="primary"
+                        href="/signup"
+                        className="text-sm"
+                    >
+                        Sign Up
+                    </Button>
+                </div>
             )}
         </nav>
     );
