@@ -8,7 +8,7 @@ export default function Footer() {
       <div className="bg-eggshell w-full">
         <svg
           viewBox="0 0 1440 80"
-          fill="#1C1917"
+          fill="#2C1A0E"
           xmlns="http://www.w3.org/2000/svg"
           preserveAspectRatio="none"
           className="w-full block"

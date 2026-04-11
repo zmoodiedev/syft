@@ -6,28 +6,28 @@ import Link from "next/link";
 
 const faqData = [
   {
-    question: "What is Syft and how does it work?",
-    answer: "Syft is a smart recipe management app that helps you organize, save, and share your favorite recipes. Add recipes from websites by pasting a URL, create your own from scratch, and organize them into categories for easy access."
+    question: "How do I save a recipe from a website?",
+    answer: "Copy the URL from any recipe website and paste it into Syft. As long as it isn't blocked, we pull the ingredients, steps, and details automatically. No copying and pasting, no losing recipes when a site goes down or moves behind a paywall."
   },
   {
-    question: "Is Syft free to use?",
-    answer: "Yes! Syft offers a free tier that includes core recipe management features. We also offer a Pro plan with unlimited recipes, advanced sharing, and the friends network."
+    question: "How is this different from just bookmarking a recipe?",
+    answer: "Bookmarks break when sites change URLs, go down, or get paywalled. Syft saves the actual recipe content. It's yours, it's searchable, it's organized, and there are no ads when you open it."
   },
   {
-    question: "Can I import recipes from other websites?",
-    answer: "Absolutely. Syft automatically extracts recipe data from most popular cooking websites — just paste the URL and we handle the rest. No ads, no blog posts, just the recipe."
+    question: "What happens when I share a recipe with a friend?",
+    answer: "It lands straight in their Syft collection. They get a notification, and the recipe is theirs to keep, cook, and organize. No links, no copy-pasting, no 'did you get my message?'"
   },
   {
-    question: "How do I share recipes with friends?",
-    answer: "Add friends by searching their username, then share recipes directly with them."
+    question: "What's the difference between Free and Pro?",
+    answer: "Free gives you up to 15 recipes with full save and organize features. Pro removes that limit, unlocks the friends network, and lets you share recipes directly to other users' collections. $3.49/month or $24.99/year."
   },
   {
-    question: "Can I organize my recipes into categories?",
-    answer: "Yes — create custom categories and tag recipes by cuisine, meal type, dietary restriction, or whatever system works for you. Filtering is built right into your recipe library."
+    question: "Can I add my own recipes, not just ones from websites?",
+    answer: "Yes. You can enter recipes from scratch — your own originals, family recipes, or anything from a physical cookbook. Title, ingredients, steps, notes. It's all yours."
   },
   {
-    question: "Is my recipe data secure and private?",
-    answer: "Your privacy is our priority. All recipes are securely stored and only visible to you unless you explicitly share them. We never share your personal data with third parties."
+    question: "Does Syft work on mobile?",
+    answer: "Yes. Syft is a web app that works in any browser on any device. A dedicated mobile app is on the roadmap."
   }
 ];
 

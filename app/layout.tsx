@@ -1,20 +1,20 @@
-import { Plus_Jakarta_Sans, Baloo_2 } from "next/font/google";
+import { Nunito, Fraunces } from "next/font/google";
 import "@/app/globals.css";
 import Script from "next/script";
 import { Metadata, Viewport } from 'next';
 import ClientLayout from './components/ClientLayout';
 import { FontAwesomeScript } from '@/app/components/FontAwesome';
 
-const jakarta = Plus_Jakarta_Sans({
+const jakarta = Nunito({
   variable: "--font-jakarta",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
 });
 
-const baloo_2 = Baloo_2({
+const baloo_2 = Fraunces({
   variable: "--font-baloo_2",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  weight: ["400", "500", "600", "700", "800", "900"],
 });
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_ID || '';

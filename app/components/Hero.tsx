@@ -5,21 +5,42 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '../context/AuthContext';
 
-const marqueeItems = [
-  '🍝 Pasta', '🥗 Salads', '🥘 Stews', '🍰 Desserts',
-  '🌮 Tacos', '🍜 Noodles', '🥩 Mains', '🥞 Breakfast',
-  '🍕 Pizza', '🧁 Baking', '🫕 Soups', '🥙 Wraps',
-];
-
 export default function Hero() {
   const { enterDemoMode } = useAuth();
 
   return (
     <section className="relative overflow-hidden bg-cream min-h-[88vh] flex flex-col">
 
-      {/* Background depth blobs */}
-      <div className="absolute top-1/2 right-[2%] -translate-y-1/2 w-[640px] h-[640px] rounded-full bg-tomato/10 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[15%] left-[0%] w-[400px] h-[400px] rounded-full bg-light-green/8 blur-[100px] pointer-events-none" />
+      {/* SVG filter definitions — torn paper edge effect for buttons */}
+      <svg className="absolute" style={{ width: 0, height: 0, overflow: 'hidden' }} aria-hidden="true">
+        <defs>
+          {/* Primary button tear — seed 5 */}
+          <filter id="torn-a" x="-12%" y="-20%" width="124%" height="140%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.038" numOctaves="4" seed="5" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="9" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+          {/* Secondary button tear — seed 14, slightly different character */}
+          <filter id="torn-b" x="-12%" y="-20%" width="124%" height="140%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.038" numOctaves="4" seed="14" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="9" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+        </defs>
+      </svg>
+
+      {/* Kitchen background image */}
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="/images/branding/kitchen.png"
+          alt=""
+          fill
+          className="object-cover object-right-bottom opacity-40"
+          priority
+        />
+        {/* Left-to-right fade: protects text column, lets Ollie breathe on the right */}
+        <div className="absolute inset-0 bg-gradient-to-r from-cream via-cream/90 to-cream/10" />
+        {/* Subtle top fade so the nav blends in */}
+        <div className="absolute inset-0 bg-gradient-to-b from-cream/60 to-transparent" style={{ bottom: '70%' }} />
+      </div>
 
       {/* Main content */}
       <div className="flex-1 flex items-center px-6 pt-28 pb-16 relative z-10">
@@ -42,10 +63,10 @@ export default function Hero() {
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.05] tracking-tight text-cast-iron mb-6"
+              className="text-5xl md:text-6xl lg:text-6xl font-bold leading-[1.05] tracking-tight text-cast-iron mb-6"
             >
               Find it. Save it.<br />
-              <span className="text-light-green">Cook it.</span> Share it.
+              <span className="text-tomato">Cook it.</span> Share it.
             </motion.h1>
 
             <motion.p
@@ -61,63 +82,65 @@ export default function Hero() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.45 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
+              className="flex flex-col sm:flex-row gap-6 justify-center lg:justify-start"
             >
-              <Link href="/login">
-                <motion.button
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="bg-tomato text-white px-8 py-4 rounded-2xl text-lg font-bold shadow-lg hover:shadow-xl transition-shadow w-full sm:w-auto"
+              {/* Primary — Start for free */}
+              <Link href="/login" className="relative flex sm:inline-flex w-full sm:w-auto group">
+                {/* Backing layer — translateY in Tailwind so group-hover can animate it */}
+                <div
+                  className="absolute inset-0 pointer-events-none skew-y-[-2deg] translate-x-[6px] translate-y-[5px] group-hover:translate-y-[-3px] transition-transform duration-200 ease-out"
+                  style={{ filter: 'url(#torn-b)', opacity: 0.38 }}
+                  aria-hidden="true"
                 >
+                  <div className="bg-tomato w-full h-full rounded-2xl" />
+                </div>
+                {/* Main background */}
+                <div
+                  className="absolute inset-0 pointer-events-none skew-y-[-2deg]"
+                  style={{ filter: 'url(#torn-a) drop-shadow(0 6px 18px rgba(212,136,58,0.4))' }}
+                  aria-hidden="true"
+                >
+                  <div className="bg-tomato w-full h-full rounded-2xl" />
+                </div>
+                {/* Text — crisp, no filter, no skew */}
+                <span className="relative z-10 text-white px-9 py-4 text-lg font-bold group-hover:opacity-90 transition-opacity w-full text-center sm:text-left">
                   Start for free →
-                </motion.button>
+                </span>
               </Link>
-              <motion.button
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.97 }}
+
+              {/* Secondary — View the demo */}
+              <button
                 onClick={enterDemoMode}
-                className="bg-white text-cast-iron px-8 py-4 rounded-2xl text-lg font-semibold border-2 border-stone-200 hover:border-light-green transition-colors w-full sm:w-auto"
+                className="relative flex sm:inline-flex w-full sm:w-auto group cursor-pointer"
               >
-                Try the demo
-              </motion.button>
+                {/* Text — crisp, no filter, no skew */}
+                <span className="relative z-10 text-cast-iron px-9 py-4 text-lg font-semibold group-hover:opacity-75 transition-opacity w-full text-center sm:text-left">
+                  View the demo
+                </span>
+              </button>
             </motion.div>
 
           </div>
 
-          {/* Right — mascot */}
+          {/* Right — Ollie the chef mascot */}
           <motion.div
-            className="flex justify-center items-center"
+            className="flex justify-center items-end"
             initial={{ opacity: 0, scale: 0.92 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.7, delay: 0.3 }}
           >
             <Image
-              src="/images/tom_wave.svg"
-              alt="Tom, the Syft mascot"
-              width={420}
-              height={446}
+              src="/images/branding/chef_ollie.png"
+              alt="Ollie, the Syft mascot"
+              width={560}
+              height={620}
               priority
-              className="w-full max-w-[320px] md:max-w-[380px] lg:max-w-[420px] h-auto drop-shadow-xl"
+              className="w-full max-w-[360px] md:max-w-[480px] lg:max-w-[560px] h-auto drop-shadow-2xl"
             />
           </motion.div>
 
         </div>
       </div>
-
-      {/* Marquee strip */}
-      <div className="w-full bg-cast-iron py-4 overflow-hidden relative z-10 shrink-0">
-        <div className="animate-marquee">
-          {[...marqueeItems, ...marqueeItems].map((item, i) => (
-            <span
-              key={i}
-              className="mx-8 text-white/50 font-medium text-base tracking-wide"
-            >
-              {item}
-            </span>
-          ))}
-        </div>
-      </div>
-
     </section>
   );
 }
