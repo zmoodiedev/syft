@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useFriends } from '../context/FriendsContext';
 import { useAuth } from '../context/AuthContext';
 import Button from './Button';
+import UpgradeModal from './UpgradeModal';
 import { toast } from 'react-hot-toast';
 import Image from 'next/image';
 
@@ -17,12 +18,13 @@ interface UserSearchResult {
 
 export default function AddFriend() {
     const { sendFriendRequest } = useFriends();
-    const { user } = useAuth();
+    const { user, userProfile } = useAuth();
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [hasSearched, setHasSearched] = useState(false);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
     const handleSearch = async () => {
         if (!searchQuery.trim()) return;
@@ -73,7 +75,18 @@ export default function AddFriend() {
         return null;
     }
 
+    // Gate for Free tier
+    if (userProfile?.tier === 'Free') {
+        return null; // Parent profile page already shows the upsell wall
+    }
+
     return (
+        <>
+        <UpgradeModal
+            isOpen={showUpgradeModal}
+            onClose={() => setShowUpgradeModal(false)}
+            reason="social_features"
+        />
         <div className="py-6">
             <div className="flex items-center justify-between mb-6 flex-col md:flex-row">
                 <h2 className="text-xl font-bold">Add Friends</h2>
@@ -145,5 +158,6 @@ export default function AddFriend() {
                 )}
             </div>
         </div>
+        </>
     );
-} 
+}

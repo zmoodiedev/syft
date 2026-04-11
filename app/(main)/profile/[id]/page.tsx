@@ -16,6 +16,8 @@ import { Recipe } from '@/app/models/Recipe';
 import UserTierBadge from '@/app/components/UserTierBadge';
 import Button from '@/app/components/Button';
 import NotificationItem from '@/app/components/NotificationItem';
+import UpgradeModal from '@/app/components/UpgradeModal';
+import ConfirmModal from '@/app/components/ConfirmModal';
 import { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 
@@ -23,8 +25,8 @@ export default function ProfilePage() {
   const { id } = useParams();
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
-  const { user } = useAuth();
-  const { sendFriendRequest, friends, outgoingRequests, cancelFriendRequest } = useFriends();
+  const { user, userProfile } = useAuth();
+  const { sendFriendRequest, friends, outgoingRequests, cancelFriendRequest, removeFriend } = useFriends();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [userStats, setUserStats] = useState<UserStats>({
     recipeCount: 0,
@@ -41,6 +43,11 @@ export default function ProfilePage() {
   const [relationship, setRelationship] = useState<UserRelationship | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('recipes');
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [friendToRemove, setFriendToRemove] = useState<{ id: string; name: string } | null>(null);
+  const [isRemovingFriend, setIsRemovingFriend] = useState(false);
+  const [categoryToRemove, setCategoryToRemove] = useState<string | null>(null);
+  const [isRemovingCategory, setIsRemovingCategory] = useState(false);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const [showLeftScroll, setShowLeftScroll] = useState(false);
   const [showRightScroll, setShowRightScroll] = useState(true);
@@ -282,7 +289,11 @@ export default function ProfilePage() {
   
   const handleSendFriendRequest = async () => {
     if (!user || !id) return;
-    
+    if (userProfile?.tier === 'Free') {
+      setShowUpgradeModal(true);
+      return;
+    }
+
     try {
       try {
         await sendFriendRequest(id as string);
@@ -373,16 +384,37 @@ export default function ProfilePage() {
     }
   };
 
-  const handleRemoveCategory = async (cat: string) => {
-    if (!profile || !user) return;
-    const updated = (profile.customCategories || []).filter(c => c !== cat);
+  const handleConfirmRemoveFriend = async () => {
+    if (!friendToRemove) return;
+    setIsRemovingFriend(true);
+    try {
+      await removeFriend(friendToRemove.id);
+      toast.success('Friend removed');
+      setFriendToRemove(null);
+    } catch {
+      toast.error('Failed to remove friend');
+    } finally {
+      setIsRemovingFriend(false);
+    }
+  };
+
+  const handleConfirmRemoveCategory = async () => {
+    if (!categoryToRemove || !profile || !user) return;
+    setIsRemovingCategory(true);
+    const updated = (profile.customCategories || []).filter(c => c !== categoryToRemove);
     setProfile(prev => prev ? { ...prev, customCategories: updated } : prev);
     try {
       await updateUserProfile(user.uid, { customCategories: updated });
+      setCategoryToRemove(null);
     } catch {
       toast.error('Failed to remove category');
+      // Revert optimistic update
+      setProfile(prev => prev ? { ...prev, customCategories: [...(prev.customCategories || []), categoryToRemove] } : prev);
+    } finally {
+      setIsRemovingCategory(false);
     }
   };
+
   
   if (loading) {
     return (
@@ -402,6 +434,30 @@ export default function ProfilePage() {
   }
   
   return (
+    <>
+    <UpgradeModal
+      isOpen={showUpgradeModal}
+      onClose={() => setShowUpgradeModal(false)}
+      reason="social_features"
+    />
+    <ConfirmModal
+      isOpen={!!friendToRemove}
+      onClose={() => setFriendToRemove(null)}
+      onConfirm={handleConfirmRemoveFriend}
+      title="Remove friend"
+      message={`Remove ${friendToRemove?.name ?? 'this friend'}? They won't be notified.`}
+      confirmLabel="Remove"
+      loading={isRemovingFriend}
+    />
+    <ConfirmModal
+      isOpen={!!categoryToRemove}
+      onClose={() => setCategoryToRemove(null)}
+      onConfirm={handleConfirmRemoveCategory}
+      title="Remove category"
+      message={`Remove "${categoryToRemove}" from your categories? Recipes using it won't be affected.`}
+      confirmLabel="Remove"
+      loading={isRemovingCategory}
+    />
     <div className="min-h-screen bg-eggshell">
       <div className="container mx-auto px-6 py-10">
         <div className="flex flex-col lg:flex-row gap-6 items-start">
@@ -583,6 +639,22 @@ export default function ProfilePage() {
                 {/* Friends */}
                 {activeTab === 'friends' && (
                   <>
+                    {isOwnProfile && userProfile?.tier === 'Free' ? (
+                      /* Upsell wall for Free users on own profile */
+                      <div className="text-center py-14">
+                        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-light-green/10 mb-4">
+                          <FiUserPlus className="w-6 h-6 text-light-green" />
+                        </div>
+                        <h3 className="text-base font-bold text-cast-iron mb-2">Friends is a Pro feature</h3>
+                        <p className="text-sm text-steel max-w-xs mx-auto mb-6">
+                          Add friends, share recipes, and browse each other&apos;s collections on Pro.
+                        </p>
+                        <Button variant="primary" onClick={() => setShowUpgradeModal(true)}>
+                          Upgrade to Pro
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
                       {((isOwnProfile && friends.length > 0) ||
                         ((profile as UserProfile).friendsVisibility === 'public' && friends.length > 0) ||
@@ -597,7 +669,17 @@ export default function ProfilePage() {
                               )}
                             </div>
                             <p className="flex-1 text-sm font-medium text-cast-iron truncate">{friend.displayName || 'User'}</p>
-                            <Button variant="outline" size="sm" href={`/profile/${friend.id}`} className="text-xs flex-shrink-0">View</Button>
+                            <div className="flex items-center gap-1.5 flex-shrink-0">
+                              <Button variant="outline" size="sm" href={`/profile/${friend.id}`} className="text-xs">View</Button>
+                              {isOwnProfile && (
+                                <button
+                                  onClick={() => setFriendToRemove({ id: friend.id, name: friend.displayName || 'this friend' })}
+                                  className="text-xs font-medium text-steel/50 hover:text-tomato transition-colors px-2 py-1"
+                                >
+                                  Remove
+                                </button>
+                              )}
+                            </div>
                           </div>
                         ))
                       ) : (
@@ -637,6 +719,8 @@ export default function ProfilePage() {
                     )}
 
                     {isOwnProfile && <AddFriend />}
+                      </>
+                    )}
                   </>
                 )}
 
@@ -682,7 +766,7 @@ export default function ProfilePage() {
                           >
                             {cat}
                             <button
-                              onClick={() => handleRemoveCategory(cat)}
+                              onClick={() => setCategoryToRemove(cat)}
                               className="hover:text-green transition-colors"
                               aria-label={`Remove ${cat}`}
                             >
@@ -762,5 +846,6 @@ export default function ProfilePage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

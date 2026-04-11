@@ -23,7 +23,7 @@ export const TIER_FEATURES: Record<UserTier, TierFeatures> = {
     earlyAccess: false
   },
   'Pro': {
-    maxRecipes: 250,
+    maxRecipes: Infinity,
     maxFriends: 100,
     maxSharedRecipes: 50,
     prioritySupport: true,

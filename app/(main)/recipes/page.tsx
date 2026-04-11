@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
 import { db } from '@/app/lib/firebase';
 import {
@@ -13,6 +14,10 @@ import ProtectedRoute from '@/app/components/ProtectedRoute';
 import Button from '@/app/components/Button';
 import { FiGrid, FiList } from 'react-icons/fi';
 import { DEMO_RECIPES } from '@/app/lib/demoData';
+import { getUserRecipeCount } from '@/app/lib/recipe';
+import { TIER_FEATURES } from '@/app/lib/tiers';
+import RecipeLimitBanner from '@/app/components/RecipeLimitBanner';
+import UpgradeModal from '@/app/components/UpgradeModal';
 
 const PAGE_SIZE = 12;
 
@@ -30,9 +35,12 @@ interface Recipe {
 }
 
 export default function RecipesPage() {
-    const { user, isDemo } = useAuth();
+    const { user, userProfile, isDemo } = useAuth();
+    const router = useRouter();
     const [recipes, setRecipes] = useState<Recipe[]>([]);
     const [loading, setLoading] = useState(true);
+    const [totalRecipeCount, setTotalRecipeCount] = useState(0);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
     const [hasMore, setHasMore] = useState(false);
     const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
@@ -96,6 +104,11 @@ export default function RecipesPage() {
         };
 
         fetchRecipes();
+
+        // Load total count for limit banner (free users only)
+        if (user && !isDemo) {
+            getUserRecipeCount(user.uid).then(setTotalRecipeCount);
+        }
     }, [user, isDemo]);
 
     const loadMore = useCallback(async () => {
@@ -186,6 +199,11 @@ export default function RecipesPage() {
 
     return (
         <ProtectedRoute>
+            <UpgradeModal
+                isOpen={showUpgradeModal}
+                onClose={() => setShowUpgradeModal(false)}
+                reason="recipe_limit"
+            />
             <div className="min-h-screen bg-eggshell">
                 <div className="container mx-auto px-6 py-10 md:py-14">
 
@@ -202,9 +220,28 @@ export default function RecipesPage() {
                             )}
                         </div>
                         {!isDemo && (
-                            <Button href="/add-recipe">Add recipe</Button>
+                            <Button onClick={() => {
+                                const atLimit = userProfile?.tier === 'Free' &&
+                                    totalRecipeCount >= TIER_FEATURES['Free'].maxRecipes;
+                                if (atLimit) {
+                                    setShowUpgradeModal(true);
+                                } else {
+                                    router.push('/add-recipe');
+                                }
+                            }}>
+                                Add recipe
+                            </Button>
                         )}
                     </div>
+
+                    {/* Limit nudge banner — free users at 10-14/15 */}
+                    {!isDemo && userProfile?.tier === 'Free' && (
+                        <RecipeLimitBanner
+                            count={totalRecipeCount}
+                            limit={TIER_FEATURES['Free'].maxRecipes}
+                            onUpgradeClick={() => setShowUpgradeModal(true)}
+                        />
+                    )}
 
                     {/* Search + view toggle */}
                     <div className="flex items-center gap-3 mb-4">

@@ -60,16 +60,16 @@ export async function POST(request: NextRequest) {
     const base64 = buffer.toString('base64');
     const dataURI = `data:${file.type};base64,${base64}`;
 
-    // Upload to Cloudinary with optimizations and robust error handling
+    // Upload to Cloudinary — resize, convert to WebP, strip all metadata
     const transformationOptions = {
       folder: 'syft_recipes',
       resource_type: 'image' as ResourceType,
-      format: 'webp', // Convert to WebP for better compression
-      quality: 80, // Good quality-size balance
-      width: 1200, // Reasonable max width
+      format: 'webp',
+      quality: 80,
+      width: 1200,
       crop: 'limit',
-      fetch_format: 'auto',
-      timeout: 60000, // Increase timeout to 60 seconds
+      flags: 'strip_profile', // Strip EXIF/IPTC/XMP (incl. GPS)
+      timeout: 60000,
     };
 
     console.log('Starting Cloudinary upload with options:', {

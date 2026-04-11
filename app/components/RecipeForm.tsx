@@ -2,10 +2,11 @@ import { useState, useEffect, useRef } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { useAuth } from '@/app/context/AuthContext';
 import { db } from '@/app/lib/firebase';
-import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { uploadImage } from '@/lib/cloudinary';
+import UpgradeModal from './UpgradeModal';
 import Button from './Button';
 import { FiGlobe, FiLock, FiUsers, FiPlus, FiX } from 'react-icons/fi';
 
@@ -46,6 +47,7 @@ export interface Recipe {
   userId?: string;
   sourceUrl?: string;
   visibility?: string;
+  locked?: boolean;
 }
 
 export interface RecipeFormProps {
@@ -56,7 +58,7 @@ export interface RecipeFormProps {
 }
 
 export default function RecipeForm({ initialData, onSubmit, scanMode = false, submitButtonText }: RecipeFormProps) {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const router = useRouter();
   const isEditMode = !!initialData?.id;
   const [selectedCategories, setSelectedCategories] = useState<string[]>(initialData?.categories || []);
@@ -108,6 +110,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
   const [showBulkImport, setShowBulkImport] = useState<boolean>(false);
   const [bulkIngredients, setBulkIngredients] = useState<string>('');
   const [bulkInstructions, setBulkInstructions] = useState<string>('');
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const { register, handleSubmit, formState: { errors }, setValue } = useForm<Recipe>({
     defaultValues: {
       name: initialData?.name || '',
@@ -1145,11 +1148,25 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
           });
           toast.success('Recipe updated successfully');
         } else {
-          await addDoc(collection(db, 'recipes'), {
-            ...recipeData,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
+          const token = await user.getIdToken();
+          const res = await fetch('/api/recipes/create', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(recipeData),
           });
+
+          if (res.status === 403) {
+            setShowUpgradeModal(true);
+            return;
+          }
+
+          if (!res.ok) {
+            throw new Error('Failed to save recipe');
+          }
+
           toast.success('Recipe added successfully');
         }
         
@@ -1339,6 +1356,12 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
   };
 
   return (
+    <>
+    <UpgradeModal
+      isOpen={showUpgradeModal}
+      onClose={() => setShowUpgradeModal(false)}
+      reason="recipe_limit"
+    />
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5">
 
       {/* Scan banner */}
@@ -1758,5 +1781,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
       </button>
 
     </form>
+    </>
   );
 } 

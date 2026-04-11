@@ -9,6 +9,9 @@ import { useAuth } from "../context/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
 import { useFriends } from '@/app/context/FriendsContext';
 import { getUnreadNotificationCount } from '../lib/notification';
+import { getUserRecipeCount } from '@/app/lib/recipe';
+import { TIER_FEATURES } from '@/app/lib/tiers';
+import UpgradeModal from './UpgradeModal';
 
 export default function Navbar() {
     const { user, userProfile, logout, isDemo, exitDemoMode } = useAuth();
@@ -19,6 +22,7 @@ export default function Navbar() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [mounted, setMounted] = useState(false);
     const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
     
     // Handle mounting
     useEffect(() => {
@@ -75,6 +79,18 @@ export default function Navbar() {
             document.body.style.overflow = '';
         };
     }, [mobileMenuOpen, mounted]);
+
+    const handleAddRecipe = async () => {
+        setMobileMenuOpen(false);
+        if (userProfile?.tier === 'Free' && user) {
+            const count = await getUserRecipeCount(user.uid);
+            if (count >= TIER_FEATURES['Free'].maxRecipes) {
+                setShowUpgradeModal(true);
+                return;
+            }
+        }
+        router.push('/add-recipe');
+    };
 
     const handleLogout = async () => {
         try {
@@ -178,28 +194,34 @@ export default function Navbar() {
     }
 
     return (
+        <>
+        <UpgradeModal
+            isOpen={showUpgradeModal}
+            onClose={() => setShowUpgradeModal(false)}
+            reason="recipe_limit"
+        />
         <nav className="flex flex-row gap-[1rem] items-center">
             {user && (
-                <ul className="flex-row gap-10 text-base font-medium hidden md:flex mr-8">
+                <ul className="flex-row gap-10 text-base font-medium hidden md:flex mr-8 items-center">
                     <li>
                         <Link
                             href="/recipes"
-                            className={`text-cast-iron hover:text-light-green px-3 py-2 transition-colors ${
-                                pathname === '/recipes' ? 'border-b-2 border-light-green' : ''
+                            className={`text-cast-iron hover:text-light-green px-3 py-2 transition-colors border-b-2 ${
+                                pathname === '/recipes' ? 'border-light-green' : 'border-transparent'
                             }`}
                         >
                             My Recipes
                         </Link>
                     </li>
                     <li>
-                        <Link
-                            href="/add-recipe"
-                            className={`text-cast-iron hover:text-light-green px-3 py-2 transition-colors ${
-                                pathname === '/add-recipe' ? 'border-b-2 border-light-green' : ''
+                        <button
+                            onClick={handleAddRecipe}
+                            className={`text-base font-medium leading-normal text-cast-iron hover:text-light-green px-3 py-2 transition-colors border-b-2 ${
+                                pathname === '/add-recipe' ? 'border-light-green' : 'border-transparent'
                             }`}
                         >
                             Add Recipe
-                        </Link>
+                        </button>
                     </li>
                 </ul>
             )}
@@ -268,15 +290,14 @@ export default function Navbar() {
                                             <i className="fa-solid fa-book-open mr-3 w-6 text-center"></i>
                                             My Recipes
                                         </Link>
-                                        <Link 
-                                            href="/add-recipe"
-                                            className="py-3 border-b border-gray-100 flex items-center"
-                                            onClick={() => setMobileMenuOpen(false)}
+                                        <button
+                                            onClick={handleAddRecipe}
+                                            className="py-3 border-b border-gray-100 flex items-center text-left w-full"
                                             data-extension-ignore="true"
                                         >
                                             <i className="fa-solid fa-plus mr-3 w-6 text-center"></i>
                                             Add Recipe
-                                        </Link>
+                                        </button>
                                         <Link 
                                             href={`/profile/${user.uid}?tab=friends`}
                                             className="py-3 border-b border-gray-100 flex items-center"
@@ -464,5 +485,6 @@ export default function Navbar() {
                 </div>
             )}
         </nav>
+        </>
     );
 } 

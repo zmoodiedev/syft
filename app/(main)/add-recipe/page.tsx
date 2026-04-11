@@ -1,11 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import RecipeForm from '@/app/components/RecipeForm';
 import UrlInput from '@/app/components/UrlInput';
 import BulkEntryForm from '@/app/components/BulkEntryForm';
+import UpgradeModal from '@/app/components/UpgradeModal';
 import { FiArrowLeft, FiFileText, FiGlobe, FiCamera, FiList } from 'react-icons/fi';
+import { useAuth } from '@/app/context/AuthContext';
+import { useRouter } from 'next/navigation';
+import { getUserRecipeCount } from '@/app/lib/recipe';
+import { TIER_FEATURES } from '@/app/lib/tiers';
 
 type OptionId = 'url' | 'scan' | 'bulk' | 'manual';
 
@@ -24,8 +29,20 @@ function FormPanel({ id }: { id: OptionId }) {
 }
 
 export default function AddRecipe() {
+    const { user, userProfile } = useAuth();
+    const router = useRouter();
     const [selected, setSelected] = useState<OptionId>('url');
     const [mobileView, setMobileView] = useState<'options' | 'form'>('options');
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
+    useEffect(() => {
+        if (!user || userProfile?.tier !== 'Free') return;
+        getUserRecipeCount(user.uid).then(count => {
+            if (count >= TIER_FEATURES['Free'].maxRecipes) {
+                setShowUpgradeModal(true);
+            }
+        });
+    }, [user, userProfile]);
 
     const handleSelect = (id: OptionId) => {
         setSelected(id);
@@ -33,6 +50,12 @@ export default function AddRecipe() {
     };
 
     return (
+        <>
+        <UpgradeModal
+            isOpen={showUpgradeModal}
+            onClose={() => { setShowUpgradeModal(false); router.push('/recipes'); }}
+            reason="recipe_limit"
+        />
         <div className="min-h-screen bg-eggshell">
             <div className="container mx-auto px-6 py-10 md:py-14">
 
@@ -109,5 +132,6 @@ export default function AddRecipe() {
                 </div>
             </div>
         </div>
+        </>
     );
 }

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { FiChevronRight, FiClock } from 'react-icons/fi';
+import { FiChevronRight, FiClock, FiLock } from 'react-icons/fi';
 
 interface Recipe {
   id: string;
@@ -11,6 +11,7 @@ interface Recipe {
   prepTime?: string;
   cookTime?: string;
   categories?: string[];
+  locked?: boolean;
 }
 
 interface RecipeListItemProps {
@@ -35,9 +36,17 @@ export default function RecipeListItem({ recipe, index }: RecipeListItemProps) {
         className="flex items-center justify-between bg-white border border-gray-100 rounded-2xl px-5 py-3.5 shadow-sm hover:shadow-md hover:border-gray-200 transition-all duration-200 group"
       >
         <div className="min-w-0 flex-1">
-          <h3 className="text-base font-bold text-cast-iron group-hover:text-light-green transition-colors duration-200 truncate">
-            {recipe.name}
-          </h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-base font-bold text-cast-iron group-hover:text-light-green transition-colors duration-200 truncate">
+              {recipe.name}
+            </h3>
+            {recipe.locked && (
+              <span className="flex items-center gap-1 text-[10px] font-semibold text-steel/50 flex-shrink-0">
+                <FiLock className="w-3 h-3" />
+                Read only
+              </span>
+            )}
+          </div>
           {(totalTime || displayCategories.length > 0) && (
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               {totalTime && (

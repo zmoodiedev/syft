@@ -14,6 +14,7 @@ interface Recipe {
   userId: string;
   visibility?: string;
   categories?: string[];
+  locked?: boolean;
 }
 
 interface RecipeCardProps {
@@ -49,8 +50,16 @@ export default function RecipeCard({ recipe, priority = false }: RecipeCardProps
       transition={{ duration: 0.3 }}
       className="relative rounded-2xl overflow-hidden h-52 shadow-sm hover:shadow-md transition-shadow duration-300"
     >
+      {/* Locked badge */}
+      {recipe.locked && (
+        <div className="absolute top-2.5 left-2.5 z-20 flex items-center gap-1 bg-black/70 backdrop-blur-sm text-white text-[10px] font-semibold px-2 py-1 rounded-full">
+          <FiLock className="w-2.5 h-2.5" />
+          Read only
+        </div>
+      )}
+
       {/* Visibility badge */}
-      {isOwner && (
+      {isOwner && !recipe.locked && (
         <div
           className="absolute top-2.5 right-2.5 bg-white/90 backdrop-blur-sm p-1.5 rounded-full shadow-sm z-20"
           title={vis.label}

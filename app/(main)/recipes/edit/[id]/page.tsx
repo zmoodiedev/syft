@@ -40,6 +40,12 @@ export default function EditRecipe() {
             return;
           }
 
+          if (recipeData.locked) {
+            setError('This recipe is read-only. Upgrade to Pro to edit it.');
+            setLoading(false);
+            return;
+          }
+
           setRecipe(recipeData);
         } else {
           setError('Recipe not found');
@@ -92,14 +98,28 @@ export default function EditRecipe() {
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
             </div>
           ) : error ? (
-            <div className="text-center py-12">
-              <h2 className="text-2xl font-semibold text-red-600 mb-6">{error}</h2>
-              <Link
-                href="/recipes"
-                className="inline-block bg-primary-500 text-white px-6 py-2 rounded-lg hover:bg-primary-600 transition-colors"
-              >
-                Back to Recipes
-              </Link>
+            <div className="text-center py-12 max-w-sm mx-auto">
+              <span className="text-4xl block mb-4">🔒</span>
+              <h2 className="text-xl font-bold text-cast-iron mb-2">
+                {error.includes('read-only') ? 'Recipe is read-only' : 'Cannot edit recipe'}
+              </h2>
+              <p className="text-sm text-steel mb-6">{error}</p>
+              <div className="flex flex-col gap-3">
+                {recipeId && (
+                  <Link
+                    href={`/recipes/${recipeId}`}
+                    className="inline-flex items-center justify-center gap-2 bg-light-green text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-green transition-colors"
+                  >
+                    View Recipe
+                  </Link>
+                )}
+                <Link
+                  href="/recipes"
+                  className="text-sm text-steel hover:text-cast-iron transition-colors"
+                >
+                  Back to My Recipes
+                </Link>
+              </div>
             </div>
           ) : recipe ? (
             <div>

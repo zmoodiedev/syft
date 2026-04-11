@@ -1,26 +1,27 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { 
+import {
     User,
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     signInWithPopup,
     GoogleAuthProvider,
     signOut,
-    onAuthStateChanged
+    onAuthStateChanged,
+    updateProfile
 } from 'firebase/auth';
 import { auth, db } from '../lib/firebase';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { useRouter, usePathname } from 'next/navigation';
-import { UserProfile } from '../models/User';
+import { UserProfile, DEFAULT_USER_SETTINGS } from '../models/User';
 
 interface AuthContextType {
     user: User | null;
     userProfile: UserProfile | null;
     loading: boolean;
     isDemo: boolean;
-    signUp: (email: string, password: string) => Promise<void>;
+    signUp: (email: string, password: string, displayName?: string, tier?: 'Free' | 'Pro', billingCycle?: 'monthly' | 'yearly') => Promise<void>;
     signIn: (email: string, password: string) => Promise<void>;
     signInWithGoogle: () => Promise<void>;
     logout: () => Promise<void>;
@@ -40,17 +41,34 @@ const getAllowedEmails = (): string[] => {
     return allowedEmailsStr.split(',').map(email => email.trim());
 };
 
-const createUserProfile = async (user: User) => {
+const createUserProfile = async (
+    user: User,
+    displayName?: string,
+    tier: 'Free' | 'Pro' = 'Free',
+    billingCycle?: 'monthly' | 'yearly'
+) => {
     const userRef = doc(db, 'users', user.uid);
     const userDoc = await getDoc(userRef);
 
     if (!userDoc.exists()) {
-        await setDoc(userRef, {
-            displayName: user.displayName,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const profileData: Record<string, any> = {
+            ...DEFAULT_USER_SETTINGS,
+            displayName: displayName || user.displayName || null,
             email: user.email,
-            photoURL: user.photoURL,
-            createdAt: serverTimestamp()
-        });
+            photoURL: user.photoURL || null,
+            tier: 'Free', // Always Free until payment confirmed
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+        };
+
+        // Store upgrade intent so we can notify when billing goes live
+        if (tier === 'Pro' && billingCycle) {
+            profileData.pendingTier = 'Pro';
+            profileData.pendingBillingCycle = billingCycle;
+        }
+
+        await setDoc(userRef, profileData);
     }
 };
 
@@ -201,9 +219,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         userProfile,
         loading,
         isDemo,
-        signUp: async (email: string, password: string) => {
+        signUp: async (email: string, password: string, displayName?: string, tier?: 'Free' | 'Pro', billingCycle?: 'monthly' | 'yearly') => {
             const result = await createUserWithEmailAndPassword(auth, email, password);
-            await createUserProfile(result.user);
+            if (displayName) {
+                await updateProfile(result.user, { displayName });
+            }
+            await createUserProfile(result.user, displayName, tier, billingCycle);
             const profile = await fetchUserProfile(result.user.uid);
             if (profile) {
                 setUserProfile(profile);

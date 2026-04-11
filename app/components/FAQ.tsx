@@ -19,7 +19,7 @@ const faqData = [
   },
   {
     question: "How do I share recipes with friends?",
-    answer: "Add friends by searching their username, then share recipes directly with them. You can also set individual recipes to public so anyone with the link can view them."
+    answer: "Add friends by searching their username, then share recipes directly with them."
   },
   {
     question: "Can I organize my recipes into categories?",

@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { useAuth } from '@/app/context/AuthContext';
-import { db } from '@/app/lib/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
+import UpgradeModal from './UpgradeModal';
 import { FiGlobe, FiLock, FiUsers } from 'react-icons/fi';
 
 interface Ingredient {
@@ -38,6 +37,7 @@ interface Recipe {
 export default function BulkEntryForm() {
   const { user } = useAuth();
   const router = useRouter();
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [visibility, setVisibility] = useState('public');
   const [imageUrl, setImageUrl] = useState('');
   const [isPreviewingImage, setIsPreviewingImage] = useState(false);
@@ -236,12 +236,25 @@ export default function BulkEntryForm() {
         visibility
       };
       
-      await addDoc(collection(db, 'recipes'), {
-        ...recipeData,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+      const token = await user.getIdToken();
+      const res = await fetch('/api/recipes/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(recipeData),
       });
-      
+
+      if (res.status === 403) {
+        setShowUpgradeModal(true);
+        return;
+      }
+
+      if (!res.ok) {
+        throw new Error('Failed to save recipe');
+      }
+
       toast.success('Recipe added successfully');
       router.push('/recipes');
     } catch (error) {
@@ -251,6 +264,12 @@ export default function BulkEntryForm() {
   };
 
   return (
+    <>
+    <UpgradeModal
+      isOpen={showUpgradeModal}
+      onClose={() => setShowUpgradeModal(false)}
+      reason="recipe_limit"
+    />
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8">
       {/* Header */}
       <div className="text-center">
@@ -506,5 +525,6 @@ export default function BulkEntryForm() {
         </button>
       </div>
     </form>
+    </>
   );
 } 

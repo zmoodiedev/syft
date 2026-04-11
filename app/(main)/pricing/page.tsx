@@ -5,6 +5,7 @@ import { useAuth } from '@/app/context/AuthContext';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { toast } from 'react-hot-toast';
 
 type Currency = 'USD' | 'CAD';
 
@@ -30,9 +31,9 @@ const pricingTiers: PricingTier[] = [
     priceUSD: 0,
     priceCAD: 0,
     period: 'forever',
-    description: 'Perfect for getting started with recipe management',
+    description: 'A good place to start.',
     features: [
-      { name: 'Recipe Storage', included: true, value: 'Up to 20 recipes' },
+      { name: 'Recipe Storage', included: true, value: 'Up to 15 recipes' },
       { name: 'Basic Recipe Features', included: true },
       { name: 'Recipe Sharing', included: false },
       { name: 'Friends Network', included: false },
@@ -40,12 +41,12 @@ const pricingTiers: PricingTier[] = [
     ],
   },
   {
-    id: 'monthly',
-    name: 'Pro Monthly',
-    priceUSD: 4.99,
-    priceCAD: 6.99,
-    period: 'per month',
-    description: 'Full access to all features with monthly flexibility',
+    id: 'yearly',
+    name: 'Pro Yearly',
+    priceUSD: 24.99,
+    priceCAD: 34.49,
+    period: 'per year',
+    description: 'Best value. About $2 a month.',
     features: [
       { name: 'Recipe Storage', included: true, value: 'Unlimited recipes' },
       { name: 'Premium Recipe Features', included: true },
@@ -56,12 +57,12 @@ const pricingTiers: PricingTier[] = [
     popular: true,
   },
   {
-    id: 'yearly',
-    name: 'Pro Yearly',
-    priceUSD: 23.00,
-    priceCAD: 32.00,
-    period: 'per year',
-    description: 'Best value — save 17% with annual billing',
+    id: 'monthly',
+    name: 'Pro Monthly',
+    priceUSD: 3.49,
+    priceCAD: 4.82,
+    period: 'per month',
+    description: 'Full access, cancel anytime.',
     features: [
       { name: 'Recipe Storage', included: true, value: 'Unlimited recipes' },
       { name: 'Premium Recipe Features', included: true },
@@ -69,7 +70,7 @@ const pricingTiers: PricingTier[] = [
       { name: 'Friends Network', included: true },
       { name: 'Priority Support', included: true },
     ],
-  }
+  },
 ];
 
 const faqItems = [
@@ -94,6 +95,7 @@ const faqItems = [
 export default function PricingPage() {
   const { user } = useAuth();
   const [currency, setCurrency] = useState<Currency>('USD');
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
 
   const currentPlan = user ? 'free' : null;
 
@@ -105,21 +107,45 @@ export default function PricingPage() {
   };
 
   const getButtonText = (tierId: string) => {
+    if (checkoutLoading === tierId) return 'Redirecting...';
     if (!user) return 'Get started';
-    if (currentPlan === tierId) return 'Current Plan';
+    if (currentPlan === tierId) return 'Current plan';
     switch (tierId) {
-      case 'free':     return 'Downgrade to Free';
-      case 'monthly':  return 'Upgrade to Monthly';
-      case 'yearly':   return 'Upgrade to Yearly';
-      default:         return 'Get started';
+      case 'free':    return 'Downgrade to Free';
+      case 'monthly': return 'Upgrade — monthly';
+      case 'yearly':  return 'Upgrade — yearly';
+      default:        return 'Get started';
     }
   };
 
-  const isButtonDisabled = (tierId: string) => Boolean(user && currentPlan === tierId);
+  const isButtonDisabled = (tierId: string) =>
+    Boolean((user && currentPlan === tierId) || checkoutLoading);
 
-  const handleUpgrade = (tierId: string) => {
-    if (!user) { window.location.href = '/login'; return; }
-    console.log(`Upgrading to ${tierId}`);
+  const handleUpgrade = async (tierId: string) => {
+    if (!user) { window.location.href = '/signup'; return; }
+    if (tierId === 'free') return;
+    setCheckoutLoading(tierId);
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch('/api/stripe/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ planId: tierId as 'monthly' | 'yearly', currency }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        toast.error('Could not start checkout. Please try again.');
+      }
+    } catch {
+      toast.error('Something went wrong.');
+    } finally {
+      setCheckoutLoading(null);
+    }
   };
 
   return (
