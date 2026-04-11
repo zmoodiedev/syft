@@ -23,8 +23,6 @@ const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_ID || '';
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
 };
 
 // Metadata for the entire site
@@ -98,27 +96,30 @@ export default function RootLayout({
     <html lang="en" className="h-full">
       <head>
         <meta charSet="utf-8" />
-        <link rel="canonical" href="https://syft.cooking" />
         <meta name="theme-color" content="#ffffff" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
-        <Script 
-          src="https://kit.fontawesome.com/843ef57212.js" 
+        <Script
+          src="https://kit.fontawesome.com/843ef57212.js"
           crossOrigin="anonymous"
           strategy="beforeInteractive"
         />
-        {/* Google Analytics */}
-        <Script
-          src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
-          strategy="afterInteractive"
-        />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${GA_MEASUREMENT_ID}');
-          `}
-        </Script>
+        {/* Google Analytics — only injected when the measurement ID is configured */}
+        {GA_MEASUREMENT_ID && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${GA_MEASUREMENT_ID}');
+              `}
+            </Script>
+          </>
+        )}
         <FontAwesomeScript />
       </head>
       <body

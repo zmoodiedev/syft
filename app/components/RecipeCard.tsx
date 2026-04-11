@@ -83,6 +83,7 @@ export default function RecipeCard({ recipe, priority = false }: RecipeCardProps
                 priority={priority}
                 quality={85}
                 className="object-cover"
+                unoptimized={!recipe.imageUrl.includes('res.cloudinary.com')}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
             </>

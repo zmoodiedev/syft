@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import * as cheerio from 'cheerio';
+import { auth } from '@/lib/firebase-admin';
 
-// Set the runtime to edge to ensure compatibility with Vercel deployments
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 // List of known problematic websites that block scraping
 const BLOCKED_WEBSITES: string[] = [
@@ -47,6 +47,16 @@ interface JsonLdRecipe {
 }
 
 export async function POST(request: Request) {
+    const token = request.headers.get('Authorization')?.split('Bearer ')[1];
+    if (!token) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    try {
+        await auth.verifyIdToken(token);
+    } catch {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     try {
         const { url } = await request.json();
 

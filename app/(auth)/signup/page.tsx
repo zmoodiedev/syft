@@ -126,9 +126,10 @@ export default function SignUpPage() {
         } catch (err) {
             if (err instanceof Error) {
                 const msg = err.message;
-                if (msg.includes('email-already-in-use')) setError('An account with this email already exists.');
-                else if (msg.includes('weak-password'))   setError('Password must be at least 6 characters.');
-                else if (msg.includes('invalid-email'))   setError('Invalid email address.');
+                if (msg.includes('Access denied'))             setError(msg);
+                else if (msg.includes('email-already-in-use')) setError('An account with this email already exists.');
+                else if (msg.includes('weak-password'))        setError('Password must be at least 6 characters.');
+                else if (msg.includes('invalid-email'))        setError('Invalid email address.');
                 else setError('Failed to create account. Please try again.');
             } else {
                 setError('Failed to create account. Please try again.');

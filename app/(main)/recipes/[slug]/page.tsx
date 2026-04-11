@@ -13,7 +13,8 @@ import ConfirmModal from '@/app/components/ConfirmModal';
 import { toast } from 'react-hot-toast';
 import { deleteImage } from '@/lib/cloudinary';
 import { useFriends } from '@/app/context/FriendsContext';
-import { FiEdit, FiClock, FiUsers, FiShare2, FiTrash2, FiGlobe, FiLock, FiChevronLeft, FiExternalLink } from 'react-icons/fi';
+import { FiEdit, FiClock, FiUsers, FiShare2, FiTrash2, FiGlobe, FiLock, FiChevronLeft, FiExternalLink, FiSun } from 'react-icons/fi';
+import { useWakeLock } from '@/app/hooks/useWakeLock';
 import { getUserRelationship } from '@/app/lib/user';
 import { getUserRecipeCount } from '@/app/lib/recipe';
 import { TIER_FEATURES } from '@/app/lib/tiers';
@@ -99,6 +100,7 @@ export default function RecipeDetail() {
   const [isSaving, setIsSaving] = useState(false);
   const [needsAuthentication, setNeedsAuthentication] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+  const { isActive: wakeLockActive, isSupported: wakeLockSupported, toggle: toggleWakeLock } = useWakeLock();
 
   useEffect(() => {
     if (authLoading) return;
@@ -473,6 +475,7 @@ export default function RecipeDetail() {
                     priority
                     quality={90}
                     className="object-cover"
+                    unoptimized={!recipe.imageUrl.includes('res.cloudinary.com')}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
                 </>
@@ -641,6 +644,23 @@ export default function RecipeDetail() {
                   <FiExternalLink className="w-3.5 h-3.5" />
                   View original source
                 </a>
+              </div>
+            )}
+
+            {/* Keep-screen-on toggle — mobile only */}
+            {wakeLockSupported && (
+              <div className="md:hidden flex justify-center mb-6">
+                <button
+                  onClick={toggleWakeLock}
+                  className={`inline-flex items-center gap-2 pl-3.5 pr-4 py-2 rounded-full text-sm font-medium border transition-all active:scale-95 ${
+                    wakeLockActive
+                      ? 'bg-light-green border-light-green text-white shadow-sm shadow-light-green/20'
+                      : 'bg-white border-gray-200 text-steel'
+                  }`}
+                >
+                  <FiSun className={`w-4 h-4 transition-transform ${wakeLockActive ? 'rotate-0' : '-rotate-12'}`} />
+                  {wakeLockActive ? 'Screen staying on' : 'Keep screen on'}
+                </button>
               </div>
             )}
 

@@ -1,7 +1,5 @@
 'use client';
 
-import { FiAlertTriangle, FiInfo } from 'react-icons/fi';
-
 interface RecipeLimitBannerProps {
   count: number;
   limit: number;
@@ -9,47 +7,57 @@ interface RecipeLimitBannerProps {
 }
 
 export default function RecipeLimitBanner({ count, limit, onUpgradeClick }: RecipeLimitBannerProps) {
-  // Silent below 10, modal handles the wall at the limit
   if (count < 10 || count >= limit) return null;
 
   const remaining = limit - count;
-  const isUrgent = count >= 13;
+  const fillPct   = Math.round((count / limit) * 100);
+  const isUrgent  = count >= 13;
 
   if (isUrgent) {
     return (
-      <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 mb-6">
-        <FiAlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-amber-800">
-            {remaining === 1 ? '1 recipe slot left' : `${remaining} recipe slots left`}
+      <div className="bg-[var(--color-cream)] border border-orange-100 rounded-2xl px-5 py-4 mb-6">
+        <div className="flex items-center justify-between gap-4 mb-2.5">
+          <p className="text-sm font-semibold text-cast-iron">
+            {remaining === 1 ? 'Only 1 recipe slot left' : `Only ${remaining} recipe slots left`}
           </p>
-          <p className="text-xs text-amber-700/80 mt-0.5">
-            Using {count} of {limit} free recipes.{' '}
-            <button
-              onClick={onUpgradeClick}
-              className="font-semibold underline underline-offset-2 hover:text-amber-900 transition-colors"
-            >
-              Go Pro for unlimited storage.
-            </button>
-          </p>
+          <button
+            onClick={onUpgradeClick}
+            className="text-sm font-semibold text-tomato hover:opacity-75 transition-opacity whitespace-nowrap shrink-0"
+          >
+            Go Pro →
+          </button>
         </div>
+        {/* Progress bar */}
+        <div className="h-1.5 bg-orange-100 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-tomato rounded-full transition-all duration-500"
+            style={{ width: `${fillPct}%` }}
+          />
+        </div>
+        <p className="text-xs text-steel mt-1.5">{count} of {limit} free slots used</p>
       </div>
     );
   }
 
   return (
-    <div className="flex items-center gap-3 bg-white border border-gray-100 rounded-2xl px-5 py-3.5 mb-6 shadow-sm">
-      <FiInfo className="w-4 h-4 text-steel flex-shrink-0" />
-      <p className="text-sm text-steel flex-1">
-        Using <span className="font-semibold text-cast-iron">{count} of {limit}</span> free recipe slots.{' '}
+    <div className="bg-white border border-gray-100 rounded-2xl px-5 py-4 mb-6 shadow-sm">
+      <div className="flex items-center justify-between gap-4 mb-2.5">
+        <p className="text-sm font-medium text-cast-iron">Recipe slots</p>
         <button
           onClick={onUpgradeClick}
-          className="text-light-green font-semibold hover:text-green transition-colors"
+          className="text-sm font-semibold text-light-green hover:text-green transition-colors whitespace-nowrap shrink-0"
         >
-          Upgrade to Pro
-        </button>{' '}
-        for unlimited recipes.
-      </p>
+          Upgrade →
+        </button>
+      </div>
+      {/* Progress bar */}
+      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-light-green rounded-full transition-all duration-500"
+          style={{ width: `${fillPct}%` }}
+        />
+      </div>
+      <p className="text-xs text-steel mt-1.5">{count} of {limit} free slots used</p>
     </div>
   );
 }

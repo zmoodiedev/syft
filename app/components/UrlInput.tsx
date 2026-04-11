@@ -4,6 +4,7 @@ import { useState } from 'react';
 import RecipeForm from './RecipeForm';
 import Button from './Button';
 import { FiArrowLeft } from 'react-icons/fi';
+import { useAuth } from '@/app/context/AuthContext';
 
 interface ScrapedRecipe {
     name: string;
@@ -18,6 +19,7 @@ interface ScrapedRecipe {
 }
 
 export default function UrlInput() {
+    const { user } = useAuth();
     const [url, setUrl] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -25,15 +27,19 @@ export default function UrlInput() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!url) return;
+        if (!url || !user) return;
 
         setLoading(true);
         setError(null);
 
         try {
+            const token = await user.getIdToken();
             const response = await fetch('/api/scrape-recipe', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
                 body: JSON.stringify({ url }),
             });
 

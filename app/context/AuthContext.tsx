@@ -220,6 +220,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loading,
         isDemo,
         signUp: async (email: string, password: string, displayName?: string, tier?: 'Free' | 'Pro', billingCycle?: 'monthly' | 'yearly') => {
+            const allowedEmails = getAllowedEmails();
+            if (allowedEmails.length > 0 && !allowedEmails.includes(email)) {
+                throw new Error('Access denied. Syft is currently in beta and only open to selected users.');
+            }
             const result = await createUserWithEmailAndPassword(auth, email, password);
             if (displayName) {
                 await updateProfile(result.user, { displayName });
@@ -231,6 +235,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
         },
         signIn: async (email: string, password: string) => {
+            const allowedEmails = getAllowedEmails();
+            if (allowedEmails.length > 0 && !allowedEmails.includes(email)) {
+                throw new Error('Access denied. Syft is currently in beta and only open to selected users.');
+            }
             const result = await signInWithEmailAndPassword(auth, email, password);
             await createUserProfile(result.user);
             const profile = await fetchUserProfile(result.user.uid);

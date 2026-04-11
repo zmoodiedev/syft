@@ -1,42 +1,37 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/app/lib/firebase';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
-
-// Secret key for authorization
-const ADMIN_SECRET = process.env.ADMIN_MIGRATION_SECRET || 'default-secret-key-not-secure';
+import { db } from '@/lib/firebase-admin';
 
 export async function POST(request: Request) {
+  const secret = process.env.ADMIN_MIGRATION_SECRET;
+  if (!secret) {
+    console.error('ADMIN_MIGRATION_SECRET is not set');
+    return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 });
+  }
+
   try {
-    // Get request body
     const body = await request.json();
-    const { userId, secret } = body;
-    
-    // Validate request
+    const { userId, secret: provided } = body;
+
     if (!userId) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
-    
-    if (!secret || secret !== ADMIN_SECRET) {
+
+    if (!provided || provided !== secret) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
-    // Check if user exists
-    const userRef = doc(db, 'users', userId);
-    const userDoc = await getDoc(userRef);
-    
-    if (!userDoc.exists()) {
+
+    const userRef = db.collection('users').doc(userId);
+    const userDoc = await userRef.get();
+
+    if (!userDoc.exists) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
-    
-    // Update user role to admin
-    await updateDoc(userRef, { role: 'admin' });
-    
-    return NextResponse.json({
-      success: true,
-      message: `User ${userId} has been set as an admin`
-    });
+
+    await userRef.update({ role: 'admin' });
+
+    return NextResponse.json({ success: true, message: `User ${userId} is now an admin` });
   } catch (error) {
     console.error('Error setting admin role:', error);
     return NextResponse.json({ error: 'Failed to set admin role' }, { status: 500 });
   }
-} 
+}
