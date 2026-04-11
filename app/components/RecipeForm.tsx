@@ -8,7 +8,7 @@ import { toast } from 'react-hot-toast';
 import { uploadImage } from '@/lib/cloudinary';
 import UpgradeModal from './UpgradeModal';
 import Button from './Button';
-import { FiGlobe, FiLock, FiUsers, FiPlus, FiX } from 'react-icons/fi';
+import { FiLock, FiUsers, FiPlus, FiX } from 'react-icons/fi';
 
 // Default categories for new users
 export const DEFAULT_CATEGORIES = [
@@ -69,7 +69,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
   const [fileDialogRequested, setFileDialogRequested] = useState(false);
   const [showScanFeature, setShowScanFeature] = useState(scanMode);
   const [isMobile, setIsMobile] = useState(false);
-  const [visibility, setVisibility] = useState(initialData?.visibility || 'public');
+  const [visibility, setVisibility] = useState(initialData?.visibility || 'friends');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recipeImageInputRef = useRef<HTMLInputElement>(null);
   const cameraCaptureRef = useRef<HTMLInputElement>(null);
@@ -1366,10 +1366,10 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
 
       {/* Scan banner */}
       {showScanFeature && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h3 className="text-base font-semibold text-cast-iron">
+              <h3 className="text-lg font-bold text-cast-iron">
                 {scanMode ? 'Scan your recipe' : 'Recipe scanner'}
               </h3>
               <p className="text-sm text-steel mt-1">
@@ -1407,7 +1407,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
               <summary className="cursor-pointer text-sm font-medium text-light-green hover:text-green transition-colors list-none flex items-center gap-1">
                 View extracted text <span className="text-xs text-steel/50 font-normal">(reference only)</span>
               </summary>
-              <div className="mt-2 bg-eggshell rounded-xl border border-gray-100 p-3 overflow-auto max-h-60 whitespace-pre-wrap text-xs text-steel">
+              <div className="mt-2 bg-eggshell rounded-xl border border-stone-100 p-3 overflow-auto max-h-60 whitespace-pre-wrap text-xs text-steel">
                 {extractedRecipeText}
               </div>
             </details>
@@ -1416,21 +1416,10 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
       )}
 
       {/* Basics */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
+      <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-6 space-y-5">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold text-cast-iron">Basics</h2>
-          <div className="flex items-center bg-gray-100 p-1 rounded-xl">
-            <button
-              type="button"
-              onClick={() => setVisibility('public')}
-              title="Anyone can view this recipe"
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                visibility === 'public' ? 'bg-white text-light-green shadow-sm' : 'text-steel hover:text-cast-iron'
-              }`}
-            >
-              <FiGlobe className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Public</span>
-            </button>
+          <div className="flex items-center bg-stone-100 p-1 rounded-xl">
             <button
               type="button"
               onClick={() => setVisibility('friends')}
@@ -1462,7 +1451,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
             id="name"
             type="text"
             placeholder="e.g. Grandma's Lasagna"
-            className="block w-full border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-3 px-4 text-base"
+            className="block w-full border border-stone-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-3 px-4 text-base"
             {...register('name', { required: true })}
           />
           {errors.name && <p className="mt-1 text-sm text-red-500">Recipe name is required</p>}
@@ -1471,15 +1460,15 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
         <div className="grid grid-cols-3 gap-4">
           <div>
             <label htmlFor="servings" className="block text-sm font-medium text-cast-iron mb-1.5">Servings</label>
-            <input id="servings" type="text" placeholder="e.g. 4" className="block w-full border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2.5 px-3 text-sm" {...register('servings')} />
+            <input id="servings" type="text" placeholder="e.g. 4" className="block w-full border border-stone-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2.5 px-3 text-sm" {...register('servings')} />
           </div>
           <div>
             <label htmlFor="prepTime" className="block text-sm font-medium text-cast-iron mb-1.5">Prep time</label>
-            <input id="prepTime" type="text" placeholder="e.g. 15 mins" className="block w-full border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2.5 px-3 text-sm" {...register('prepTime')} />
+            <input id="prepTime" type="text" placeholder="e.g. 15 mins" className="block w-full border border-stone-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2.5 px-3 text-sm" {...register('prepTime')} />
           </div>
           <div>
             <label htmlFor="cookTime" className="block text-sm font-medium text-cast-iron mb-1.5">Cook time</label>
-            <input id="cookTime" type="text" placeholder="e.g. 30 mins" className="block w-full border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2.5 px-3 text-sm" {...register('cookTime')} />
+            <input id="cookTime" type="text" placeholder="e.g. 30 mins" className="block w-full border border-stone-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2.5 px-3 text-sm" {...register('cookTime')} />
           </div>
         </div>
       </div>
@@ -1488,7 +1477,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
 
         {/* Ingredients */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-6">
           <h2 className="text-lg font-bold text-cast-iron mb-4">Ingredients</h2>
 
           <div className="space-y-1">
@@ -1521,20 +1510,20 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
                           <div key={ingredient.id} className="flex items-center gap-2 py-1">
                             <input
                               placeholder="Amt"
-                              className="w-14 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2 px-2 text-sm text-center"
+                              className="w-14 border border-stone-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2 px-2 text-sm text-center"
                               value={ingredient.amount}
                               onChange={(e) => updateIngredient(globalIndex, 'amount', e.target.value)}
                             />
                             <input
                               placeholder="Unit"
-                              className="w-[4.5rem] border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2 px-2 text-sm"
+                              className="w-[4.5rem] border border-stone-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2 px-2 text-sm"
                               value={ingredient.unit}
                               onChange={(e) => updateIngredient(globalIndex, 'unit', e.target.value)}
                             />
                             <input
                               placeholder="Ingredient"
                               required
-                              className="flex-1 min-w-0 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2 px-3 text-sm"
+                              className="flex-1 min-w-0 border border-stone-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2 px-3 text-sm"
                               value={ingredient.item}
                               onChange={(e) => updateIngredient(globalIndex, 'item', e.target.value)}
                             />
@@ -1553,7 +1542,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
             })()}
           </div>
 
-          <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
+          <div className="mt-4 pt-4 border-t border-stone-100 space-y-3">
             <button type="button" onClick={() => addIngredient()} className="flex items-center gap-1.5 text-sm font-medium text-light-green hover:text-green transition-colors">
               <FiPlus className="w-4 h-4" /> Add ingredient
             </button>
@@ -1564,7 +1553,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
                 placeholder="New section (e.g. For the sauce)"
                 value={newGroupName}
                 onChange={(e) => setNewGroupName(e.target.value)}
-                className="flex-1 text-sm border border-gray-200 rounded-lg py-1.5 px-3 focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors"
+                className="flex-1 text-sm border border-stone-200 rounded-lg py-1.5 px-3 focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors"
                 onKeyPress={(e) => {
                   if (e.key === 'Enter') { e.preventDefault(); addIngredientGroup(); }
                 }}
@@ -1577,7 +1566,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
         </div>
 
         {/* Instructions */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-6">
           <h2 className="text-lg font-bold text-cast-iron mb-4">Instructions</h2>
 
           <div className="space-y-1">
@@ -1616,7 +1605,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
                               placeholder="Describe this step"
                               required
                               rows={1}
-                              className="flex-1 min-w-0 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2 px-3 text-sm resize-none overflow-hidden"
+                              className="flex-1 min-w-0 border border-stone-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2 px-3 text-sm resize-none overflow-hidden"
                               value={instruction.text}
                               onChange={(e) => {
                                 updateInstruction(globalIndex, 'text', e.target.value);
@@ -1639,7 +1628,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
             })()}
           </div>
 
-          <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
+          <div className="mt-4 pt-4 border-t border-stone-100 space-y-3">
             <button type="button" onClick={() => addInstruction()} className="flex items-center gap-1.5 text-sm font-medium text-light-green hover:text-green transition-colors">
               <FiPlus className="w-4 h-4" /> Add step
             </button>
@@ -1650,7 +1639,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
                 placeholder="New section (e.g. For the sauce)"
                 value={newInstructionGroupName}
                 onChange={(e) => setNewInstructionGroupName(e.target.value)}
-                className="flex-1 text-sm border border-gray-200 rounded-lg py-1.5 px-3 focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors"
+                className="flex-1 text-sm border border-stone-200 rounded-lg py-1.5 px-3 focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors"
                 onKeyPress={(e) => {
                   if (e.key === 'Enter') { e.preventDefault(); addInstructionGroup(); }
                 }}
@@ -1664,12 +1653,12 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
       </div>
 
       {/* More options */}
-      <details className="group bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <details className="group bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
         <summary className="flex items-center justify-between px-6 py-4 cursor-pointer select-none list-none">
           <span className="text-sm font-medium text-cast-iron">More options</span>
           <span className="text-steel/40 text-xs">▼</span>
         </summary>
-        <div className="px-6 pb-6 pt-5 border-t border-gray-100 space-y-6">
+        <div className="px-6 pb-6 pt-5 border-t border-stone-100 space-y-6">
 
           {/* Image */}
           <div>
@@ -1700,17 +1689,17 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
               <input
                 id="imageUrl"
                 placeholder="Or paste an image URL"
-                className="flex-1 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2.5 px-4 text-sm"
+                className="flex-1 border border-stone-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2.5 px-4 text-sm"
                 type="text"
                 value={imageUrl}
                 onChange={handleImageUrlChange}
               />
-              <button type="button" onClick={validateAndPreviewImage} className="border border-gray-200 text-steel hover:border-light-green hover:text-light-green rounded-xl px-4 py-2.5 text-sm font-medium transition-colors whitespace-nowrap">
+              <button type="button" onClick={validateAndPreviewImage} className="border border-stone-200 text-steel hover:border-light-green hover:text-light-green rounded-xl px-4 py-2.5 text-sm font-medium transition-colors whitespace-nowrap">
                 Preview
               </button>
             </div>
             {isPreviewingImage && imageUrl && (
-              <div className="mt-3 w-full h-40 rounded-xl overflow-hidden border border-gray-100">
+              <div className="mt-3 w-full h-40 rounded-xl overflow-hidden border border-stone-100">
                 <img src={imageUrl} alt="Recipe preview" className="w-full h-full object-cover" />
               </div>
             )}
@@ -1723,7 +1712,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
             <input
               id="sourceUrl"
               placeholder="https://example.com/recipe"
-              className="block w-full border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2.5 px-4 text-sm"
+              className="block w-full border border-stone-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2.5 px-4 text-sm"
               type="url"
               {...register('sourceUrl')}
             />
@@ -1734,7 +1723,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
             <label className="block text-sm font-medium text-cast-iron mb-3">Categories</label>
             {isLoadingCategories ? (
               <div className="py-4 flex justify-center">
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-200 border-t-light-green" />
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-stone-200 border-t-light-green" />
               </div>
             ) : (
               <div className="flex flex-wrap gap-2 mb-3">
@@ -1747,7 +1736,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
                     className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-150 focus:outline-none active:scale-95 ${
                       selectedCategories.includes(category)
                         ? 'bg-light-green text-white'
-                        : 'bg-eggshell text-steel hover:bg-gray-100 border border-gray-100'
+                        : 'bg-eggshell text-steel hover:bg-stone-100 border border-stone-100'
                     }`}
                   >
                     {category}
@@ -1759,7 +1748,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
               <input
                 type="text"
                 placeholder="New category..."
-                className="flex-1 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2 px-3 text-sm"
+                className="flex-1 border border-stone-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2 px-3 text-sm"
                 value={newCategory}
                 onChange={(e) => setNewCategory(e.target.value)}
               />

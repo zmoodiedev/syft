@@ -160,7 +160,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 } else if (pathname !== '/login' &&
                     pathname !== '/' &&
                     pathname !== '/pricing' &&
-                    pathname !== '/who-we-are' &&
+                    pathname !== '/about' &&
                     pathname !== '/contact' &&
                     pathname !== '/terms-of-service' &&
                     pathname !== '/privacy-policy' &&

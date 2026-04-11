@@ -37,7 +37,7 @@ export default function Footer() {
               <p className="text-xs font-semibold text-white/35 uppercase tracking-widest mb-5">Product</p>
               <ul className="space-y-3 text-sm">
                 <li><Link href="/pricing"     className="text-white/60 hover:text-white transition-colors">Pricing</Link></li>
-                <li><Link href="/who-we-are"  className="text-white/60 hover:text-white transition-colors">Who We Are</Link></li>
+                <li><Link href="/about"  className="text-white/60 hover:text-white transition-colors">Who We Are</Link></li>
                 <li><Link href="/roadmap"     className="text-white/60 hover:text-white transition-colors">Roadmap</Link></li>
                 <li><Link href="/contact"     className="text-white/60 hover:text-white transition-colors">Contact</Link></li>
               </ul>

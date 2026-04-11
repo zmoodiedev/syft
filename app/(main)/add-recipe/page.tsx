@@ -61,7 +61,7 @@ export default function AddRecipe() {
 
                 {/* Page header */}
                 <div className="mb-6">
-                    <h1 className="text-2xl font-bold text-cast-iron">Add a recipe</h1>
+                    <h1 className="text-3xl font-bold text-cast-iron">Add a recipe</h1>
                     <p className="text-sm text-steel mt-1">Choose how you want to add it.</p>
                 </div>
 
@@ -69,7 +69,7 @@ export default function AddRecipe() {
 
                     {/* Sidebar */}
                     <div className={`w-full lg:w-64 xl:w-72 flex-shrink-0 lg:sticky lg:top-8 ${mobileView === 'form' ? 'hidden lg:block' : 'block'}`}>
-                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
                             <div className="bg-cast-iron px-5 py-4">
                                 <p className="text-sm font-semibold text-white">Method</p>
                                 <p className="text-xs text-white/50 mt-0.5">How do you want to add it?</p>
@@ -83,11 +83,11 @@ export default function AddRecipe() {
                                             key={opt.id}
                                             onClick={() => handleSelect(opt.id)}
                                             className={`w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
-                                                active ? 'bg-light-green/10' : 'hover:bg-gray-50'
+                                                active ? 'bg-light-green/10' : 'hover:bg-stone-50'
                                             }`}
                                         >
                                             <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
-                                                active ? 'bg-light-green' : 'bg-gray-100'
+                                                active ? 'bg-light-green' : 'bg-stone-100'
                                             }`}>
                                                 <Icon className={`w-4 h-4 transition-colors ${active ? 'text-white' : 'text-steel'}`} />
                                             </div>

@@ -210,7 +210,7 @@ export default function RecipesPage() {
                     {/* Header */}
                     <div className="flex items-center justify-between gap-4 mb-6">
                         <div className="flex items-center gap-3">
-                            <h1 className="text-2xl font-bold text-cast-iron">
+                            <h1 className="text-3xl font-bold text-cast-iron">
                                 {isDemo ? 'Demo Recipes' : 'My Recipes'}
                             </h1>
                             {!loading && (
@@ -256,10 +256,10 @@ export default function RecipesPage() {
                                 placeholder="Search recipes..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-11 pr-4 py-2.5 border border-gray-200 rounded-xl text-cast-iron text-sm placeholder:text-steel/40 focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors bg-white"
+                                className="w-full pl-11 pr-4 py-2.5 border border-stone-200 rounded-xl text-cast-iron text-sm placeholder:text-steel/40 focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors bg-white"
                             />
                         </div>
-                        <div className="flex items-center bg-white border border-gray-200 rounded-xl p-1 flex-shrink-0">
+                        <div className="flex items-center bg-white border border-stone-200 rounded-xl p-1 flex-shrink-0">
                             <button
                                 onClick={() => setViewMode('cards')}
                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
@@ -293,7 +293,7 @@ export default function RecipesPage() {
                                     className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                                         selectedCategories.includes(category)
                                             ? 'bg-light-green text-white'
-                                            : 'bg-white text-steel border border-gray-200 hover:border-light-green hover:text-light-green'
+                                            : 'bg-white text-steel border border-stone-200 hover:border-light-green hover:text-light-green'
                                     }`}
                                     aria-pressed={selectedCategories.includes(category)}
                                 >
@@ -314,11 +314,13 @@ export default function RecipesPage() {
                     {/* Content */}
                     {loading ? (
                         <div className="flex justify-center py-24">
-                            <div className="animate-spin rounded-full h-10 w-10 border-2 border-gray-200 border-t-light-green" />
+                            <div className="animate-spin rounded-full h-10 w-10 border-2 border-stone-200 border-t-light-green" />
                         </div>
                     ) : sortedRecipes.length === 0 ? (
                         <div className="text-center py-24">
-                            <span className="text-5xl block mb-4">🍽️</span>
+                            <div className="w-14 h-14 bg-tomato/10 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                                <i className="fa-solid fa-utensils text-tomato text-xl" />
+                            </div>
                             <h3 className="text-xl font-bold text-cast-iron mb-2">
                                 {searchQuery
                                     ? 'No recipes match your search'
@@ -376,7 +378,7 @@ export default function RecipesPage() {
                             {hasMore && (
                                 <div ref={loaderRef} className="py-8 flex justify-center">
                                     {loadingMore && (
-                                        <div className="animate-spin rounded-full h-7 w-7 border-2 border-gray-200 border-t-light-green" />
+                                        <div className="animate-spin rounded-full h-7 w-7 border-2 border-stone-200 border-t-light-green" />
                                     )}
                                 </div>
                             )}

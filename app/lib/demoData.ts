@@ -10,7 +10,7 @@ export const DEMO_RECIPES: Recipe[] = [
     categories: ['Dinner', 'Italian', 'Pasta'],
     imageUrl: 'https://images.unsplash.com/photo-1622973536968-3ead9e780960?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
     userId: 'demo-user',
-    visibility: 'public',
+    visibility: 'friends',
     ingredients: [
       { amount: '1', unit: 'lb', item: 'ground beef', id: 'ing-1' },
       { amount: '1', unit: '', item: 'onion, diced', id: 'ing-2' },
@@ -41,7 +41,7 @@ export const DEMO_RECIPES: Recipe[] = [
     categories: ['Breakfast', 'American'],
     imageUrl: 'https://images.unsplash.com/photo-1528198622811-0842b4e50787?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
     userId: 'demo-user',
-    visibility: 'public',
+    visibility: 'friends',
     ingredients: [
       { amount: '1.5', unit: 'cups', item: 'all-purpose flour', id: 'ing-11' },
       { amount: '2', unit: 'tbsp', item: 'sugar', id: 'ing-12' },
@@ -72,7 +72,7 @@ export const DEMO_RECIPES: Recipe[] = [
     categories: ['Dessert', 'Baking', 'American'],
     imageUrl: 'https://images.unsplash.com/photo-1747494750619-e599070ee148?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
     userId: 'demo-user',
-    visibility: 'public',
+    visibility: 'friends',
     ingredients: [
       { amount: '2.25', unit: 'cups', item: 'all-purpose flour', id: 'ing-20' },
       { amount: '1', unit: 'tsp', item: 'baking soda', id: 'ing-21' },
@@ -103,7 +103,7 @@ export const DEMO_RECIPES: Recipe[] = [
     categories: ['Lunch', 'Salad', 'Mediterranean', 'Healthy'],
     imageUrl: 'https://images.unsplash.com/photo-1722032617357-7b09276b1a8d?q=80&w=1173&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
     userId: 'demo-user',
-    visibility: 'public',
+    visibility: 'friends',
     ingredients: [
       { amount: '4', unit: 'cups', item: 'mixed greens', id: 'ing-29' },
       { amount: '1', unit: 'cup', item: 'cherry tomatoes, halved', id: 'ing-30' },

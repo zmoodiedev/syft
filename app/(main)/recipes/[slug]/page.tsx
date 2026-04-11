@@ -13,7 +13,7 @@ import ConfirmModal from '@/app/components/ConfirmModal';
 import { toast } from 'react-hot-toast';
 import { deleteImage } from '@/lib/cloudinary';
 import { useFriends } from '@/app/context/FriendsContext';
-import { FiEdit, FiClock, FiUsers, FiShare2, FiTrash2, FiGlobe, FiLock, FiChevronLeft, FiExternalLink, FiSun } from 'react-icons/fi';
+import { FiEdit, FiClock, FiUsers, FiShare2, FiTrash2, FiLock, FiChevronLeft, FiExternalLink, FiSun } from 'react-icons/fi';
 import { useWakeLock } from '@/app/hooks/useWakeLock';
 import { getUserRelationship } from '@/app/lib/user';
 import { getUserRecipeCount } from '@/app/lib/recipe';
@@ -99,7 +99,7 @@ export default function RecipeDetail() {
   const [filteredFriends, setFilteredFriends] = useState<FriendItem[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [needsAuthentication, setNeedsAuthentication] = useState(false);
-  const [isCopied, setIsCopied] = useState(false);
+
   const { isActive: wakeLockActive, isSupported: wakeLockSupported, toggle: toggleWakeLock } = useWakeLock();
 
   useEffect(() => {
@@ -128,19 +128,11 @@ export default function RecipeDetail() {
           if (recipeSnap.exists()) {
             const recipeData = { id: recipeSnap.id, ...recipeSnap.data() } as Recipe;
 
-            if (recipeData.visibility === 'public' ||
-                (typeof recipeData.visibility === 'string' && recipeData.visibility.toLowerCase() === 'public')) {
-              setRecipe(recipeData);
-              setError('');
-              setLoading(false);
-              return;
-            }
-
             const isOwner = user ? recipeData.userId === user.uid : false;
 
             if (recipeData.visibility) {
               const visibilityStr = String(recipeData.visibility).toLowerCase();
-              if (visibilityStr === 'public' || isOwner) {
+              if (isOwner) {
                 setRecipe(recipeData);
                 setError('');
               } else if (visibilityStr === 'friends' && user) {
@@ -153,23 +145,24 @@ export default function RecipeDetail() {
                 }
               } else if (visibilityStr === 'private' && !isOwner) {
                 setError('This recipe is private');
+              } else if (!user) {
+                setError('Sign in to view this recipe');
+              } else {
+                setError('This recipe is only visible to friends of the owner');
               }
               setLoading(false);
               return;
             }
 
+            // Legacy: no visibility field — treat as friends-only
             const ownerRef = doc(db, 'users', recipeData.userId);
             const ownerSnap = await getDoc(ownerRef);
             if (ownerSnap.exists()) {
               const ownerData = ownerSnap.data();
-              const recipeVisibility = ownerData.recipeVisibility || 'public';
+              const recipeVisibility = ownerData.recipeVisibility || 'friends';
               setRecipeOwnerInfo({ displayName: ownerData.displayName || null, recipeVisibility });
 
-              if (recipeVisibility === 'public') {
-                setNeedsAuthentication(false);
-                setRecipe(recipeData);
-                setError('');
-              } else if (isOwner) {
+              if (isOwner) {
                 setRecipe(recipeData);
                 setError('');
               } else if (recipeVisibility === 'friends' && user) {
@@ -261,14 +254,6 @@ export default function RecipeDetail() {
     }
   };
 
-  const handleCopyLink = () => {
-    const url = `${window.location.origin}/recipes/${recipe?.id}`;
-    navigator.clipboard.writeText(url).then(() => {
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
-    });
-  };
-
   const handleSaveRecipe = async () => {
     if (!user || !recipe) return;
     setIsSaving(true);
@@ -308,9 +293,11 @@ export default function RecipeDetail() {
     return (
       <div className="min-h-screen bg-eggshell flex items-center justify-center">
         <div className="text-center px-6 max-w-sm">
-          <span className="text-5xl block mb-6">🔒</span>
+          <div className="w-14 h-14 bg-cast-iron/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <i className="fa-solid fa-lock text-cast-iron text-xl" />
+          </div>
           <h2 className="text-2xl font-bold text-cast-iron mb-2">Sign in to view this recipe</h2>
-          <p className="text-steel text-sm mb-8">This recipe may be public once you sign in.</p>
+          <p className="text-steel text-sm mb-8">Sign in to see if you have access to this recipe.</p>
           <div className="flex flex-col gap-3">
             <Button
               variant="primary"
@@ -435,11 +422,13 @@ export default function RecipeDetail() {
     <div className="min-h-screen bg-eggshell">
       {loading ? (
         <div className="flex justify-center items-center min-h-screen">
-          <div className="animate-spin rounded-full h-10 w-10 border-2 border-gray-200 border-t-light-green" />
+          <div className="animate-spin rounded-full h-10 w-10 border-2 border-stone-200 border-t-light-green" />
         </div>
       ) : error ? (
         <div className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center">
-          <span className="text-5xl block mb-6">🍽️</span>
+          <div className="w-14 h-14 bg-tomato/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <i className="fa-solid fa-utensils text-tomato text-xl" />
+          </div>
           <h2 className="text-xl font-bold text-cast-iron mb-2">{error}</h2>
           <Link href="/recipes" className="mt-6 text-sm text-steel hover:text-cast-iron transition-colors flex items-center gap-1">
             <FiChevronLeft className="h-4 w-4" /> Back to recipes
@@ -452,15 +441,12 @@ export default function RecipeDetail() {
             {/* Visibility badge */}
             {isOwner && (
               <div className={`absolute top-4 right-4 z-20 text-white text-xs font-medium px-2.5 py-1.5 rounded-full flex items-center gap-1.5 ${
-                String(recipe.visibility || 'public').toLowerCase() === 'private' ? 'bg-tomato' :
-                String(recipe.visibility || 'public').toLowerCase() === 'friends' ? 'bg-orange-500' :
-                'bg-light-green'
+                String(recipe.visibility || 'friends').toLowerCase() === 'private' ? 'bg-tomato' : 'bg-orange-500'
               }`}>
-                {String(recipe.visibility || 'public').toLowerCase() === 'private' ? <FiLock className="w-3 h-3" /> :
-                 String(recipe.visibility || 'public').toLowerCase() === 'friends' ? <FiUsers className="w-3 h-3" /> :
-                 <FiGlobe className="w-3 h-3" />}
-                {String(recipe.visibility || 'public').toLowerCase() === 'private' ? 'Private' :
-                 String(recipe.visibility || 'public').toLowerCase() === 'friends' ? 'Friends only' : 'Public'}
+                {String(recipe.visibility || 'friends').toLowerCase() === 'private'
+                  ? <FiLock className="w-3 h-3" />
+                  : <FiUsers className="w-3 h-3" />}
+                {String(recipe.visibility || 'friends').toLowerCase() === 'private' ? 'Private' : 'Friends only'}
               </div>
             )}
 
@@ -655,7 +641,7 @@ export default function RecipeDetail() {
                   className={`inline-flex items-center gap-2 pl-3.5 pr-4 py-2 rounded-full text-sm font-medium border transition-all active:scale-95 ${
                     wakeLockActive
                       ? 'bg-light-green border-light-green text-white shadow-sm shadow-light-green/20'
-                      : 'bg-white border-gray-200 text-steel'
+                      : 'bg-white border-stone-200 text-steel'
                   }`}
                 >
                   <FiSun className={`w-4 h-4 transition-transform ${wakeLockActive ? 'rotate-0' : '-rotate-12'}`} />
@@ -667,16 +653,16 @@ export default function RecipeDetail() {
             {/* Ingredients + Instructions */}
             <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-6">
               {/* Ingredients */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                <h2 className="text-lg font-bold text-cast-iron mb-5 pb-3 border-b border-gray-100">
+              <div className="bg-white rounded-3xl border border-stone-100 shadow-sm p-6">
+                <h2 className="text-lg font-bold text-cast-iron mb-5 pb-3 border-b border-stone-100">
                   Ingredients
                 </h2>
                 {renderIngredients(recipe.ingredients)}
               </div>
 
               {/* Instructions */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                <h2 className="text-lg font-bold text-cast-iron mb-5 pb-3 border-b border-gray-100">
+              <div className="bg-white rounded-3xl border border-stone-100 shadow-sm p-6">
+                <h2 className="text-lg font-bold text-cast-iron mb-5 pb-3 border-b border-stone-100">
                   Instructions
                 </h2>
                 {renderInstructions(recipe.instructions)}
@@ -686,7 +672,9 @@ export default function RecipeDetail() {
         </>
       ) : (
         <div className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center">
-          <span className="text-5xl block mb-6">🍽️</span>
+          <div className="w-14 h-14 bg-tomato/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <i className="fa-solid fa-utensils text-tomato text-xl" />
+          </div>
           <h2 className="text-xl font-bold text-cast-iron mb-2">Recipe not found</h2>
           <Link href="/recipes" className="mt-4 text-sm text-steel hover:text-cast-iron transition-colors flex items-center gap-1">
             <FiChevronLeft className="h-4 w-4" /> Back to recipes
@@ -697,28 +685,8 @@ export default function RecipeDetail() {
       {/* Share Modal */}
       {isShareModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-xl">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-xl">
             <h2 className="text-xl font-bold text-cast-iron mb-5">Share</h2>
-
-            {/* Copy link — public recipes only */}
-            {String(recipe?.visibility ?? 'public').toLowerCase() === 'public' && (
-              <div className="mb-6 p-4 bg-eggshell rounded-xl border border-gray-100">
-                <p className="text-xs font-semibold text-steel/50 uppercase tracking-wider mb-2">Public link</p>
-                <div className="flex items-center gap-2">
-                  <p className="text-sm text-steel truncate flex-1">{`${typeof window !== 'undefined' ? window.location.origin : ''}/recipes/${recipe?.id}`}</p>
-                  <button
-                    onClick={handleCopyLink}
-                    className={`flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${
-                      isCopied
-                        ? 'bg-light-green text-white'
-                        : 'bg-cast-iron text-white hover:bg-cast-iron/80'
-                    }`}
-                  >
-                    {isCopied ? 'Copied!' : 'Copy'}
-                  </button>
-                </div>
-              </div>
-            )}
 
             <div className="relative mb-4">
               <input
@@ -726,7 +694,7 @@ export default function RecipeDetail() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search friends..."
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm text-cast-iron placeholder:text-steel/50 focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors"
+                className="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm text-cast-iron placeholder:text-steel/50 focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors"
               />
             </div>
 
@@ -734,9 +702,9 @@ export default function RecipeDetail() {
               {filteredFriends.length > 0 ? (
                 <>
                   {filteredFriends.map(friend => (
-                    <div key={friend.id} className="flex items-center justify-between py-3 px-1 border-b border-gray-100 last:border-0">
+                    <div key={friend.id} className="flex items-center justify-between py-3 px-1 border-b border-stone-100 last:border-0">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                        <div className="w-9 h-9 rounded-full bg-stone-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                           {friend.photoURL ? (
                             <Image src={friend.photoURL} alt={friend.displayName || 'Friend'} width={36} height={36} className="object-cover h-full w-full" />
                           ) : (

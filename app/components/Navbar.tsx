@@ -463,7 +463,7 @@ export default function Navbar() {
                             </Link>
                         </li>
                         <li>
-                            <Link href="/who-we-are" className={`transition-colors ${pathname === '/who-we-are' ? 'text-cast-iron' : 'text-cast-iron/60 hover:text-cast-iron'}`}>
+                            <Link href="/about" className={`transition-colors ${pathname === '/about' ? 'text-cast-iron' : 'text-cast-iron/60 hover:text-cast-iron'}`}>
                                 About
                             </Link>
                         </li>

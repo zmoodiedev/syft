@@ -87,7 +87,7 @@ export default function UrlInput() {
                         value={url}
                         onChange={(e) => setUrl(e.target.value)}
                         placeholder="https://example.com/recipe"
-                        className="w-full border border-gray-200 rounded-xl py-3 px-4 text-cast-iron text-sm placeholder:text-steel/50 focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors bg-white"
+                        className="w-full border border-stone-200 rounded-xl py-3 px-4 text-cast-iron text-sm placeholder:text-steel/50 focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors bg-white"
                         required
                     />
                 </div>
@@ -111,7 +111,7 @@ export default function UrlInput() {
                 </Button>
             </form>
 
-            <div className="border-t border-gray-100 pt-6">
+            <div className="border-t border-stone-100 pt-6">
                 <h3 className="text-sm font-semibold text-cast-iron mb-2">A note on importing</h3>
                 <p className="text-sm text-steel mb-3">
                     We do our best to pull ingredients and steps automatically, but some sites block this kind of access. If it doesn&apos;t work, you can always enter the recipe manually.

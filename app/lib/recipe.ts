@@ -51,14 +51,8 @@ export async function getUserRecipes(
         firestoreLimit(limit)
       );
     } else {
-      // Not logged in - only show public recipes
-      q = query(
-        recipesRef,
-        where('userId', '==', userId),
-        where('visibility', '==', 'public'),
-        orderBy('__name__'),
-        firestoreLimit(limit)
-      );
+      // Not logged in - no recipes visible (all are friends-only or private)
+      return { recipes: [], lastVisible: null };
     }
     
     // If there's a last visible document, start after it for pagination
@@ -80,14 +74,8 @@ export async function getUserRecipes(
           firestoreLimit(limit)
         );
       } else {
-        q = query(
-          recipesRef,
-          where('userId', '==', userId),
-          where('visibility', '==', 'public'),
-          orderBy('__name__'),
-          startAfter(lastVisible),
-          firestoreLimit(limit)
-        );
+        // Not logged in - no recipes visible
+        return { recipes: [], lastVisible: null };
       }
     }
     
@@ -114,7 +102,7 @@ export async function getUserRecipes(
       // For a complete implementation, you would check friendship status here
       // This simplified version just filters out private recipes
       recipes = recipes.filter(recipe => {
-        const visibility = recipe.visibility?.toLowerCase() || 'public';
+        const visibility = recipe.visibility?.toLowerCase() || 'friends';
         return visibility !== 'private';
       });
     }
@@ -196,23 +184,16 @@ export async function getUserStats(userId: string) {
           recipeCount = 0;
           recipesSnapshot.forEach(doc => {
             const data = doc.data();
-            const visibility = data.visibility?.toLowerCase() || 'public';
-            
-            if (visibility === 'public' || 
-                (visibility === 'friends' && isFriend)) {
+            const visibility = data.visibility?.toLowerCase() || 'friends';
+
+            if (visibility === 'friends' && isFriend) {
               recipeCount++;
             }
           });
         }
       } else {
-        // Not authenticated - only count public recipes
-        const recipesQuery = query(
-          recipesRef, 
-          where('userId', '==', userId),
-          where('visibility', '==', 'public')
-        );
-        const recipesSnapshot = await getDocs(recipesQuery);
-        recipeCount = recipesSnapshot.size;
+        // Not authenticated - no recipes visible
+        recipeCount = 0;
       }
     } catch (error) {
       console.error('Error counting recipes:', error);

@@ -4,11 +4,11 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { FiUser, FiSettings, FiBookmark, FiUserPlus, FiUserCheck, FiUserX, FiChevronDown, FiChevronRight, FiBell, FiTag, FiX } from 'react-icons/fi';
+import { FiUser, FiSettings, FiBookmark, FiUserPlus, FiUserCheck, FiChevronDown, FiChevronRight, FiBell, FiTag, FiX } from 'react-icons/fi';
 import { useAuth } from '@/app/context/AuthContext';
 import { useFriends } from '@/app/context/FriendsContext';
 import AddFriend from '@/app/components/AddFriend';
-import { getUserProfile, getUserRelationship, followUser, unfollowUser, getFollowingList, updateUserProfile } from '@/app/lib/user';
+import { getUserProfile, getUserRelationship, updateUserProfile } from '@/app/lib/user';
 import { getUserRecipes, getUserStats } from '@/app/lib/recipe';
 import { getUserNotifications, getUnreadNotificationCount, markAllNotificationsAsRead } from '@/app/lib/notification';
 import { UserProfile, UserRelationship, UserStats, Notification } from '@/app/models/User';
@@ -35,7 +35,6 @@ export default function ProfilePage() {
     followingCount: 0
   });
   const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [followingUsers, setFollowingUsers] = useState<{id: string, displayName: string | null, photoURL: string | null}[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [hasMoreRecipes, setHasMoreRecipes] = useState(true);
@@ -97,7 +96,6 @@ export default function ProfilePage() {
       setRecipes([]);
       setLastVisible(null);
       setHasMoreRecipes(true);
-      setFollowingUsers([]);
       setNotifications([]);
       setUnreadNotificationCount(0);
       
@@ -154,18 +152,8 @@ export default function ProfilePage() {
             // Continue with empty recipes array
           }
           
-          // If this is the user's own profile, load their following list
+          // If this is the user's own profile, load notifications
           if (isOwnProfile) {
-            try {
-              const following = await getFollowingList(id as string);
-              setFollowingUsers(following);
-            } catch (followingError) {
-              console.error('Error loading following list:', followingError);
-              // Continue with empty following list
-              setFollowingUsers([]);
-            }
-            
-            // Load notifications for own profile
             try {
               const userNotifications = await getUserNotifications(id as string);
               setNotifications(userNotifications);
@@ -222,68 +210,6 @@ export default function ProfilePage() {
       console.error('Error loading more recipes:', error);
     } finally {
       setLoadingMoreRecipes(false);
-    }
-  };
-  
-  const handleFollow = async () => {
-    if (!user || !id || !relationship) return;
-    
-    try {
-      let success = false;
-      
-      if (relationship.isFollowing) {
-        // Try to unfollow
-        success = await unfollowUser(user.uid, id as string);
-        if (success) {
-          // Update UI immediately for better user experience
-          setRelationship({ ...relationship, isFollowing: false });
-          
-          // Update following count in stats
-          setUserStats(prev => ({
-            ...prev,
-            followingCount: Math.max(0, prev.followingCount - 1)  // Prevent negative values
-          }));
-          
-          // If we're on our own profile, refresh the following list
-          if (user.uid === id) {
-            try {
-              const following = await getFollowingList(user.uid);
-              setFollowingUsers(following);
-            } catch (error) {
-              console.error('Error refreshing following list:', error);
-            }
-          }
-        }
-      } else {
-        // Try to follow
-        success = await followUser(user.uid, id as string);
-        if (success) {
-          // Update UI immediately for better user experience
-          setRelationship({ ...relationship, isFollowing: true });
-          
-          // Update following count in stats
-          setUserStats(prev => ({
-            ...prev,
-            followingCount: prev.followingCount + 1
-          }));
-          
-          // If we're on our own profile, refresh the following list
-          if (user.uid === id) {
-            try {
-              const following = await getFollowingList(user.uid);
-              setFollowingUsers(following);
-            } catch (error) {
-              console.error('Error refreshing following list:', error);
-            }
-          }
-        }
-      }
-      
-      if (!success) {
-        console.warn("Follow action couldn't be completed due to permissions");
-      }
-    } catch (error) {
-      console.error('Error updating follow status:', error);
     }
   };
   
@@ -426,9 +352,12 @@ export default function ProfilePage() {
   
   if (!profile) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center">
-        <h1 className="text-2xl font-bold mb-2">User Not Found</h1>
-        <p className="text-gray-600">This user doesn&apos;t exist or their profile is private.</p>
+      <div className="min-h-screen bg-eggshell flex flex-col items-center justify-center gap-3">
+        <div className="w-14 h-14 bg-cast-iron/10 rounded-2xl flex items-center justify-center">
+          <i className="fa-solid fa-user-slash text-cast-iron text-xl" />
+        </div>
+        <h1 className="text-2xl font-bold text-cast-iron">User not found</h1>
+        <p className="text-steel text-sm">This user doesn&apos;t exist or their profile is private.</p>
       </div>
     );
   }
@@ -463,31 +392,30 @@ export default function ProfilePage() {
         <div className="flex flex-col lg:flex-row gap-6 items-start">
           {/* Sidebar */}
           <div className="w-full lg:w-72 xl:w-80 flex-shrink-0 lg:sticky lg:top-8">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="relative pt-10">
 
-              {/* Banner */}
-              <div className="h-24 bg-cast-iron" />
-
-              {/* Avatar + info */}
-              <div className="px-5 pb-5">
-                <div className="-mt-10 mb-3">
-                  <div className="h-20 w-20 rounded-full border-4 border-white overflow-hidden shadow-sm bg-white">
-                    {profile.photoURL ? (
-                      <Image
-                        src={profile.photoURL}
-                        alt={profile.displayName || 'User'}
-                        width={80}
-                        height={80}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="h-full w-full flex items-center justify-center bg-light-green">
-                        <FiUser className="h-8 w-8 text-white" />
-                      </div>
-                    )}
-                  </div>
+              {/* Avatar — hangs above the card */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 z-10">
+                <div className="h-24 w-24 rounded-full border-4 border-eggshell overflow-hidden shadow-md bg-white">
+                  {profile.photoURL ? (
+                    <Image
+                      src={profile.photoURL}
+                      alt={profile.displayName || 'User'}
+                      width={80}
+                      height={80}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="h-full w-full flex items-center justify-center bg-light-green">
+                      <FiUser className="h-8 w-8 text-white" />
+                    </div>
+                  )}
                 </div>
+              </div>
 
+              <div className="bg-white rounded-3xl border border-stone-100 shadow-sm">
+              {/* Info */}
+              <div className="px-5 pt-16 pb-5">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
                   <h1 className="text-xl font-bold text-cast-iron">{profile.displayName || 'User'}</h1>
                   {isOwnProfile && <UserTierBadge tier={profile.tier} />}
@@ -498,7 +426,7 @@ export default function ProfilePage() {
                 )}
 
                 {/* Stats */}
-                <div className="grid grid-cols-3 gap-2 py-4 border-t border-b border-gray-100 my-4">
+                <div className="grid grid-cols-2 gap-2 py-4 border-t border-b border-stone-100 my-4">
                   <div className="text-center">
                     <p className="text-xl font-bold text-cast-iron">{userStats.recipeCount}</p>
                     <p className="text-xs text-steel/60 mt-0.5">Recipes</p>
@@ -506,10 +434,6 @@ export default function ProfilePage() {
                   <div className="text-center">
                     <p className="text-xl font-bold text-cast-iron">{userStats.friendCount}</p>
                     <p className="text-xs text-steel/60 mt-0.5">Friends</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xl font-bold text-cast-iron">{userStats.followerCount}</p>
-                    <p className="text-xs text-steel/60 mt-0.5">Followers</p>
                   </div>
                 </div>
 
@@ -538,32 +462,20 @@ export default function ProfilePage() {
                           Request Sent
                         </Button>
                       )}
-                      {relationship && (
-                        <Button
-                          variant={relationship.isFollowing ? 'outline' : 'secondary'}
-                          className="w-full flex items-center justify-center gap-2"
-                          onClick={handleFollow}
-                        >
-                          {relationship.isFollowing ? (
-                            <><FiUserX size={15} /> Unfollow</>
-                          ) : (
-                            <><FiUserPlus size={15} /> Follow</>
-                          )}
-                        </Button>
-                      )}
                     </>
                   )}
                 </div>
               </div>
+              </div>
             </div>
           </div>
-          
+
           {/* Main content */}
           <div className="flex-1 min-w-0">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-3xl border border-stone-100 shadow-sm overflow-hidden">
 
               {/* Tabs */}
-              <div className="border-b border-gray-100 relative">
+              <div className="border-b border-stone-100 relative">
                 <div className={`absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent z-10 flex items-center pointer-events-none md:hidden transition-opacity duration-200 ${showLeftScroll ? 'opacity-100' : 'opacity-0'}`}>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-steel ml-1" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -575,8 +487,7 @@ export default function ProfilePage() {
                     { id: 'recipes',       label: 'Recipes',      icon: FiBookmark, badge: 0,                      show: true },
                     { id: 'categories',    label: 'Categories',   icon: FiTag,      badge: 0,                      show: isOwnProfile },
                     { id: 'friends',       label: `Friends${userStats.friendCount > 0 ? ` (${userStats.friendCount})` : ''}`,     icon: FiUser,     badge: 0, show: isOwnProfile || (profile as UserProfile).friendsVisibility === 'public' || !!(relationship?.isFriend) },
-                    { id: 'following',     label: `Following${userStats.followingCount > 0 ? ` (${userStats.followingCount})` : ''}`, icon: FiUser, badge: 0, show: isOwnProfile },
-                    { id: 'notifications', label: 'Notifications', icon: FiBell,     badge: unreadNotificationCount, show: isOwnProfile },
+{ id: 'notifications', label: 'Notifications', icon: FiBell,     badge: unreadNotificationCount, show: isOwnProfile },
                   ] as { id: string; label: string; icon: React.ElementType; badge: number; show: boolean }[])
                     .filter(t => t.show)
                     .map(t => {
@@ -588,7 +499,7 @@ export default function ProfilePage() {
                           className={`flex items-center gap-1.5 py-4 px-3 mr-1 border-b-2 text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors ${
                             activeTab === t.id
                               ? 'border-light-green text-light-green'
-                              : 'border-transparent text-steel hover:text-cast-iron hover:border-gray-200'
+                              : 'border-transparent text-steel hover:text-cast-iron hover:border-stone-200'
                           }`}
                         >
                           <Icon className="w-3.5 h-3.5" />
@@ -616,7 +527,9 @@ export default function ProfilePage() {
                 {/* Recipes */}
                 {activeTab === 'recipes' && (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <span className="text-4xl block mb-4">🍽️</span>
+                    <div className="w-12 h-12 bg-tomato/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <i className="fa-solid fa-utensils text-tomato" />
+                    </div>
                     <h3 className="text-base font-bold text-cast-iron mb-1">
                       {isOwnProfile
                         ? `You have ${userStats.recipeCount} recipe${userStats.recipeCount !== 1 ? 's' : ''}`
@@ -660,7 +573,7 @@ export default function ProfilePage() {
                         ((profile as UserProfile).friendsVisibility === 'public' && friends.length > 0) ||
                         (relationship?.isFriend && friends.length > 0)) ? (
                         friends.map(friend => (
-                          <div key={friend.id} className="flex items-center gap-3 p-3 rounded-2xl border border-gray-100 hover:border-gray-200 transition-colors">
+                          <div key={friend.id} className="flex items-center gap-3 p-3 rounded-2xl border border-stone-100 hover:border-stone-200 transition-colors">
                             <div className="h-10 w-10 rounded-full overflow-hidden bg-light-green/10 flex-shrink-0 flex items-center justify-center">
                               {friend.photoURL ? (
                                 <Image src={friend.photoURL} alt={friend.displayName || 'Friend'} width={40} height={40} className="h-full w-full object-cover" />
@@ -698,7 +611,7 @@ export default function ProfilePage() {
                         <h3 className="text-sm font-semibold text-cast-iron mb-3">Pending Requests</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           {outgoingRequests.map(request => (
-                            <div key={request.id} className="flex items-center gap-3 p-3 rounded-2xl border border-gray-100">
+                            <div key={request.id} className="flex items-center gap-3 p-3 rounded-2xl border border-stone-100">
                               <div className="h-10 w-10 rounded-full overflow-hidden bg-light-green/10 flex-shrink-0 flex items-center justify-center">
                                 {request.receiverPhotoURL ? (
                                   <Image src={request.receiverPhotoURL} alt={request.receiverName || 'User'} width={40} height={40} className="h-full w-full object-cover" />
@@ -714,7 +627,7 @@ export default function ProfilePage() {
                             </div>
                           ))}
                         </div>
-                        <div className="border-t border-gray-100 mt-6" />
+                        <div className="border-t border-stone-100 mt-6" />
                       </div>
                     )}
 
@@ -722,31 +635,6 @@ export default function ProfilePage() {
                       </>
                     )}
                   </>
-                )}
-
-                {/* Following */}
-                {activeTab === 'following' && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {followingUsers.length > 0 ? (
-                      followingUsers.map(followedUser => (
-                        <div key={followedUser.id} className="flex items-center gap-3 p-3 rounded-2xl border border-gray-100 hover:border-gray-200 transition-colors">
-                          <div className="h-10 w-10 rounded-full overflow-hidden bg-light-green/10 flex-shrink-0 flex items-center justify-center">
-                            {followedUser.photoURL ? (
-                              <Image src={followedUser.photoURL} alt={followedUser.displayName || 'User'} width={40} height={40} className="h-full w-full object-cover" />
-                            ) : (
-                              <FiUser className="h-5 w-5 text-light-green" />
-                            )}
-                          </div>
-                          <p className="flex-1 text-sm font-medium text-cast-iron truncate">{followedUser.displayName || 'User'}</p>
-                          <Button variant="outline" size="sm" href={`/profile/${followedUser.id}`} className="text-xs flex-shrink-0">View</Button>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="col-span-full text-center py-12">
-                        <p className="text-sm text-steel">You aren&apos;t following anyone yet.</p>
-                      </div>
-                    )}
-                  </div>
                 )}
 
                 {/* Categories */}
@@ -787,7 +675,7 @@ export default function ProfilePage() {
                         onChange={(e) => setNewCategory(e.target.value)}
                         onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddCategory(); } }}
                         placeholder="New category name..."
-                        className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-cast-iron placeholder:text-steel/40 focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors"
+                        className="flex-1 px-4 py-2.5 border border-stone-200 rounded-xl text-sm text-cast-iron placeholder:text-steel/40 focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors"
                       />
                       <Button variant="primary" size="sm" onClick={handleAddCategory}>
                         Add
@@ -800,7 +688,6 @@ export default function ProfilePage() {
                 {activeTab === 'notifications' && (
                   <div ref={notificationsRef}>
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-sm font-semibold text-cast-iron">Notifications</h3>
                       {notifications.length > 0 && unreadNotificationCount > 0 && (
                         <button
                           onClick={async () => {
@@ -815,7 +702,7 @@ export default function ProfilePage() {
                       )}
                     </div>
                     {notifications.length > 0 ? (
-                      <div className="divide-y divide-gray-100 rounded-2xl border border-gray-100 overflow-hidden">
+                      <div className="divide-y divide-stone-100 rounded-3xl border border-stone-100 overflow-hidden">
                         {notifications.map(notification => (
                           <NotificationItem
                             key={notification.id}

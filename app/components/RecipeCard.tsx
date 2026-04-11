@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { FiClock, FiGlobe, FiLock, FiUsers } from 'react-icons/fi';
+import { FiClock, FiLock, FiUsers } from 'react-icons/fi';
 import { useAuth } from '@/app/context/AuthContext';
 
 interface Recipe {
@@ -25,15 +25,14 @@ interface RecipeCardProps {
 const VISIBILITY_ICONS = {
   private: { icon: FiLock,  label: 'Private'     },
   friends: { icon: FiUsers, label: 'Friends only' },
-  public:  { icon: FiGlobe, label: 'Public'       },
 };
 
 export default function RecipeCard({ recipe, priority = false }: RecipeCardProps) {
   const { user } = useAuth();
   const isOwner = user?.uid === recipe.userId;
 
-  const visibilityKey = (recipe.visibility ?? 'public') as keyof typeof VISIBILITY_ICONS;
-  const vis = VISIBILITY_ICONS[visibilityKey] ?? VISIBILITY_ICONS.public;
+  const visibilityKey = (recipe.visibility ?? 'friends') as keyof typeof VISIBILITY_ICONS;
+  const vis = VISIBILITY_ICONS[visibilityKey] ?? VISIBILITY_ICONS.friends;
   const VisIcon = vis.icon;
 
   const totalTime = recipe.prepTime || recipe.cookTime

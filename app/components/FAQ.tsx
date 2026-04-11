@@ -19,7 +19,7 @@ const faqData = [
   },
   {
     question: "What's the difference between Free and Pro?",
-    answer: "Free gives you up to 15 recipes with full save and organize features. Pro removes that limit, unlocks the friends network, and lets you share recipes directly to other users' collections. $3.49/month or $24.99/year."
+    answer: "Free gives you up to 15 recipes with full save and organize features. Pro removes that limit, unlocks the friends network, and lets you share recipes directly to other users' collections."
   },
   {
     question: "Can I add my own recipes, not just ones from websites?",

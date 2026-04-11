@@ -30,8 +30,8 @@ const PLANS = [
         id: 'monthly' as PlanId,
         name: 'Pro',
         label: 'Monthly',
-        priceUSD: 4.99,
-        priceCAD: 6.99,
+        priceUSD: 3.49,
+        priceCAD: 4.82,
         period: '/month',
         tagline: 'Cancel anytime.',
         features: ['Unlimited recipes', 'Friends network', 'Recipe sharing', 'Priority support'],
@@ -43,8 +43,8 @@ const PLANS = [
         id: 'yearly' as PlanId,
         name: 'Pro',
         label: 'Yearly',
-        priceUSD: 23.00,
-        priceCAD: 32.00,
+        priceUSD: 24.99,
+        priceCAD: 34.49,
         period: '/year',
         tagline: 'Best value.',
         features: ['Unlimited recipes', 'Friends network', 'Recipe sharing', 'Priority support'],
@@ -54,12 +54,10 @@ const PLANS = [
     },
 ];
 
-const panelEmojis = [
-    { emoji: '🍅', style: { top: '12%', right: '11%' },   rotate: 12,  size: 'text-7xl', blur: 0,   opacity: 0.18 },
-    { emoji: '🥦', style: { top: '55%', right: '8%' },    rotate: -8,  size: 'text-6xl', blur: 0,   opacity: 0.15 },
-    { emoji: '🫙', style: { top: '30%', left: '10%' },    rotate: -14, size: 'text-5xl', blur: 1,   opacity: 0.12 },
-    { emoji: '🧅', style: { bottom: '18%', right: '20%'}, rotate: 9,   size: 'text-4xl', blur: 0.5, opacity: 0.12 },
-    { emoji: '🍯', style: { bottom: '10%', left: '12%' }, rotate: -6,  size: 'text-3xl', blur: 2,   opacity: 0.1  },
+const leftFeatures = [
+    { icon: 'fa-star',        text: 'Free to start, no card needed' },
+    { icon: 'fa-bookmark',    text: 'Import recipes from anywhere' },
+    { icon: 'fa-paper-plane', text: 'Share straight to friends\u2019 collections' },
 ];
 
 const slideVariants = {
@@ -72,9 +70,9 @@ export default function SignUpPage() {
     const { user, signUp, signInWithGoogle } = useAuth();
     const router = useRouter();
 
-    const [step, setStep]               = useState<Step>(1);
-    const [selectedPlan, setSelectedPlan] = useState<PlanId>('monthly');
-    const [currency, setCurrency]       = useState<Currency>('CAD');
+    const [step, setStep]                       = useState<Step>(1);
+    const [selectedPlan, setSelectedPlan]       = useState<PlanId>('monthly');
+    const [currency, setCurrency]               = useState<Currency>('USD');
 
     // Step 2 form
     const [displayName, setDisplayName]         = useState('');
@@ -186,42 +184,61 @@ export default function SignUpPage() {
     return (
         <div className="min-h-screen flex">
 
-            {/* Left panel — branding */}
-            <div className="hidden lg:flex lg:w-[44%] bg-cast-iron flex-col justify-between p-12 relative overflow-hidden">
-                {panelEmojis.map((item, i) => (
-                    <div key={i} className="absolute select-none pointer-events-none" style={{ ...item.style, opacity: item.opacity }}>
-                        <span
-                            className={`block ${item.size}`}
-                            style={{ transform: `rotate(${item.rotate}deg)`, filter: item.blur > 0 ? `blur(${item.blur}px)` : undefined }}
-                        >
-                            {item.emoji}
-                        </span>
-                    </div>
-                ))}
+            {/* Left panel — branding (desktop only) */}
+            <div className="hidden lg:flex lg:w-[44%] bg-cast-iron flex-col justify-between p-12 relative">
 
-                <Link href="/">
-                    <Image src="/logo_syft.svg" alt="Syft" width={0} height={0} priority className="h-[36px] w-auto brightness-0 invert" />
+                {/* Kitchen — ghost layer */}
+                <div className="absolute inset-0 pointer-events-none">
+                    <Image
+                        src="/images/branding/kitchen.png"
+                        alt=""
+                        fill
+                        className="object-cover opacity-[0.07]"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-cast-iron/60 to-transparent" />
+                </div>
+
+                {/* Ollie & Arthur — bottom-right corner, leaning off edge */}
+                <div className="absolute bottom-0 -right-16 pointer-events-none z-10">
+                    <Image
+                        src="/images/branding/ollie_arthur.png"
+                        alt=""
+                        width={380}
+                        height={275}
+                        className="w-[420px] h-auto"
+                    />
+                </div>
+
+                {/* Logo */}
+                <Link href="/" className="relative z-10">
+                    <Image
+                        src="/logo_syft.svg"
+                        alt="Syft"
+                        width={0}
+                        height={0}
+                        priority
+                        className="h-[36px] w-auto brightness-0 invert"
+                    />
                 </Link>
 
-                <div>
+                {/* Tagline + features */}
+                <div className="relative z-10">
                     <h2 className="text-4xl font-bold text-white leading-tight mb-8">
                         Start cooking<br />smarter.
                     </h2>
                     <ul className="space-y-4">
-                        {[
-                            { icon: '✨', text: 'Free to start, no card needed' },
-                            { icon: '📚', text: 'Import recipes from anywhere' },
-                            { icon: '🔒', text: 'Private by default, share when ready' },
-                        ].map(item => (
-                            <li key={item.icon} className="flex items-center gap-3 text-white/65 text-sm">
-                                <span className="text-xl">{item.icon}</span>
+                        {leftFeatures.map(item => (
+                            <li key={item.icon} className="flex items-center gap-3 text-white/60 text-sm">
+                                <div className="w-7 h-7 bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i className={`fa-solid ${item.icon} text-white/60 text-xs`} />
+                                </div>
                                 {item.text}
                             </li>
                         ))}
                     </ul>
                 </div>
 
-                <p className="text-white/20 text-xs">© {new Date().getFullYear()} Syft. All rights reserved.</p>
+                <p className="text-white/20 text-xs relative z-10">© {new Date().getFullYear()} Syft. All rights reserved.</p>
             </div>
 
             {/* Right panel — steps */}
@@ -248,7 +265,7 @@ export default function SignUpPage() {
                                     <h2 className="text-2xl font-bold text-cast-iron">Choose your plan</h2>
                                     <p className="text-steel text-sm mt-1">Start free. Upgrade anytime.</p>
                                 </div>
-                                <div className="flex items-center bg-white border border-gray-200 rounded-xl p-1 shadow-sm flex-shrink-0">
+                                <div className="flex items-center bg-white border border-stone-200 rounded-xl p-1 shadow-sm flex-shrink-0">
                                     {(['USD', 'CAD'] as Currency[]).map(c => (
                                         <button
                                             key={c}
@@ -271,7 +288,7 @@ export default function SignUpPage() {
                                         className={`w-full text-left p-5 rounded-2xl border-2 transition-all relative ${
                                             selectedPlan === plan.id
                                                 ? 'border-light-green bg-white shadow-md'
-                                                : 'border-gray-200 bg-white hover:border-gray-300'
+                                                : 'border-stone-200 bg-white hover:border-stone-300'
                                         }`}
                                     >
                                         {plan.badge && (
@@ -311,9 +328,8 @@ export default function SignUpPage() {
                                                 </div>
                                             </div>
 
-                                            {/* Radio indicator */}
                                             <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 mt-0.5 flex items-center justify-center transition-colors ${
-                                                selectedPlan === plan.id ? 'border-light-green bg-light-green' : 'border-gray-300'
+                                                selectedPlan === plan.id ? 'border-light-green bg-light-green' : 'border-stone-300'
                                             }`}>
                                                 {selectedPlan === plan.id && (
                                                     <div className="w-2 h-2 rounded-full bg-white" />
@@ -348,7 +364,6 @@ export default function SignUpPage() {
                             transition={{ duration: 0.2 }}
                             className="w-full max-w-md"
                         >
-                            {/* Step header */}
                             <div className="flex items-center justify-between mb-6">
                                 <button
                                     onClick={() => { setStep(1); setError(''); }}
@@ -362,7 +377,7 @@ export default function SignUpPage() {
                                 </span>
                             </div>
 
-                            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+                            <div className="bg-white rounded-3xl shadow-sm border border-stone-100 p-8">
                                 <h2 className="text-2xl font-bold text-cast-iron mb-1">Create your account</h2>
                                 <p className="text-steel text-sm mb-7">
                                     {selectedPlan === 'free' ? 'No credit card needed.' : 'Payment details on the next step.'}
@@ -386,7 +401,7 @@ export default function SignUpPage() {
                                             value={displayName}
                                             onChange={e => setDisplayName(e.target.value)}
                                             placeholder="How should we call you?"
-                                            className="border border-gray-200 rounded-xl w-full py-3 px-4 text-sm text-cast-iron placeholder:text-steel/40 focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors"
+                                            className="border border-stone-200 rounded-xl w-full py-3 px-4 text-sm text-cast-iron placeholder:text-steel/40 focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors"
                                             required
                                         />
                                     </div>
@@ -399,7 +414,7 @@ export default function SignUpPage() {
                                             id="email"
                                             value={email}
                                             onChange={e => setEmail(e.target.value)}
-                                            className="border border-gray-200 rounded-xl w-full py-3 px-4 text-sm text-cast-iron focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors"
+                                            className="border border-stone-200 rounded-xl w-full py-3 px-4 text-sm text-cast-iron focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors"
                                             required
                                         />
                                     </div>
@@ -413,7 +428,7 @@ export default function SignUpPage() {
                                             value={password}
                                             onChange={e => setPassword(e.target.value)}
                                             placeholder="Min. 6 characters"
-                                            className="border border-gray-200 rounded-xl w-full py-3 px-4 text-sm text-cast-iron placeholder:text-steel/40 focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors"
+                                            className="border border-stone-200 rounded-xl w-full py-3 px-4 text-sm text-cast-iron placeholder:text-steel/40 focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors"
                                             required
                                         />
                                     </div>
@@ -426,7 +441,7 @@ export default function SignUpPage() {
                                             id="confirmPassword"
                                             value={confirmPassword}
                                             onChange={e => setConfirmPassword(e.target.value)}
-                                            className="border border-gray-200 rounded-xl w-full py-3 px-4 text-sm text-cast-iron focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors"
+                                            className="border border-stone-200 rounded-xl w-full py-3 px-4 text-sm text-cast-iron focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors"
                                             required
                                         />
                                     </div>
@@ -453,7 +468,7 @@ export default function SignUpPage() {
                                 <div className="mt-6">
                                     <div className="relative">
                                         <div className="absolute inset-0 flex items-center">
-                                            <div className="w-full border-t border-gray-200" />
+                                            <div className="w-full border-t border-stone-100" />
                                         </div>
                                         <div className="relative flex justify-center text-sm">
                                             <span className="px-3 bg-white text-steel">Or continue with</span>
@@ -461,7 +476,7 @@ export default function SignUpPage() {
                                     </div>
                                     <button
                                         onClick={handleGoogleSignUp}
-                                        className="mt-4 w-full flex items-center justify-center bg-white border border-gray-200 text-cast-iron py-3 px-4 rounded-xl text-sm font-medium hover:bg-gray-50 transition-all"
+                                        className="mt-4 w-full flex items-center justify-center bg-white border border-stone-200 text-cast-iron py-3 px-4 rounded-xl text-sm font-medium hover:bg-stone-50 transition-all"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" className="mr-2">
                                             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -473,7 +488,7 @@ export default function SignUpPage() {
                                     </button>
                                 </div>
 
-                                <div className="text-center mt-6 pt-5 border-t border-gray-100">
+                                <div className="text-center mt-6 pt-5 border-t border-stone-100">
                                     <p className="text-sm text-steel">
                                         Already have an account?{' '}
                                         <Link href="/login" className="font-semibold text-light-green hover:underline">Sign in</Link>
@@ -497,12 +512,11 @@ export default function SignUpPage() {
                                 <span className="text-xs font-semibold text-steel/60 uppercase tracking-wider">Secure checkout</span>
                             </div>
 
-                            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+                            <div className="bg-white rounded-3xl shadow-sm border border-stone-100 p-8">
                                 <h2 className="text-2xl font-bold text-cast-iron mb-1">Set up billing</h2>
                                 <p className="text-steel text-sm mb-6">Review your plan and enter payment details.</p>
 
-                                {/* Order summary */}
-                                <div className="bg-eggshell rounded-xl p-4 mb-5 border border-gray-100">
+                                <div className="bg-eggshell rounded-2xl p-4 mb-5 border border-stone-100">
                                     <p className="text-xs font-semibold text-steel/50 uppercase tracking-wider mb-3">Order summary</p>
                                     <div className="flex items-center justify-between">
                                         <div>
@@ -515,18 +529,18 @@ export default function SignUpPage() {
                                         </div>
                                     </div>
                                     {selectedPlan === 'yearly' && (
-                                        <div className="mt-2 pt-2 border-t border-gray-200 flex items-center justify-between">
+                                        <div className="mt-2 pt-2 border-t border-stone-200 flex items-center justify-between">
                                             <p className="text-xs text-light-green font-semibold">Annual savings</p>
                                             <p className="text-xs text-light-green font-semibold">~62% off vs monthly</p>
                                         </div>
                                     )}
                                 </div>
 
-                                {/* Payment fields — collected by Stripe Checkout */}
+                                {/* Payment fields — decorative, collected by Stripe */}
                                 <div className="space-y-4 mb-6 opacity-40 pointer-events-none select-none" aria-hidden="true">
                                     <div>
                                         <label className="block text-sm font-medium text-cast-iron mb-1.5">Card number</label>
-                                        <div className="border border-gray-200 rounded-xl py-3 px-4 flex items-center gap-2 bg-gray-50">
+                                        <div className="border border-stone-200 rounded-xl py-3 px-4 flex items-center gap-2 bg-stone-50">
                                             <FiCreditCard className="w-4 h-4 text-steel/50" />
                                             <span className="text-steel/50 text-sm tracking-widest">•••• •••• •••• ••••</span>
                                         </div>
@@ -534,20 +548,20 @@ export default function SignUpPage() {
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
                                             <label className="block text-sm font-medium text-cast-iron mb-1.5">Expiry</label>
-                                            <div className="border border-gray-200 rounded-xl py-3 px-4 bg-gray-50">
+                                            <div className="border border-stone-200 rounded-xl py-3 px-4 bg-stone-50">
                                                 <span className="text-steel/50 text-sm">MM / YY</span>
                                             </div>
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-cast-iron mb-1.5">CVC</label>
-                                            <div className="border border-gray-200 rounded-xl py-3 px-4 bg-gray-50">
+                                            <div className="border border-stone-200 rounded-xl py-3 px-4 bg-stone-50">
                                                 <span className="text-steel/50 text-sm">•••</span>
                                             </div>
                                         </div>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-cast-iron mb-1.5">Name on card</label>
-                                        <div className="border border-gray-200 rounded-xl py-3 px-4 bg-gray-50">
+                                        <div className="border border-stone-200 rounded-xl py-3 px-4 bg-stone-50">
                                             <span className="text-steel/50 text-sm">Full name</span>
                                         </div>
                                     </div>

@@ -33,7 +33,7 @@ export default function RecipeListItem({ recipe, index }: RecipeListItemProps) {
     >
       <Link
         href={`/recipes/${recipe.id}`}
-        className="flex items-center justify-between bg-white border border-gray-100 rounded-2xl px-5 py-3.5 shadow-sm hover:shadow-md hover:border-gray-200 transition-all duration-200 group"
+        className="flex items-center justify-between bg-white border border-stone-100 rounded-2xl px-5 py-3.5 shadow-sm hover:shadow-md hover:border-stone-200 transition-all duration-200 group"
       >
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -56,7 +56,7 @@ export default function RecipeListItem({ recipe, index }: RecipeListItemProps) {
                 </span>
               )}
               {displayCategories.map(cat => (
-                <span key={cat} className="text-[10px] font-medium bg-eggshell text-steel/60 border border-gray-100 rounded-full px-2 py-0.5">
+                <span key={cat} className="text-[10px] font-medium bg-eggshell text-steel/60 border border-stone-100 rounded-full px-2 py-0.5">
                   {cat}
                 </span>
               ))}
