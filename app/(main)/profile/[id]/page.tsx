@@ -4,7 +4,9 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { FiUser, FiSettings, FiBookmark, FiUserPlus, FiUserCheck, FiChevronDown, FiChevronRight, FiBell, FiTag, FiX } from 'react-icons/fi';
+import { FiUser, FiSettings, FiBookmark, FiUserPlus, FiUserCheck, FiBell, FiTag, FiX } from 'react-icons/fi';
+import { motion } from 'framer-motion';
+import RecipeCard from '@/app/components/RecipeCard';
 import { useAuth } from '@/app/context/AuthContext';
 import { useFriends } from '@/app/context/FriendsContext';
 import AddFriend from '@/app/components/AddFriend';
@@ -168,7 +170,7 @@ export default function ProfilePage() {
         }
         
         // If not the user's own profile, load relationship info
-        if (user && id !== user.uid && profile) {
+        if (user && id !== user.uid && profileData) {
           try {
             const relationshipData = await getUserRelationship(user.uid, id as string);
             setRelationship(relationshipData);
@@ -364,100 +366,102 @@ export default function ProfilePage() {
   
   return (
     <>
-    <UpgradeModal
-      isOpen={showUpgradeModal}
-      onClose={() => setShowUpgradeModal(false)}
-      reason="social_features"
-    />
-    <ConfirmModal
-      isOpen={!!friendToRemove}
-      onClose={() => setFriendToRemove(null)}
-      onConfirm={handleConfirmRemoveFriend}
-      title="Remove friend"
-      message={`Remove ${friendToRemove?.name ?? 'this friend'}? They won't be notified.`}
-      confirmLabel="Remove"
-      loading={isRemovingFriend}
-    />
-    <ConfirmModal
-      isOpen={!!categoryToRemove}
-      onClose={() => setCategoryToRemove(null)}
-      onConfirm={handleConfirmRemoveCategory}
-      title="Remove category"
-      message={`Remove "${categoryToRemove}" from your categories? Recipes using it won't be affected.`}
-      confirmLabel="Remove"
-      loading={isRemovingCategory}
-    />
-    <div className="min-h-screen bg-eggshell">
-      <div className="container mx-auto px-6 py-10">
-        <div className="flex flex-col lg:flex-row gap-6 items-start">
-          {/* Sidebar */}
-          <div className="w-full lg:w-72 xl:w-80 flex-shrink-0 lg:sticky lg:top-8">
-            <div className="relative pt-10">
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        reason="social_features"
+      />
+      <ConfirmModal
+        isOpen={!!friendToRemove}
+        onClose={() => setFriendToRemove(null)}
+        onConfirm={handleConfirmRemoveFriend}
+        title="Remove friend"
+        message={`Remove ${friendToRemove?.name ?? 'this friend'}? They won't be notified.`}
+        confirmLabel="Remove"
+        loading={isRemovingFriend}
+      />
+      <ConfirmModal
+        isOpen={!!categoryToRemove}
+        onClose={() => setCategoryToRemove(null)}
+        onConfirm={handleConfirmRemoveCategory}
+        title="Remove category"
+        message={`Remove "${categoryToRemove}" from your categories? Recipes using it won't be affected.`}
+        confirmLabel="Remove"
+        loading={isRemovingCategory}
+      />
 
-              {/* Avatar — hangs above the card */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 z-10">
-                <div className="h-24 w-24 rounded-full border-4 border-eggshell overflow-hidden shadow-md bg-white">
-                  {profile.photoURL ? (
-                    <Image
-                      src={profile.photoURL}
-                      alt={profile.displayName || 'User'}
-                      width={80}
-                      height={80}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="h-full w-full flex items-center justify-center bg-light-green">
-                      <FiUser className="h-8 w-8 text-white" />
-                    </div>
-                  )}
-                </div>
+      <div className="min-h-screen bg-eggshell">
+        <div className="container mx-auto px-4 sm:px-6 py-10 max-w-5xl">
+
+          {/* Profile Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="bg-white rounded-3xl border border-stone-100 shadow-sm p-6 mb-5"
+          >
+            <div className="flex flex-col sm:flex-row items-start gap-5">
+              {/* Avatar */}
+              <div className="h-20 w-20 rounded-full overflow-hidden bg-light-green flex-shrink-0 shadow-sm">
+                {profile.photoURL ? (
+                  <Image
+                    src={profile.photoURL}
+                    alt={profile.displayName || 'User'}
+                    width={80}
+                    height={80}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center">
+                    <FiUser className="h-8 w-8 text-white" />
+                  </div>
+                )}
               </div>
 
-              <div className="bg-white rounded-3xl border border-stone-100 shadow-sm">
-              {/* Info */}
-              <div className="px-5 pt-16 pb-5">
-                <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <h1 className="text-xl font-bold text-cast-iron">{profile.displayName || 'User'}</h1>
-                  {isOwnProfile && <UserTierBadge tier={profile.tier} />}
+              {/* Info + Action */}
+              <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <h1 className="text-xl font-bold text-cast-iron">{profile.displayName || 'User'}</h1>
+                    {isOwnProfile && <UserTierBadge tier={profile.tier} />}
+                  </div>
+                  {profile.bio && (
+                    <p className="text-sm text-steel mb-3 max-w-lg">{profile.bio}</p>
+                  )}
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                    <span className="text-sm text-steel">
+                      <span className="font-semibold text-cast-iron">{userStats.recipeCount}</span> Recipes
+                    </span>
+                    <span className="text-steel/30 text-sm">·</span>
+                    <span className="text-sm text-steel">
+                      <span className="font-semibold text-cast-iron">{userStats.friendCount}</span> Friends
+                    </span>
+                    <span className="text-steel/30 text-sm hidden sm:inline">·</span>
+                    <span className="text-xs text-steel/40">
+                      Member since {profile.createdAt
+                        ? new Date(profile.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+                        : '—'}
+                    </span>
+                  </div>
                 </div>
 
-                {profile.bio && (
-                  <p className="text-sm text-steel mt-1 mb-4">{profile.bio}</p>
-                )}
-
-                {/* Stats */}
-                <div className="grid grid-cols-2 gap-2 py-4 border-t border-b border-stone-100 my-4">
-                  <div className="text-center">
-                    <p className="text-xl font-bold text-cast-iron">{userStats.recipeCount}</p>
-                    <p className="text-xs text-steel/60 mt-0.5">Recipes</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xl font-bold text-cast-iron">{userStats.friendCount}</p>
-                    <p className="text-xs text-steel/60 mt-0.5">Friends</p>
-                  </div>
-                </div>
-
-                <p className="text-xs text-steel/40 mb-4">
-                  Member since {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '—'}
-                </p>
-
-                {/* Actions */}
-                <div className="space-y-2">
+                {/* Action button */}
+                <div className="flex-shrink-0">
                   {isOwnProfile ? (
-                    <Button variant="secondary" className="w-full flex items-center justify-center gap-2" href="/profile/edit">
+                    <Button variant="secondary" className="flex items-center gap-2" href="/profile/edit">
                       <FiSettings size={15} />
                       Edit Profile
                     </Button>
                   ) : (
                     <>
                       {relationship && !relationship.isFriend && !relationship.isPendingFriend && (
-                        <Button variant="secondary" className="w-full flex items-center justify-center gap-2" onClick={handleSendFriendRequest}>
+                        <Button variant="secondary" className="flex items-center gap-2" onClick={handleSendFriendRequest}>
                           <FiUserPlus size={15} />
                           Add Friend
                         </Button>
                       )}
                       {relationship && relationship.isPendingFriend && (
-                        <Button variant="secondary" className="w-full flex items-center justify-center gap-2" disabled>
+                        <Button variant="secondary" className="flex items-center gap-2" disabled>
                           <FiUserCheck size={15} />
                           Request Sent
                         </Button>
@@ -466,273 +470,277 @@ export default function ProfilePage() {
                   )}
                 </div>
               </div>
+            </div>
+          </motion.div>
+
+          {/* Tabs + Content */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.08 }}
+            className="bg-white rounded-3xl border border-stone-100 shadow-sm overflow-hidden"
+          >
+            {/* Tab bar */}
+            <div className="border-b border-stone-100 relative">
+              <div className={`absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent z-10 flex items-center pointer-events-none md:hidden transition-opacity duration-200 ${showLeftScroll ? 'opacity-100' : 'opacity-0'}`}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-steel ml-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              </div>
+
+              <nav ref={tabsContainerRef} className="flex overflow-x-auto px-5 hide-scrollbar">
+                {([
+                  { id: 'recipes',       label: 'Recipes',       icon: FiBookmark, badge: 0,                      show: true },
+                  { id: 'categories',    label: 'Categories',    icon: FiTag,      badge: 0,                      show: isOwnProfile },
+                  { id: 'friends',       label: `Friends${userStats.friendCount > 0 ? ` (${userStats.friendCount})` : ''}`, icon: FiUser, badge: 0, show: isOwnProfile || (profile as UserProfile).friendsVisibility === 'public' || !!(relationship?.isFriend) },
+                  { id: 'notifications', label: 'Notifications', icon: FiBell,     badge: unreadNotificationCount, show: isOwnProfile },
+                ] as { id: string; label: string; icon: React.ElementType; badge: number; show: boolean }[])
+                  .filter(t => t.show)
+                  .map(t => {
+                    const Icon = t.icon;
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => setActiveTab(t.id)}
+                        className={`flex items-center gap-1.5 py-4 px-3 mr-1 border-b-2 text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors ${
+                          activeTab === t.id
+                            ? 'border-light-green text-light-green'
+                            : 'border-transparent text-steel hover:text-cast-iron hover:border-stone-200'
+                        }`}
+                      >
+                        <Icon className="w-3.5 h-3.5" />
+                        {t.label}
+                        {t.badge > 0 && (
+                          <span className="ml-0.5 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-light-green rounded-full">
+                            {t.badge}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+              </nav>
+
+              <div className={`absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent z-10 flex items-center justify-end pointer-events-none md:hidden transition-opacity duration-200 ${showRightScroll ? 'opacity-100' : 'opacity-0'}`}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-steel mr-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                </svg>
               </div>
             </div>
-          </div>
 
-          {/* Main content */}
-          <div className="flex-1 min-w-0">
-            <div className="bg-white rounded-3xl border border-stone-100 shadow-sm overflow-hidden">
+            {/* Tab content */}
+            <div className="p-6">
 
-              {/* Tabs */}
-              <div className="border-b border-stone-100 relative">
-                <div className={`absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent z-10 flex items-center pointer-events-none md:hidden transition-opacity duration-200 ${showLeftScroll ? 'opacity-100' : 'opacity-0'}`}>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-steel ml-1" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                </div>
-
-                <nav ref={tabsContainerRef} className="flex overflow-x-auto px-5 hide-scrollbar">
-                  {([
-                    { id: 'recipes',       label: 'Recipes',      icon: FiBookmark, badge: 0,                      show: true },
-                    { id: 'categories',    label: 'Categories',   icon: FiTag,      badge: 0,                      show: isOwnProfile },
-                    { id: 'friends',       label: `Friends${userStats.friendCount > 0 ? ` (${userStats.friendCount})` : ''}`,     icon: FiUser,     badge: 0, show: isOwnProfile || (profile as UserProfile).friendsVisibility === 'public' || !!(relationship?.isFriend) },
-{ id: 'notifications', label: 'Notifications', icon: FiBell,     badge: unreadNotificationCount, show: isOwnProfile },
-                  ] as { id: string; label: string; icon: React.ElementType; badge: number; show: boolean }[])
-                    .filter(t => t.show)
-                    .map(t => {
-                      const Icon = t.icon;
-                      return (
-                        <button
-                          key={t.id}
-                          onClick={() => setActiveTab(t.id)}
-                          className={`flex items-center gap-1.5 py-4 px-3 mr-1 border-b-2 text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors ${
-                            activeTab === t.id
-                              ? 'border-light-green text-light-green'
-                              : 'border-transparent text-steel hover:text-cast-iron hover:border-stone-200'
-                          }`}
-                        >
-                          <Icon className="w-3.5 h-3.5" />
-                          {t.label}
-                          {t.badge > 0 && (
-                            <span className="ml-0.5 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-light-green rounded-full">
-                              {t.badge}
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
-                </nav>
-
-                <div className={`absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent z-10 flex items-center justify-end pointer-events-none md:hidden transition-opacity duration-200 ${showRightScroll ? 'opacity-100' : 'opacity-0'}`}>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-steel mr-1" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                  </svg>
-                </div>
-              </div>
-
-              {/* Tab content */}
-              <div className="p-6">
-
-                {/* Recipes */}
-                {activeTab === 'recipes' && (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
+              {/* Recipes */}
+              {activeTab === 'recipes' && (
+                recipes.length > 0 ? (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {recipes.map((recipe, i) => (
+                        <RecipeCard key={recipe.id} recipe={recipe} priority={i < 3} />
+                      ))}
+                    </div>
+                    {hasMoreRecipes && (
+                      <div className="text-center mt-6">
+                        <Button variant="secondary" onClick={loadMoreRecipes} disabled={loadingMoreRecipes}>
+                          {loadingMoreRecipes ? 'Loading...' : 'Load more'}
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-16 text-center">
                     <div className="w-12 h-12 bg-tomato/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
                       <i className="fa-solid fa-utensils text-tomato" />
                     </div>
                     <h3 className="text-base font-bold text-cast-iron mb-1">
-                      {isOwnProfile
-                        ? `You have ${userStats.recipeCount} recipe${userStats.recipeCount !== 1 ? 's' : ''}`
-                        : `${profile.displayName || 'This user'} has ${userStats.recipeCount} recipe${userStats.recipeCount !== 1 ? 's' : ''}`}
+                      {isOwnProfile ? 'No recipes yet' : `${profile.displayName || 'This user'} hasn't shared any recipes`}
                     </h3>
-                    <p className="text-sm text-steel mb-6">
-                      {isOwnProfile ? 'Search, filter, and browse your collection.' : 'Browse their collection with search and filters.'}
-                    </p>
-                    <Button
-                      variant="secondary"
-                      href={isOwnProfile ? '/recipes' : `/profile/${id}/recipes`}
-                      className="flex items-center gap-2"
-                    >
-                      {isOwnProfile ? 'Go to My Recipes' : `Browse ${profile.displayName || 'their'} recipes`}
-                      <FiChevronRight className="w-4 h-4" />
-                    </Button>
+                    {isOwnProfile && (
+                      <Button variant="secondary" href="/add-recipe" className="mt-4">
+                        Add your first recipe
+                      </Button>
+                    )}
                   </div>
-                )}
+                )
+              )}
 
-                {/* Friends */}
-                {activeTab === 'friends' && (
-                  <>
-                    {isOwnProfile && userProfile?.tier === 'Free' ? (
-                      /* Upsell wall for Free users on own profile */
-                      <div className="text-center py-14">
-                        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-light-green/10 mb-4">
-                          <FiUserPlus className="w-6 h-6 text-light-green" />
-                        </div>
-                        <h3 className="text-base font-bold text-cast-iron mb-2">Friends is a Pro feature</h3>
-                        <p className="text-sm text-steel max-w-xs mx-auto mb-6">
-                          Add friends, share recipes, and browse each other&apos;s collections on Pro.
-                        </p>
-                        <Button variant="primary" onClick={() => setShowUpgradeModal(true)}>
-                          Upgrade to Pro
-                        </Button>
+              {/* Friends */}
+              {activeTab === 'friends' && (
+                <>
+                  {isOwnProfile && userProfile?.tier === 'Free' ? (
+                    <div className="text-center py-14">
+                      <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-light-green/10 mb-4">
+                        <FiUserPlus className="w-6 h-6 text-light-green" />
                       </div>
-                    ) : (
-                      <>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-                      {((isOwnProfile && friends.length > 0) ||
-                        ((profile as UserProfile).friendsVisibility === 'public' && friends.length > 0) ||
-                        (relationship?.isFriend && friends.length > 0)) ? (
-                        friends.map(friend => (
-                          <div key={friend.id} className="flex items-center gap-3 p-3 rounded-2xl border border-stone-100 hover:border-stone-200 transition-colors">
-                            <div className="h-10 w-10 rounded-full overflow-hidden bg-light-green/10 flex-shrink-0 flex items-center justify-center">
-                              {friend.photoURL ? (
-                                <Image src={friend.photoURL} alt={friend.displayName || 'Friend'} width={40} height={40} className="h-full w-full object-cover" />
-                              ) : (
-                                <FiUser className="h-5 w-5 text-light-green" />
-                              )}
-                            </div>
-                            <p className="flex-1 text-sm font-medium text-cast-iron truncate">{friend.displayName || 'User'}</p>
-                            <div className="flex items-center gap-1.5 flex-shrink-0">
-                              <Button variant="outline" size="sm" href={`/profile/${friend.id}`} className="text-xs">View</Button>
-                              {isOwnProfile && (
-                                <button
-                                  onClick={() => setFriendToRemove({ id: friend.id, name: friend.displayName || 'this friend' })}
-                                  className="text-xs font-medium text-steel/50 hover:text-tomato transition-colors px-2 py-1"
-                                >
-                                  Remove
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="col-span-full text-center py-12">
-                          <p className="text-sm text-steel">
-                            {(profile as UserProfile).friendsVisibility === 'private' && !isOwnProfile && !relationship?.isFriend
-                              ? "This user's friends list is private."
-                              : 'No friends to display.'}
-                          </p>
-                        </div>
-                      )}
+                      <h3 className="text-base font-bold text-cast-iron mb-2">Friends is a Pro feature</h3>
+                      <p className="text-sm text-steel max-w-xs mx-auto mb-6">
+                        Add friends, share recipes, and browse each other&apos;s collections on Pro.
+                      </p>
+                      <Button variant="primary" onClick={() => setShowUpgradeModal(true)}>
+                        Upgrade to Pro
+                      </Button>
                     </div>
-
-                    {isOwnProfile && outgoingRequests.length > 0 && (
-                      <div className="mb-6">
-                        <h3 className="text-sm font-semibold text-cast-iron mb-3">Pending Requests</h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {outgoingRequests.map(request => (
-                            <div key={request.id} className="flex items-center gap-3 p-3 rounded-2xl border border-stone-100">
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                        {((isOwnProfile && friends.length > 0) ||
+                          ((profile as UserProfile).friendsVisibility === 'public' && friends.length > 0) ||
+                          (relationship?.isFriend && friends.length > 0)) ? (
+                          friends.map(friend => (
+                            <div key={friend.id} className="flex items-center gap-3 p-3 rounded-2xl border border-stone-100 hover:border-stone-200 transition-colors">
                               <div className="h-10 w-10 rounded-full overflow-hidden bg-light-green/10 flex-shrink-0 flex items-center justify-center">
-                                {request.receiverPhotoURL ? (
-                                  <Image src={request.receiverPhotoURL} alt={request.receiverName || 'User'} width={40} height={40} className="h-full w-full object-cover" />
+                                {friend.photoURL ? (
+                                  <Image src={friend.photoURL} alt={friend.displayName || 'Friend'} width={40} height={40} className="h-full w-full object-cover" />
                                 ) : (
                                   <FiUser className="h-5 w-5 text-light-green" />
                                 )}
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-cast-iron truncate">{request.receiverName || 'User'}</p>
-                                <p className="text-xs text-steel/50">Request pending</p>
+                              <p className="flex-1 text-sm font-medium text-cast-iron truncate">{friend.displayName || 'User'}</p>
+                              <div className="flex items-center gap-1.5 flex-shrink-0">
+                                <Button variant="outline" size="sm" href={`/profile/${friend.id}`} className="text-xs">View</Button>
+                                {isOwnProfile && (
+                                  <button
+                                    onClick={() => setFriendToRemove({ id: friend.id, name: friend.displayName || 'this friend' })}
+                                    className="text-xs font-medium text-steel/50 hover:text-tomato transition-colors px-2 py-1"
+                                  >
+                                    Remove
+                                  </button>
+                                )}
                               </div>
-                              <Button variant="outline" size="sm" onClick={() => cancelFriendRequest(request.id)} className="text-xs flex-shrink-0">Cancel</Button>
                             </div>
-                          ))}
-                        </div>
-                        <div className="border-t border-stone-100 mt-6" />
-                      </div>
-                    )}
-
-                    {isOwnProfile && <AddFriend />}
-                      </>
-                    )}
-                  </>
-                )}
-
-                {/* Categories */}
-                {activeTab === 'categories' && isOwnProfile && (
-                  <div>
-                    <p className="text-xs text-steel/50 mb-5">
-                      These appear as options when adding or editing recipes.
-                    </p>
-
-                    {/* Existing categories */}
-                    {(profile.customCategories || []).length > 0 ? (
-                      <div className="flex flex-wrap gap-2 mb-5">
-                        {(profile.customCategories || []).map(cat => (
-                          <div
-                            key={cat}
-                            className="flex items-center gap-1.5 bg-light-green/10 text-light-green border border-light-green/20 rounded-full px-3 py-1.5 text-sm font-medium"
-                          >
-                            {cat}
-                            <button
-                              onClick={() => setCategoryToRemove(cat)}
-                              className="hover:text-green transition-colors"
-                              aria-label={`Remove ${cat}`}
-                            >
-                              <FiX className="w-3.5 h-3.5" />
-                            </button>
+                          ))
+                        ) : (
+                          <div className="col-span-full text-center py-12">
+                            <p className="text-sm text-steel">
+                              {(profile as UserProfile).friendsVisibility === 'private' && !isOwnProfile && !relationship?.isFriend
+                                ? "This user's friends list is private."
+                                : 'No friends to display.'}
+                            </p>
                           </div>
-                        ))}
+                        )}
                       </div>
-                    ) : (
-                      <p className="text-sm text-steel mb-5">No custom categories yet.</p>
-                    )}
 
-                    {/* Add new */}
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={newCategory}
-                        onChange={(e) => setNewCategory(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddCategory(); } }}
-                        placeholder="New category name..."
-                        className="flex-1 px-4 py-2.5 border border-stone-200 rounded-xl text-sm text-cast-iron placeholder:text-steel/40 focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors"
-                      />
-                      <Button variant="primary" size="sm" onClick={handleAddCategory}>
-                        Add
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Notifications */}
-                {activeTab === 'notifications' && (
-                  <div ref={notificationsRef}>
-                    <div className="flex items-center justify-between mb-4">
-                      {notifications.length > 0 && unreadNotificationCount > 0 && (
-                        <button
-                          onClick={async () => {
-                            await markAllNotificationsAsRead(user!.uid);
-                            setUnreadNotificationCount(0);
-                            setNotifications(notifications.map(n => ({ ...n, isRead: true })));
-                          }}
-                          className="text-xs font-medium text-light-green hover:text-green transition-colors"
-                        >
-                          Mark all as read
-                        </button>
+                      {isOwnProfile && outgoingRequests.length > 0 && (
+                        <div className="mb-6">
+                          <h3 className="text-sm font-semibold text-cast-iron mb-3">Pending Requests</h3>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {outgoingRequests.map(request => (
+                              <div key={request.id} className="flex items-center gap-3 p-3 rounded-2xl border border-stone-100">
+                                <div className="h-10 w-10 rounded-full overflow-hidden bg-light-green/10 flex-shrink-0 flex items-center justify-center">
+                                  {request.receiverPhotoURL ? (
+                                    <Image src={request.receiverPhotoURL} alt={request.receiverName || 'User'} width={40} height={40} className="h-full w-full object-cover" />
+                                  ) : (
+                                    <FiUser className="h-5 w-5 text-light-green" />
+                                  )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-cast-iron truncate">{request.receiverName || 'User'}</p>
+                                  <p className="text-xs text-steel/50">Request pending</p>
+                                </div>
+                                <Button variant="outline" size="sm" onClick={() => cancelFriendRequest(request.id)} className="text-xs flex-shrink-0">Cancel</Button>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="border-t border-stone-100 mt-6" />
+                        </div>
                       )}
+
+                      {isOwnProfile && <AddFriend />}
+                    </>
+                  )}
+                </>
+              )}
+
+              {/* Categories */}
+              {activeTab === 'categories' && isOwnProfile && (
+                <div>
+                  <p className="text-xs text-steel/50 mb-5">
+                    These appear as options when adding or editing recipes.
+                  </p>
+                  {(profile.customCategories || []).length > 0 ? (
+                    <div className="flex flex-wrap gap-2 mb-5">
+                      {(profile.customCategories || []).map(cat => (
+                        <div
+                          key={cat}
+                          className="flex items-center gap-1.5 bg-light-green/10 text-light-green border border-light-green/20 rounded-full px-3 py-1.5 text-sm font-medium"
+                        >
+                          {cat}
+                          <button
+                            onClick={() => setCategoryToRemove(cat)}
+                            className="hover:text-green transition-colors"
+                            aria-label={`Remove ${cat}`}
+                          >
+                            <FiX className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
                     </div>
-                    {notifications.length > 0 ? (
-                      <div className="divide-y divide-stone-100 rounded-3xl border border-stone-100 overflow-hidden">
-                        {notifications.map(notification => (
-                          <NotificationItem
-                            key={notification.id}
-                            notification={notification}
-                            onDelete={(id) => {
-                              setNotifications(notifications.filter(n => n.id !== id));
-                              if (!notification.isRead) {
-                                setUnreadNotificationCount(prev => Math.max(0, prev - 1));
-                              }
-                            }}
-                          />
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-16">
-                        <FiBell className="w-8 h-8 mx-auto mb-3 text-steel/30" />
-                        <p className="text-sm font-medium text-cast-iron mb-1">No notifications</p>
-                        <p className="text-xs text-steel">You&apos;re all caught up.</p>
-                      </div>
+                  ) : (
+                    <p className="text-sm text-steel mb-5">No custom categories yet.</p>
+                  )}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newCategory}
+                      onChange={(e) => setNewCategory(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddCategory(); } }}
+                      placeholder="New category name..."
+                      className="flex-1 px-4 py-2.5 border border-stone-200 rounded-xl text-sm text-cast-iron placeholder:text-steel/40 focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors"
+                    />
+                    <Button variant="primary" size="sm" onClick={handleAddCategory}>
+                      Add
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Notifications */}
+              {activeTab === 'notifications' && (
+                <div ref={notificationsRef}>
+                  <div className="flex items-center justify-between mb-4">
+                    {notifications.length > 0 && unreadNotificationCount > 0 && (
+                      <button
+                        onClick={async () => {
+                          await markAllNotificationsAsRead(user!.uid);
+                          setUnreadNotificationCount(0);
+                          setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+                        }}
+                        className="text-xs font-medium text-light-green hover:text-green transition-colors"
+                      >
+                        Mark all as read
+                      </button>
                     )}
                   </div>
-                )}
+                  {notifications.length > 0 ? (
+                    <div className="divide-y divide-stone-100 rounded-3xl border border-stone-100 overflow-hidden">
+                      {notifications.map(notification => (
+                        <NotificationItem
+                          key={notification.id}
+                          notification={notification}
+                          onDelete={(id) => {
+                            setNotifications(notifications.filter(n => n.id !== id));
+                            if (!notification.isRead) {
+                              setUnreadNotificationCount(prev => Math.max(0, prev - 1));
+                            }
+                          }}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-16">
+                      <FiBell className="w-8 h-8 mx-auto mb-3 text-steel/30" />
+                      <p className="text-sm font-medium text-cast-iron mb-1">No notifications</p>
+                      <p className="text-xs text-steel">You&apos;re all caught up.</p>
+                    </div>
+                  )}
+                </div>
+              )}
 
-              </div>
             </div>
-          </div>
+          </motion.div>
 
         </div>
       </div>
-    </div>
     </>
   );
 }

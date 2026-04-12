@@ -390,11 +390,6 @@ export default function Navbar() {
                                     <Link href={`/profile/${user.uid}`} className="text-sm font-medium mr-2 hover:underline">
                                         {userProfile?.displayName || user.email}
                                     </Link>
-                                    {(sharedRecipes.length > 0 || unreadNotificationCount > 0) && (
-                                        <span className="mr-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-light-green rounded-full">
-                                            {sharedRecipes.length + unreadNotificationCount}
-                                        </span>
-                                    )}
                                     <i className="fa-solid fa-caret-down text-xs" />
                                 </div>
                             </button>

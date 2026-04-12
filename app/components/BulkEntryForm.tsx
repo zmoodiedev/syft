@@ -452,6 +452,7 @@ export default function BulkEntryForm() {
               <div className="mt-4">
                 <h3 className="text-sm font-medium text-cast-iron mb-1.5">Image Preview</h3>
                 <div className="w-full h-48 overflow-hidden relative border border-stone-200 rounded-xl">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={imageUrl} alt="Recipe preview" className="w-full h-full object-cover" />
                 </div>
               </div>

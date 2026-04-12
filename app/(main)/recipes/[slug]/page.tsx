@@ -135,7 +135,10 @@ export default function RecipeDetail() {
               if (isOwner) {
                 setRecipe(recipeData);
                 setError('');
-              } else if (visibilityStr === 'friends' && user) {
+              } else if (visibilityStr === 'private') {
+                setError('This recipe is private');
+              } else if (user) {
+                // 'friends' or legacy 'public' — require friendship
                 const relationshipData = await getUserRelationship(user.uid, recipeData.userId);
                 if (!relationshipData.isFriend) {
                   setError('This recipe is only visible to friends of the owner');
@@ -143,12 +146,8 @@ export default function RecipeDetail() {
                   setRecipe(recipeData);
                   setError('');
                 }
-              } else if (visibilityStr === 'private' && !isOwner) {
-                setError('This recipe is private');
-              } else if (!user) {
-                setError('Sign in to view this recipe');
               } else {
-                setError('This recipe is only visible to friends of the owner');
+                setError('Sign in to view this recipe');
               }
               setLoading(false);
               return;

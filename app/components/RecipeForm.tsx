@@ -1700,6 +1700,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
             </div>
             {isPreviewingImage && imageUrl && (
               <div className="mt-3 w-full h-40 rounded-xl overflow-hidden border border-stone-100">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={imageUrl} alt="Recipe preview" className="w-full h-full object-cover" />
               </div>
             )}
