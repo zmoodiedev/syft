@@ -66,7 +66,7 @@ function formatFraction(value: string): string {
 
 export default function SharedRecipePage() {
   const { shareId } = useParams();
-  const { user, userProfile, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [shared, setShared] = useState<SharedRecipeDoc | null>(null);
   const [recipe, setRecipe] = useState<Recipe | null>(null);
@@ -118,6 +118,7 @@ export default function SharedRecipePage() {
     setIsSaving(true);
     try {
       const token = await user.getIdToken();
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { id: _id, ...recipeWithoutId } = recipe;
       const res = await fetch('/api/recipes/create', {
         method: 'POST',

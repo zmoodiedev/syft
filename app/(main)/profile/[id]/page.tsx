@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import Image from 'next/image';
 import { FiUser, FiSettings, FiBookmark, FiUserPlus, FiUserCheck, FiBell, FiTag, FiX } from 'react-icons/fi';
 import { motion } from 'framer-motion';

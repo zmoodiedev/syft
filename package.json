@@ -38,6 +38,9 @@
     "stripe": "^22.0.1",
     "tailwind-merge": "^1.14.0"
   },
+  "overrides": {
+    "glob": "^11.0.0"
+  },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
