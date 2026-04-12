@@ -58,7 +58,7 @@ export interface RecipeFormProps {
 }
 
 export default function RecipeForm({ initialData, onSubmit, scanMode = false, submitButtonText }: RecipeFormProps) {
-  const { user, userProfile } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const isEditMode = !!initialData?.id;
   const [selectedCategories, setSelectedCategories] = useState<string[]>(initialData?.categories || []);
@@ -106,10 +106,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
   // New state for instruction groups
   const [instructionGroups, setInstructionGroups] = useState<string[]>(['']);
   const [newInstructionGroupName, setNewInstructionGroupName] = useState<string>('');
-  // New state for bulk import
-  const [showBulkImport, setShowBulkImport] = useState<boolean>(false);
-  const [bulkIngredients, setBulkIngredients] = useState<string>('');
-  const [bulkInstructions, setBulkInstructions] = useState<string>('');
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const { register, handleSubmit, formState: { errors }, setValue } = useForm<Recipe>({
     defaultValues: {
@@ -1281,78 +1277,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
     });
     
     return grouped;
-  };
-
-  // Bulk import functions
-  const parseBulkIngredients = (text: string): Ingredient[] => {
-    if (!text.trim()) return [];
-    
-    const lines = text.split('\n').map(line => line.trim()).filter(line => line);
-    
-    return lines.map((line, index) => {
-      const { amount, unit, item } = parseIngredient(line);
-      return {
-        amount,
-        unit,
-        item: item || line, // Use the original text if parsing fails
-        id: `bulk-ingredient-${index}-${Date.now()}`,
-        groupName: ''
-      };
-    });
-  };
-
-  const parseBulkInstructions = (text: string): Instruction[] => {
-    if (!text.trim()) return [];
-    
-    const lines = text.split('\n').map(line => line.trim()).filter(line => line);
-    
-    return lines.map((line, index) => {
-      // Remove common prefixes like numbers, bullets, etc.
-      let cleanText = line;
-      
-      // Remove step numbers at the beginning (e.g., "1.", "Step 1:", "1)", etc.)
-      cleanText = cleanText.replace(/^\s*(?:\d+[\.\)]\s*|step\s+\d+\s*:?\s*)/i, '');
-      
-      // Remove bullet points or dashes
-      cleanText = cleanText.replace(/^\s*[-•*]\s*/, '');
-      
-      return {
-        text: cleanText || line, // Use original if cleaning results in empty string
-        id: `bulk-instruction-${index}-${Date.now()}`,
-        groupName: ''
-      };
-    });
-  };
-
-  const handleBulkImport = () => {
-    let hasChanges = false;
-    
-    // Import ingredients
-    if (bulkIngredients.trim()) {
-      const newIngredients = parseBulkIngredients(bulkIngredients);
-      if (newIngredients.length > 0) {
-        setIngredients(prev => [...prev, ...newIngredients]);
-        hasChanges = true;
-      }
-    }
-    
-    // Import instructions
-    if (bulkInstructions.trim()) {
-      const newInstructions = parseBulkInstructions(bulkInstructions);
-      if (newInstructions.length > 0) {
-        setInstructions(prev => [...prev, ...newInstructions]);
-        hasChanges = true;
-      }
-    }
-    
-    if (hasChanges) {
-      toast.success('Ingredients and instructions imported successfully!');
-      setBulkIngredients('');
-      setBulkInstructions('');
-      setShowBulkImport(false);
-    } else {
-      toast.error('Please enter some ingredients or instructions to import');
-    }
   };
 
   return (
