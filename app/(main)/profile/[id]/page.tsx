@@ -567,18 +567,38 @@ export default function ProfilePage() {
               {activeTab === 'friends' && (
                 <>
                   {isOwnProfile && userProfile?.tier === 'Free' ? (
-                    <div className="text-center py-14">
-                      <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-light-green/10 mb-4">
-                        <FiUserPlus className="w-6 h-6 text-light-green" />
+                    userProfile?.subscriptionLapsedAt ? (
+                      <div className="text-center py-14">
+                        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-amber-100 mb-4">
+                          <FiUserPlus className="w-6 h-6 text-amber-600" />
+                        </div>
+                        <h3 className="text-base font-bold text-cast-iron mb-2">Your friends are waiting</h3>
+                        {userStats.friendCount > 0 && (
+                          <p className="text-sm text-steel max-w-xs mx-auto mb-1">
+                            You had {userStats.friendCount} {userStats.friendCount === 1 ? 'friend' : 'friends'} while on Pro.
+                          </p>
+                        )}
+                        <p className="text-sm text-steel max-w-xs mx-auto mb-6">
+                          Reactivate Pro to reconnect and keep sharing recipes.
+                        </p>
+                        <Button variant="primary" onClick={() => setShowUpgradeModal(true)}>
+                          Reactivate Pro
+                        </Button>
                       </div>
-                      <h3 className="text-base font-bold text-cast-iron mb-2">Friends is a Pro feature</h3>
-                      <p className="text-sm text-steel max-w-xs mx-auto mb-6">
-                        Add friends, share recipes, and browse each other&apos;s collections on Pro.
-                      </p>
-                      <Button variant="primary" onClick={() => setShowUpgradeModal(true)}>
-                        Upgrade to Pro
-                      </Button>
-                    </div>
+                    ) : (
+                      <div className="text-center py-14">
+                        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-light-green/10 mb-4">
+                          <FiUserPlus className="w-6 h-6 text-light-green" />
+                        </div>
+                        <h3 className="text-base font-bold text-cast-iron mb-2">Friends is a Pro feature</h3>
+                        <p className="text-sm text-steel max-w-xs mx-auto mb-6">
+                          Add friends, share recipes, and browse each other&apos;s collections on Pro.
+                        </p>
+                        <Button variant="primary" onClick={() => setShowUpgradeModal(true)}>
+                          Upgrade to Pro
+                        </Button>
+                      </div>
+                    )
                   ) : (
                     <>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">

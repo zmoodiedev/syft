@@ -33,7 +33,7 @@ export default function Header() {
         <header className={`w-full h-[var(--header-height)] p-4 z-[100] ${!isHomePage ? 'bg-white border-b border-gray-100 shadow-sm' : ''} ${isHomePage ? 'absolute' : ''}`}>
             <div className="w-full container mx-auto flex flex-row justify-between items-center h-full">
                 <Link href="/">
-                    <Logo className="h-[36px] w-auto text-light-green" />
+                    <Logo className="h-[36px] w-auto text-cast-iron" />
                 </Link>
 
                 <Navbar />

@@ -51,6 +51,7 @@ export default function BillingPage() {
   const [loading, setLoading] = useState(true);
   const [portalLoading, setPortalLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [upgradePolling, setUpgradePolling] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   useEffect(() => {
@@ -58,17 +59,43 @@ export default function BillingPage() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('success') === 'true') {
       setShowSuccess(true);
+      setUpgradePolling(true);
       window.history.replaceState({}, '', '/billing');
     }
   }, []);
 
   useEffect(() => {
     if (!user) return;
-    getUserProfile(user.uid).then(data => {
-      setProfile(data as BillingProfile);
-      setLoading(false);
-    });
-  }, [user]);
+
+    if (!upgradePolling) {
+      // Normal load — fetch once
+      getUserProfile(user.uid).then(data => {
+        setProfile(data as BillingProfile);
+        setLoading(false);
+      });
+      return;
+    }
+
+    // After a Stripe checkout, the webhook fires async. Poll until the tier
+    // updates to Pro (up to ~15 s) so we never show contradictory UI.
+    let attempts = 0;
+    const MAX_ATTEMPTS = 8;
+
+    const poll = async () => {
+      const data = await getUserProfile(user.uid) as BillingProfile;
+      attempts += 1;
+
+      if (data?.tier === 'Pro' || attempts >= MAX_ATTEMPTS) {
+        setProfile(data);
+        setLoading(false);
+        setUpgradePolling(false);
+      } else {
+        setTimeout(poll, 2000);
+      }
+    };
+
+    poll();
+  }, [user, upgradePolling]);
 
   const handleManageSubscription = async () => {
     if (!auth.currentUser) return;
@@ -92,8 +119,10 @@ export default function BillingPage() {
     }
   };
 
-  const isPro     = profile?.tier === 'Pro';
+  const isPro      = profile?.tier === 'Pro';
   const hasPending = !!profile?.pendingTier;
+  const isPastDue  = profile?.subscriptionStatus === 'past_due';
+  const isLapsed   = profile?.tier === 'Free' && !!profile?.subscriptionLapsedAt;
 
   return (
     <ProtectedRoute>
@@ -111,6 +140,45 @@ export default function BillingPage() {
             <p className="text-sm text-steel mt-1">Manage your plan and subscription.</p>
           </div>
 
+          {/* Past-due warning — payment failed, Stripe is retrying */}
+          {isPastDue && (
+            <div className="mb-5 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4">
+              <FiAlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-cast-iron">Payment failed</p>
+                <p className="text-xs text-steel mt-0.5 leading-relaxed">
+                  Your last payment didn&apos;t go through. Stripe will retry automatically — update your payment method to avoid losing access.
+                </p>
+              </div>
+              <button
+                onClick={handleManageSubscription}
+                disabled={portalLoading}
+                className="flex-shrink-0 text-xs font-semibold text-amber-700 hover:text-amber-800 transition-colors whitespace-nowrap"
+              >
+                {portalLoading ? 'Opening…' : 'Update payment →'}
+              </button>
+            </div>
+          )}
+
+          {/* Lapsed banner — subscription was canceled, content is locked */}
+          {isLapsed && (
+            <div className="mb-5 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4">
+              <FiAlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-cast-iron">Your Pro subscription ended</p>
+                <p className="text-xs text-steel mt-0.5 leading-relaxed">
+                  Your recipes and friends are still here, waiting for you. Reactivate Pro to unlock everything.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowUpgradeModal(true)}
+                className="flex-shrink-0 text-xs font-semibold text-amber-700 hover:text-amber-800 transition-colors whitespace-nowrap"
+              >
+                Reactivate →
+              </button>
+            </div>
+          )}
+
           {/* Success banner */}
           {showSuccess && (
             <div className="mb-5 flex items-start gap-3 bg-light-green/10 border border-light-green/20 rounded-2xl px-5 py-4">
@@ -123,8 +191,11 @@ export default function BillingPage() {
           )}
 
           {loading ? (
-            <div className="flex justify-center py-24">
+            <div className="flex flex-col items-center gap-3 py-24">
               <div className="animate-spin rounded-full h-10 w-10 border-2 border-gray-200 border-t-light-green" />
+              {upgradePolling && (
+                <p className="text-sm text-steel">Activating your subscription...</p>
+              )}
             </div>
           ) : (
             <div className="space-y-4">
@@ -234,12 +305,14 @@ export default function BillingPage() {
                 </div>
               )}
 
-              {/* Upgrade card — shown to Free users with no pending */}
+              {/* Upgrade / reactivate card — shown to Free users with no pending */}
               {!isPro && !hasPending && (
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                   <div className="bg-cast-iron px-5 py-4">
-                    <p className="text-sm font-semibold text-white">Go Pro</p>
-                    <p className="text-xs text-white/50 mt-0.5">Unlock the full Syft experience.</p>
+                    <p className="text-sm font-semibold text-white">{isLapsed ? 'Reactivate Pro' : 'Go Pro'}</p>
+                    <p className="text-xs text-white/50 mt-0.5">
+                      {isLapsed ? 'Your data is safe. Pick up right where you left off.' : 'Unlock the full Syft experience.'}
+                    </p>
                   </div>
                   <div className="p-5">
                     <ul className="space-y-2 mb-5">
@@ -252,7 +325,7 @@ export default function BillingPage() {
                     </ul>
                     <div className="flex flex-wrap gap-3 items-center">
                       <Button variant="primary" onClick={() => setShowUpgradeModal(true)} className="flex items-center gap-2">
-                        Upgrade to Pro
+                        {isLapsed ? 'Reactivate Pro' : 'Upgrade to Pro'}
                       </Button>
                       <Link href="/pricing" className="text-sm text-steel hover:text-cast-iron transition-colors">
                         View pricing →

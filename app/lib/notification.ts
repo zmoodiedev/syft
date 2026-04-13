@@ -298,6 +298,66 @@ export async function createFriendAcceptNotification(
 }
 
 /**
+ * Create a gated friend request notification (sent to the Free-tier receiver).
+ * The accept action is locked behind Pro; this persists as a nudge to upgrade.
+ */
+export async function createGatedFriendRequestNotification(
+  toUserId: string,
+  fromUserId: string,
+  fromUserName: string | null,
+  fromUserPhoto: string | null,
+  requestId: string
+): Promise<string | null> {
+  try {
+    const notificationsRef = collection(db, 'notifications');
+    const notification = {
+      userId: toUserId,
+      type: 'friend_request_gated',
+      fromUserId,
+      fromUserName,
+      fromUserPhoto,
+      relatedItemId: requestId,
+      isRead: false,
+      createdAt: serverTimestamp()
+    };
+    const docRef = await addDoc(notificationsRef, notification);
+    return docRef.id;
+  } catch (error) {
+    console.error('Error creating gated friend request notification:', error);
+    return null;
+  }
+}
+
+/**
+ * Create a pending notification for the Pro-tier sender, explaining that the
+ * receiver needs to upgrade before the request can be accepted.
+ */
+export async function createFriendRequestPendingNotification(
+  toUserId: string,
+  receiverUserId: string,
+  receiverName: string | null,
+  receiverPhoto: string | null
+): Promise<string | null> {
+  try {
+    const notificationsRef = collection(db, 'notifications');
+    const notification = {
+      userId: toUserId,
+      type: 'friend_request_pending',
+      fromUserId: receiverUserId,
+      fromUserName: receiverName,
+      fromUserPhoto: receiverPhoto,
+      isRead: false,
+      createdAt: serverTimestamp()
+    };
+    const docRef = await addDoc(notificationsRef, notification);
+    return docRef.id;
+  } catch (error) {
+    console.error('Error creating friend request pending notification:', error);
+    return null;
+  }
+}
+
+/**
  * Create a recipe share notification
  */
 export async function createRecipeShareNotification(

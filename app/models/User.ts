@@ -15,6 +15,10 @@ export interface UserProfile {
   // Custom settings
   customCategories: string[];
   
+  // Subscription state (optional — only set for users who have had a paid plan)
+  subscriptionStatus?: string;       // Stripe subscription.status: 'active' | 'past_due' | 'canceled' | …
+  subscriptionLapsedAt?: Date;       // Set when subscription.deleted fires; cleared on resubscribe
+
   // Timestamps
   createdAt: Date;
   updatedAt: Date;
@@ -36,7 +40,7 @@ export interface UserRelationship {
 export interface Notification {
   id: string;
   userId: string;          // ID of user receiving the notification
-  type: 'follow' | 'friend_request' | 'friend_accept' | 'recipe_share';
+  type: 'follow' | 'friend_request' | 'friend_accept' | 'recipe_share' | 'friend_request_gated' | 'friend_request_pending';
   fromUserId: string;      // ID of user who triggered the notification
   fromUserName: string | null; // Display name of user who triggered it
   fromUserPhoto: string | null; // Profile photo of user who triggered it

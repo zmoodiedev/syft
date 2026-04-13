@@ -17,6 +17,7 @@ import { DEMO_RECIPES } from '@/app/lib/demoData';
 import { getUserRecipeCount } from '@/app/lib/recipe';
 import { TIER_FEATURES } from '@/app/lib/tiers';
 import RecipeLimitBanner from '@/app/components/RecipeLimitBanner';
+import LapsedBanner from '@/app/components/LapsedBanner';
 import UpgradeModal from '@/app/components/UpgradeModal';
 
 const PAGE_SIZE = 12;
@@ -32,6 +33,7 @@ interface Recipe {
     imageUrl?: string;
     userId: string;
     visibility?: string;
+    locked?: boolean;
 }
 
 export default function RecipesPage() {
@@ -234,14 +236,20 @@ export default function RecipesPage() {
                         )}
                     </div>
 
-                    {/* Limit nudge banner — free users at 10-14/15 */}
-                    {!isDemo && userProfile?.tier === 'Free' && (
+                    {/* Lapsed-subscriber banner — takes precedence over the limit nudge */}
+                    {!isDemo && userProfile?.tier === 'Free' && userProfile?.subscriptionLapsedAt ? (
+                        <LapsedBanner
+                            lockedCount={recipes.filter(r => r.locked).length}
+                            onReactivateClick={() => setShowUpgradeModal(true)}
+                        />
+                    ) : !isDemo && userProfile?.tier === 'Free' ? (
+                        /* Limit nudge banner — free users approaching the 15-recipe cap */
                         <RecipeLimitBanner
                             count={totalRecipeCount}
                             limit={TIER_FEATURES['Free'].maxRecipes}
                             onUpgradeClick={() => setShowUpgradeModal(true)}
                         />
-                    )}
+                    ) : null}
 
                     {/* Search + view toggle */}
                     <div className="flex items-center gap-3 mb-4">

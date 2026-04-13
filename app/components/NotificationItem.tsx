@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Notification } from '@/app/models/User';
-import { FiUser, FiUserPlus, FiUserCheck, FiBook, FiX, FiCheck, FiThumbsUp, FiThumbsDown } from 'react-icons/fi';
+import { FiUser, FiUserPlus, FiUserCheck, FiBook, FiX, FiCheck, FiThumbsUp, FiThumbsDown, FiClock } from 'react-icons/fi';
 import { markNotificationAsRead, deleteNotification } from '@/app/lib/notification';
 import { useFriends } from '@/app/context/FriendsContext';
 import { useAuth } from '@/app/context/AuthContext';
+import UpgradeModal from '@/app/components/UpgradeModal';
 
 interface NotificationItemProps {
   notification: Notification;
@@ -14,11 +15,13 @@ interface NotificationItemProps {
 
 export default function NotificationItem({ notification, onDelete }: NotificationItemProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const { acceptFriendRequest, rejectFriendRequest, acceptSharedRecipe, rejectSharedRecipe } = useFriends();
   const { user } = useAuth();
-  
+
   useEffect(() => {
-    if (notification && !notification.isRead && user) {
+    // Keep gated requests unread — they're a persistent nudge to upgrade
+    if (notification && !notification.isRead && user && notification.type !== 'friend_request_gated') {
       markNotificationAsRead(notification.id)
         .catch(error => console.error('Error marking notification as read on view:', error));
     }
@@ -127,11 +130,14 @@ export default function NotificationItem({ notification, onDelete }: Notificatio
       case 'follow':
         return <FiUser className="text-light-green" />;
       case 'friend_request':
+      case 'friend_request_gated':
         return <FiUserPlus className="text-light-green" />;
       case 'friend_accept':
         return <FiUserCheck className="text-light-green" />;
       case 'recipe_share':
         return <FiBook className="text-light-green" />;
+      case 'friend_request_pending':
+        return <FiClock className="text-steel" />;
       default:
         return <FiUser className="text-light-green" />;
     }
@@ -213,6 +219,25 @@ export default function NotificationItem({ notification, onDelete }: Notificatio
             </Link>
           </p>
         );
+      case 'friend_request_gated':
+        return (
+          <p className="text-sm text-cast-iron">
+            <Link href={`/profile/${notification.fromUserId}`} className="font-medium hover:text-light-green">
+              {userName}
+            </Link>{' '}
+            wants to be your friend on Syft. Upgrade to Pro to connect and share recipes together.
+          </p>
+        );
+      case 'friend_request_pending':
+        return (
+          <p className="text-sm text-cast-iron">
+            Your friend request to{' '}
+            <Link href={`/profile/${notification.fromUserId}`} className="font-medium hover:text-light-green">
+              {userName}
+            </Link>{' '}
+            was sent. They&apos;ll need to upgrade to Pro to accept — we&apos;ll let you know when they do.
+          </p>
+        );
       default:
         return (
           <p className="text-sm text-gray-700">
@@ -247,6 +272,19 @@ export default function NotificationItem({ notification, onDelete }: Notificatio
       );
     }
 
+    if (notification.type === 'friend_request_gated') {
+      return (
+        <div className="mt-2">
+          <button
+            onClick={() => setShowUpgradeModal(true)}
+            className="px-3 py-1 bg-light-green text-white text-xs rounded font-medium hover:bg-green transition-colors"
+          >
+            Upgrade to Pro
+          </button>
+        </div>
+      );
+    }
+
     if (notification.type === 'recipe_share') {
       return (
         <div className="mt-2 flex space-x-2">
@@ -274,6 +312,12 @@ export default function NotificationItem({ notification, onDelete }: Notificatio
   };
   
   return (
+    <>
+    <UpgradeModal
+      isOpen={showUpgradeModal}
+      onClose={() => setShowUpgradeModal(false)}
+      reason="social_features"
+    />
     <div className={`p-3 border-b ${notification.isRead ? 'bg-white' : ''}`}>
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0">
@@ -329,5 +373,6 @@ export default function NotificationItem({ notification, onDelete }: Notificatio
         </div>
       </div>
     </div>
+    </>
   );
 } 

@@ -658,76 +658,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
     }
   };
 
-  // Parse an ingredient line to extract amount, unit, and item
-  const parseIngredient = (text: string): { amount: string; unit: string; item: string } => {
-    // Common cooking units
-    const commonUnits = [
-      'cup', 'cups', 'c.',
-      'tablespoon', 'tablespoons', 'tbsp', 'tbs', 'tbsp.', 'T',
-      'teaspoon', 'teaspoons', 'tsp', 'tsp.', 't',
-      'ounce', 'ounces', 'oz', 'oz.',
-      'pound', 'pounds', 'lb', 'lbs', 'lb.',
-      'gram', 'grams', 'g', 'g.',
-      'kilogram', 'kilograms', 'kg', 'kg.',
-      'milliliter', 'milliliters', 'ml', 'ml.',
-      'liter', 'liters', 'l',
-      'pinch', 'pinches',
-      'dash', 'dashes',
-      'handful', 'handfuls',
-      'clove', 'cloves',
-      'slice', 'slices',
-      'piece', 'pieces'
-    ];
-    
-    // Replace common fractions with decimal values for better parsing
-    const fraction = text.match(/(\d+)\s*\/\s*(\d+)/);
-    let processedText = text;
-    
-    if (fraction) {
-      const [wholeMatch, numerator, denominator] = fraction;
-      const decimal = parseInt(numerator) / parseInt(denominator);
-      processedText = text.replace(wholeMatch, decimal.toString());
-    }
-    
-    // Try to identify number at the start (the amount)
-    const amountMatch = processedText.match(/^[\s\d.\/+\-–—]+/);
-    let amount = '';
-    let remainingText = processedText;
-    
-    if (amountMatch) {
-      amount = amountMatch[0].trim();
-      remainingText = processedText.substring(amountMatch[0].length).trim();
-    }
-    
-    // Try to identify unit after the amount
-    let unit = '';
-    let item = remainingText;
-    
-    for (const unitName of commonUnits) {
-      const regex = new RegExp(`^\\s*(${unitName})(\\s|$)`, 'i');
-      const match = remainingText.match(regex);
-      
-      if (match) {
-        unit = match[1];
-        item = remainingText.substring(match[0].length).trim();
-        break;
-      }
-    }
-    
-    // Clean up: remove common prefixes that might be in the ingredient
-    const prefixesToRemove = [
-      'of ', '- ', '* ', '• '
-    ];
-    
-    prefixesToRemove.forEach(prefix => {
-      if (item.startsWith(prefix)) {
-        item = item.substring(prefix.length);
-      }
-    });
-    
-    return { amount, unit, item };
-  };
-
   // Handle file selection for recipe photo
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -932,9 +862,12 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
             throw new Error('Failed to save recipe');
           }
 
+          const { id: newId } = await res.json();
           toast.success('Recipe added successfully');
+          router.push(`/recipes/${newId}`);
+          return;
         }
-        
+
         router.push('/recipes');
       }
     } catch (error) {

@@ -121,22 +121,25 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
         );
 
         const unsubscribeIncoming = onSnapshot(incomingRequestsQuery, (snapshot) => {
-            const requests = snapshot.docs.map(doc => {
-                const data = doc.data();
-                return {
-                    id: doc.id,
-                    senderId: data.senderId,
-                    receiverId: data.receiverId,
-                    senderName: data.senderName,
-                    senderEmail: data.senderEmail,
-                    senderPhotoURL: data.senderPhotoURL,
-                    receiverName: data.receiverName,
-                    receiverEmail: data.receiverEmail,
-                    receiverPhotoURL: data.receiverPhotoURL,
-                    status: data.status,
-                    createdAt: data.createdAt?.toDate()
-                } as FriendRequest;
-            });
+            const requests = snapshot.docs
+                // Gated requests are surfaced via notification only — exclude them here
+                .filter(doc => !doc.data().blockedByTier)
+                .map(doc => {
+                    const data = doc.data();
+                    return {
+                        id: doc.id,
+                        senderId: data.senderId,
+                        receiverId: data.receiverId,
+                        senderName: data.senderName,
+                        senderEmail: data.senderEmail,
+                        senderPhotoURL: data.senderPhotoURL,
+                        receiverName: data.receiverName,
+                        receiverEmail: data.receiverEmail,
+                        receiverPhotoURL: data.receiverPhotoURL,
+                        status: data.status,
+                        createdAt: data.createdAt?.toDate()
+                    } as FriendRequest;
+                });
             setIncomingRequests(requests);
         });
 
@@ -372,6 +375,8 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
                 status: 'pending'
             });
 
+            const receiverIsFree = receiverData.tier === 'Free';
+
             // Create the friend request
             const requestRef = await addDoc(collection(db, 'friendRequests'), {
                 senderId: user.uid,
@@ -383,21 +388,43 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
                 receiverEmail: receiverData.email,
                 receiverPhotoURL: receiverData.photoURL,
                 status: 'pending',
+                ...(receiverIsFree ? { blockedByTier: true } : {}),
                 createdAt: serverTimestamp()
             });
-            
-            // Create a notification for the recipient
+
+            // Create notifications
             try {
-                // Import dynamically to avoid circular dependencies
-                const { createFriendRequestNotification } = await import('@/app/lib/notification');
-                
-                await createFriendRequestNotification(
-                    receiverId,
-                    user.uid,
-                    user.displayName || null,
-                    user.photoURL || null,
-                    requestRef.id // Pass the request ID
-                );
+                const {
+                    createFriendRequestNotification,
+                    createGatedFriendRequestNotification,
+                    createFriendRequestPendingNotification,
+                } = await import('@/app/lib/notification');
+
+                if (receiverIsFree) {
+                    // Free receiver: gated notification explaining they need to upgrade
+                    await createGatedFriendRequestNotification(
+                        receiverId,
+                        user.uid,
+                        user.displayName || null,
+                        user.photoURL || null,
+                        requestRef.id
+                    );
+                    // Pro sender: let them know the request is pending due to the receiver's tier
+                    await createFriendRequestPendingNotification(
+                        user.uid,
+                        receiverId,
+                        receiverData.displayName || null,
+                        receiverData.photoURL || null
+                    );
+                } else {
+                    await createFriendRequestNotification(
+                        receiverId,
+                        user.uid,
+                        user.displayName || null,
+                        user.photoURL || null,
+                        requestRef.id
+                    );
+                }
             } catch (notificationError) {
                 console.error('Error creating friend request notification:', notificationError);
                 // Continue even if notification creation fails

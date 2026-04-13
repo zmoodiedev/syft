@@ -99,7 +99,6 @@ function AddRecipeContent() {
 
         // Use the shared title only if it looks like actual recipe text
         // (TikTok often sends "via TikTok" or nothing useful)
-        const isTikTokUrl = rawUrl.includes('tiktok.com') || rawUrl.includes('vm.tiktok.com');
         const cleanTitle = rawTitle && !rawTitle.toLowerCase().includes('tiktok') ? rawTitle : '';
 
         setShareData({

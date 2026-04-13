@@ -26,6 +26,64 @@ async function lockOverflowRecipes(userId: string) {
   await batch.commit();
 }
 
+/**
+ * Auto-accept any friend requests that were blocked because the receiver was
+ * on the Free tier. Called when a user upgrades to Pro.
+ */
+async function autoAcceptGatedFriendRequests(userId: string) {
+  const snap = await db.collection('friendRequests')
+    .where('receiverId', '==', userId)
+    .where('blockedByTier', '==', true)
+    .get();
+
+  if (snap.empty) return;
+
+  const batch = db.batch();
+
+  for (const requestDoc of snap.docs) {
+    const req = requestDoc.data();
+
+    // Create the friendship
+    const friendshipRef = db.collection('friendships').doc(`${req.senderId}_${userId}`);
+    batch.set(friendshipRef, {
+      userIds: [req.senderId, userId],
+      createdAt: new Date(),
+    });
+
+    // Delete the friend request
+    batch.delete(requestDoc.ref);
+  }
+
+  await batch.commit();
+
+  // Send notifications outside the batch (addDoc can't be batched)
+  for (const requestDoc of snap.docs) {
+    const req = requestDoc.data();
+
+    // Notify the original sender that the request was accepted
+    await db.collection('notifications').add({
+      userId: req.senderId,
+      type: 'friend_accept',
+      fromUserId: userId,
+      fromUserName: req.receiverName || null,
+      fromUserPhoto: req.receiverPhotoURL || null,
+      isRead: false,
+      createdAt: new Date(),
+    });
+
+    // Clean up the gated notification from the newly upgraded user's inbox
+    const gatedNotifSnap = await db.collection('notifications')
+      .where('userId', '==', userId)
+      .where('type', '==', 'friend_request_gated')
+      .where('fromUserId', '==', req.senderId)
+      .get();
+
+    for (const notifDoc of gatedNotifSnap.docs) {
+      await notifDoc.ref.delete();
+    }
+  }
+}
+
 /** Remove locked flag from all recipes belonging to this user. */
 async function unlockAllRecipes(userId: string) {
   const snap = await db.collection('recipes')
@@ -93,11 +151,14 @@ export async function POST(request: Request) {
           currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
           pendingTier: FieldValue.delete(),
           pendingBillingCycle: FieldValue.delete(),
+          subscriptionLapsedAt: FieldValue.delete(),
           updatedAt: new Date(),
         });
 
         // Unlock any recipes locked during a previous downgrade
         await unlockAllRecipes(userId);
+        // Auto-accept any friend requests that were pending due to the free tier
+        await autoAcceptGatedFriendRequests(userId);
         break;
       }
 
@@ -106,7 +167,7 @@ export async function POST(request: Request) {
         const userId = subscription.metadata?.userId;
         if (!userId) break;
 
-        const isActive = subscription.status === 'active';
+        const status = subscription.status;
         const updSubItem = subscription.items.data[0];
         const interval = updSubItem?.plan?.interval;
         const updPeriodEnd: number =
@@ -114,20 +175,27 @@ export async function POST(request: Request) {
           (subscription as unknown as { current_period_end?: number }).current_period_end ??
           0;
 
+        // Keep tier as Pro while Stripe is still retrying (past_due / trialing).
+        // Only fully downgrade on terminal non-active states — those are handled
+        // by subscription.deleted anyway, so this path just records the status.
+        const shouldBePro = status === 'active' || status === 'past_due' || status === 'trialing';
+
         const prevUserSnap = await db.collection('users').doc(userId).get();
         const prevTier = prevUserSnap.data()?.tier;
 
         await db.collection('users').doc(userId).update({
-          tier: isActive ? 'Pro' : 'Free',
-          subscriptionStatus: subscription.status,
+          tier: shouldBePro ? 'Pro' : 'Free',
+          subscriptionStatus: status,
           billingCycle: interval === 'year' ? 'yearly' : 'monthly',
           currentPeriodEnd: updPeriodEnd ? new Date(updPeriodEnd * 1000) : null,
           updatedAt: new Date(),
         });
 
-        if (isActive && prevTier !== 'Pro') {
-          // Re-activated — unlock any previously locked recipes
+        if (status === 'active' && prevTier !== 'Pro') {
+          // Genuine reactivation from a lapsed state — unlock recipes and
+          // accept any friend requests that were pending during the lapse.
           await unlockAllRecipes(userId);
+          await autoAcceptGatedFriendRequests(userId);
         }
         break;
       }
@@ -143,6 +211,7 @@ export async function POST(request: Request) {
           stripeSubscriptionId: FieldValue.delete(),
           currentPeriodEnd: FieldValue.delete(),
           billingCycle: FieldValue.delete(),
+          subscriptionLapsedAt: new Date(),
           updatedAt: new Date(),
         });
 

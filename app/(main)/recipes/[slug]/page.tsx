@@ -465,11 +465,15 @@ export default function RecipeDetail() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
                 </>
               ) : (
-                <div className="absolute inset-0 bg-cast-iron flex items-center justify-center">
-                  <span className="text-[20vw] font-bold text-light-green/10 select-none leading-none">
-                    {recipe.name.charAt(0).toUpperCase()}
-                  </span>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                <div className="absolute inset-0 bg-cream">
+                  <Image
+                    src="/images/branding/kitchen.png"
+                    alt=""
+                    fill
+                    sizes="100vw"
+                    className="object-cover opacity-30"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                 </div>
               )}
             </div>
