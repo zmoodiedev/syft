@@ -737,7 +737,7 @@ export default function RecipeDetail() {
             </div>
 
             <div className="flex justify-end">
-              <Button variant="outline" onClick={() => { setIsShareModalOpen(false); setSearchQuery(''); setIsCopied(false); }}>
+              <Button variant="outline" onClick={() => { setIsShareModalOpen(false); setSearchQuery(''); }}>
                 Close
               </Button>
             </div>
