@@ -95,12 +95,16 @@ export default function UrlInput() {
                 {error && (
                     <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
                         <p className="text-sm font-medium text-red-700 mb-1">
-                            {error.includes('known to block') ? 'Website not supported' : 'Something went wrong'}
+                            {error.includes('Could not connect') || error.includes('blocked automated')
+                                ? 'This site blocked the import'
+                                : error.includes('known to block') || error.includes('requires a login')
+                                ? 'Website not supported'
+                                : 'Something went wrong'}
                         </p>
                         <p className="text-sm text-red-600">{error}</p>
-                        {error.includes('known to block') && (
+                        {(error.includes('Could not connect') || error.includes('blocked automated') || error.includes('known to block')) && (
                             <p className="text-sm text-steel mt-2">
-                                Try copying the recipe details manually instead. Credit the original source when you do.
+                                Open the recipe in your browser, screenshot it, and use <strong>Scan a Recipe</strong> — or copy the text and use <strong>Bulk Entry</strong>.
                             </p>
                         )}
                     </div>

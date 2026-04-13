@@ -1,19 +1,133 @@
 import { NextResponse } from 'next/server';
 import * as cheerio from 'cheerio';
 import { auth } from '@/lib/firebase-admin';
+import Anthropic from '@anthropic-ai/sdk';
 
 export const runtime = 'nodejs';
 
-// List of known problematic websites that block scraping
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+// ---------------------------------------------------------------------------
+// Claude fallback — called when cheerio parsing produces insufficient data
+// ---------------------------------------------------------------------------
+
+const RECIPE_TOOL: Anthropic.Tool = {
+    name: 'extract_recipe',
+    description: 'Extract structured recipe data from webpage text.',
+    input_schema: {
+        type: 'object' as const,
+        properties: {
+            name:     { type: 'string' },
+            servings: { type: 'string', description: 'e.g. "4 servings"' },
+            prepTime: { type: 'string', description: 'e.g. "15 mins"' },
+            cookTime: { type: 'string', description: 'e.g. "30 mins"' },
+            ingredients: {
+                type: 'array',
+                items: {
+                    type: 'object',
+                    properties: {
+                        amount: { type: 'string' },
+                        unit:   { type: 'string' },
+                        item:   { type: 'string' },
+                    },
+                    required: ['amount', 'unit', 'item'],
+                },
+            },
+            instructions: { type: 'array', items: { type: 'string' } },
+            imageUrl:     { type: 'string' },
+            categories:   { type: 'array', items: { type: 'string' } },
+        },
+        required: ['name', 'ingredients', 'instructions'],
+    },
+};
+
+/** Strip noise from the cheerio document and return plain text for Claude. */
+function extractPageText($: ReturnType<typeof cheerio.load>): string {
+    const metaTitle = $('meta[property="og:title"]').attr('content')
+        || $('meta[name="title"]').attr('content') || '';
+    const metaDesc  = $('meta[property="og:description"]').attr('content')
+        || $('meta[name="description"]').attr('content') || '';
+    const metaImage = $('meta[property="og:image"]').attr('content') || '';
+
+    // Remove navigation, ads, comments, and other noise
+    $('script, style, noscript, iframe, nav, footer, header, aside').remove();
+    $('[class*="ad-"],[id*="ad-"],[class*="cookie"],[class*="popup"],[class*="modal"],[class*="newsletter"],[class*="sidebar"],[class*="comment"],[class*="social"],[class*="share-"]').remove();
+
+    // Prefer a focused recipe/article element over the full body
+    let mainText = '';
+    for (const sel of ['[itemtype*="Recipe"]', '[class*="recipe"]', 'article', 'main', '#content', '.content']) {
+        const el = $(sel).first();
+        if (el.length) { mainText = el.text(); break; }
+    }
+    if (!mainText) mainText = $('body').text();
+
+    const parts = [
+        metaTitle  ? `Title: ${metaTitle}`       : '',
+        metaDesc   ? `Description: ${metaDesc}`  : '',
+        metaImage  ? `Image: ${metaImage}`        : '',
+        mainText,
+    ].filter(Boolean).join('\n\n');
+
+    return parts
+        .replace(/[ \t]{2,}/g, ' ')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim()
+        .slice(0, 15000);          // well within Haiku's context window
+}
+
+async function extractWithClaude($: ReturnType<typeof cheerio.load>, sourceUrl: string): Promise<Recipe> {
+    const pageText = extractPageText($);
+
+    if (pageText.length < 100) {
+        throw new Error(
+            'This page appears to be JavaScript-rendered and returned no readable content. ' +
+            'Try a different recipe website or paste the recipe manually.'
+        );
+    }
+
+    const response = await anthropic.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1024,
+        tools: [RECIPE_TOOL],
+        tool_choice: { type: 'tool', name: 'extract_recipe' },
+        messages: [{
+            role: 'user',
+            content: `Extract the recipe from this webpage text using the extract_recipe tool.\n\nSource URL: ${sourceUrl}\n\n${pageText}`,
+        }],
+    });
+
+    const toolUse = response.content.find((b): b is Anthropic.ToolUseBlock => b.type === 'tool_use');
+    if (!toolUse) {
+        throw new Error('Could not extract recipe data from this page.');
+    }
+
+    const r = toolUse.input as {
+        name: string; servings?: string; prepTime?: string; cookTime?: string;
+        ingredients: { amount: string; unit: string; item: string }[];
+        instructions: string[]; imageUrl?: string; categories?: string[];
+    };
+
+    if (!r.name || (!r.ingredients?.length && !r.instructions?.length)) {
+        throw new Error('Could not find a recipe on this page. The site may require a login or block automated access.');
+    }
+
+    return {
+        name:         r.name,
+        servings:     r.servings  || '',
+        prepTime:     r.prepTime  || '',
+        cookTime:     r.cookTime  || '',
+        ingredients:  r.ingredients  || [],
+        instructions: r.instructions || [],
+        imageUrl:     r.imageUrl,
+        categories:   r.categories   || [],
+        sourceUrl,
+    };
+}
+
+// Sites that require a login or return nothing useful even with Claude.
+// These get a clear early error rather than wasting an API call.
 const BLOCKED_WEBSITES: string[] = [
-    'https://www.canadianliving.com',
-    'cooking.nytimes.com',
-    'foodandwine.com',
-    'epicurious.com',
-    'bonappetit.com',
-    'tasty.co',
-    'delish.com',
-    'food.com'
+    'cooking.nytimes.com',  // hard paywall + login
 ];
 
 interface RecipeIngredient {
@@ -84,26 +198,39 @@ export async function POST(request: Request) {
         };
 
         // Fetch the webpage content with headers and redirect handling
-        const response = await fetch(url, { 
-            headers,
-            redirect: 'follow',
-            cache: 'no-store',
-            next: { revalidate: 0 }
-        });
-        
+        let response: Response;
+        try {
+            response = await fetch(url, {
+                headers,
+                redirect: 'follow',
+                cache: 'no-store',
+            });
+        } catch {
+            throw new Error(
+                `Could not connect to ${new URL(url).hostname}. The site may be blocking automated access. ` +
+                'Try uploading a photo of the recipe instead (Scan a Recipe), or paste the text manually (Bulk Entry).'
+            );
+        }
+
         if (!response.ok) {
-            throw new Error(`Failed to fetch recipe: ${response.status} ${response.statusText}`);
+            throw new Error(
+                `${new URL(url).hostname} returned an error (${response.status}). ` +
+                'The page may require a login or be blocking automated access.'
+            );
         }
 
         const html = await response.text();
 
         // Check if the response contains common blocking messages
-        if (html.includes('Access Denied') || 
-            html.includes('Please enable JavaScript') || 
+        if (html.includes('Access Denied') ||
+            html.includes('Please enable JavaScript') ||
             html.includes('bot detection') ||
             html.includes('security check') ||
             html.includes('redirect count exceeded')) {
-            throw new Error('This website appears to be blocking automated access. Please try copying the recipe manually.');
+            throw new Error(
+                `${new URL(url).hostname} blocked automated access. ` +
+                'Try uploading a photo of the recipe instead (Scan a Recipe), or paste the text manually (Bulk Entry).'
+            );
         }
 
         // Load the HTML into cheerio
@@ -616,9 +743,9 @@ export async function POST(request: Request) {
             };
         }
 
-        // Validate that we found at least some recipe data
+        // If cheerio parsing came up empty, let Claude have a go at the raw page text
         if (!recipeData.name || (!recipeData.ingredients.length && !recipeData.instructions.length)) {
-            throw new Error('Could not find recipe data on this page. The website might be blocking automated access.');
+            recipeData = await extractWithClaude($, url);
         }
 
         return NextResponse.json(recipeData);

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { useAuth } from '@/app/context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -34,29 +34,36 @@ interface Recipe {
   visibility?: string;
 }
 
-export default function BulkEntryForm() {
+interface BulkEntryFormProps {
+  initialTitle?: string;
+  initialIngredients?: string;
+  initialInstructions?: string;
+  initialSourceUrl?: string;
+}
+
+export default function BulkEntryForm({ initialTitle = '', initialIngredients = '', initialInstructions = '', initialSourceUrl = '' }: BulkEntryFormProps) {
   const { user } = useAuth();
   const router = useRouter();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [visibility, setVisibility] = useState('friends');
   const [imageUrl, setImageUrl] = useState('');
   const [isPreviewingImage, setIsPreviewingImage] = useState(false);
-  
+
   // Bulk import state
-  const [bulkIngredients, setBulkIngredients] = useState<string>('');
-  const [bulkInstructions, setBulkInstructions] = useState<string>('');
-  
+  const [bulkIngredients, setBulkIngredients] = useState<string>(initialIngredients);
+  const [bulkInstructions, setBulkInstructions] = useState<string>(initialInstructions);
+
   // Parsed recipe state
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [instructions, setInstructions] = useState<Instruction[]>([]);
 
   const { register, handleSubmit, formState: { errors } } = useForm<Recipe>({
     defaultValues: {
-      name: '',
+      name: initialTitle,
       servings: '',
       prepTime: '',
       cookTime: '',
-      sourceUrl: '',
+      sourceUrl: initialSourceUrl,
     }
   });
 
@@ -158,6 +165,14 @@ export default function BulkEntryForm() {
       };
     });
   };
+
+  // Auto-parse when initial data is provided (e.g. from TikTok share)
+  useEffect(() => {
+    if (initialIngredients) setIngredients(parseBulkIngredients(initialIngredients));
+    if (initialInstructions) setInstructions(parseBulkInstructions(initialInstructions));
+  // parseBulk* functions are pure and stable; only re-run when the initial strings change
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialIngredients, initialInstructions]);
 
   // Handle bulk import
   const handleBulkImport = () => {

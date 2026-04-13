@@ -103,6 +103,11 @@ export default function RootLayout({
           crossOrigin="anonymous"
           strategy="beforeInteractive"
         />
+        {/* Service worker — required for PWA installability and Web Share Target */}
+        <Script id="sw-register" strategy="afterInteractive">
+          {`if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');`}
+        </Script>
+
         {/* Google Analytics — only injected when the measurement ID is configured */}
         {GA_MEASUREMENT_ID && (
           <>

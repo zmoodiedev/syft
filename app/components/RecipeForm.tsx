@@ -98,7 +98,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
   });
   const [userCategories, setUserCategories] = useState<string[]>([]);
   const [newCategory, setNewCategory] = useState<string>('');
-  const [extractedRecipeText, setExtractedRecipeText] = useState<string>('');
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   // New state for ingredient groups
   const [ingredientGroups, setIngredientGroups] = useState<string[]>(['']);
@@ -334,34 +333,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
     setIsPreviewingImage(true);
   };
 
-  // Adding a function to check API configuration
-  const checkAPIConfiguration = async (): Promise<boolean> => {
-    try {
-      const response = await fetch('/api/check-recipe-scan-setup');
-      const data = await response.json();
-      
-      if (!data.ready) {
-        console.error('Recipe scanning setup not complete:', data);
-        
-        let errorMessage = 'Recipe scanning setup not complete. ';
-        if (!data.setupStatus.googleVision.configured) {
-          errorMessage += 'Google Cloud Vision API credentials are missing. ';
-        }
-        
-        toast.error(errorMessage + 'Please check server configuration.', {
-          duration: 6000
-        });
-        return false;
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('Error checking API configuration:', error);
-      toast.error('Could not verify API configuration. Please try again later.');
-      return false;
-    }
-  };
-
   // Handle file selection for recipe image
   const handleRecipeImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     // Reset the file dialog requested flag since the dialog has been handled
@@ -396,13 +367,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
     
     try {
       toast.loading('Processing your recipe image...', { id: 'processing-recipe' });
-      
-      // Check if APIs are configured
-      const apisConfigured = await checkAPIConfiguration();
-      if (!apisConfigured) {
-        throw new Error('API configuration issue - please check server setup');
-      }
-      
+
       // Pre-process the image on the client side to ensure compatibility
       // This converts any image to a normalized JPEG format before sending to the API
       let processedFile = file;
@@ -598,10 +563,14 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
       }
       
       formData.append('file', processedFile);
-      
+
+      if (!user) throw new Error('You must be logged in to scan a recipe');
+      const token = await user.getIdToken();
+
       // Send to our API endpoint
       const response = await fetch('/api/vision-to-recipe', {
         method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
       
@@ -612,53 +581,42 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
         throw new Error(data.error || 'Failed to process recipe image');
       }
       
-      // Process the raw text with basic heuristics
-      if (data.rawText) {
-        // Save raw text for reference
-        setExtractedRecipeText(data.rawText);
-        
-        // Parse the text into different recipe components
-        const { name, ingredients, instructions } = parseRecipeText(data.rawText);
-        
-        // Set recipe name
-        setValue('name', name);
-        
-        // Set ingredients
-        if (ingredients.length > 0) {
-          const parsedIngredients = ingredients.map((ing, index) => {
-            // Try to parse each ingredient into amount, unit, and item
-            const { amount, unit, item } = parseIngredient(ing);
-            return {
-              amount,
-              unit,
-              item: item || ing, // Use the original text if parsing fails
-              id: `extracted-${index}-${Date.now()}`
-            };
-          });
-          
-          setIngredients(parsedIngredients);
+      // Claude returns structured recipe data directly — no parsing step needed
+      if (data.recipe) {
+        const r = data.recipe;
+
+        if (r.name)      setValue('name', r.name);
+        if (r.servings)  setValue('servings', r.servings);
+        if (r.prepTime)  setValue('prepTime', r.prepTime);
+        if (r.cookTime)  setValue('cookTime', r.cookTime);
+
+        if (r.ingredients?.length > 0) {
+          setIngredients(
+            r.ingredients.map((ing: { amount: string; unit: string; item: string }, index: number) => ({
+              amount: ing.amount || '',
+              unit:   ing.unit   || '',
+              item:   ing.item   || '',
+              id: `extracted-${index}-${Date.now()}`,
+            }))
+          );
         }
-        
-        // Set instructions
-        if (instructions.length > 0) {
-          const parsedInstructions = instructions.map((text, index) => ({
-            text,
-            id: `extracted-instruction-${index}-${Date.now()}`,
-            groupName: ''
-          }));
-          setInstructions(parsedInstructions);
+
+        if (r.instructions?.length > 0) {
+          setInstructions(
+            r.instructions.map((text: string, index: number) => ({
+              text,
+              id: `extracted-instruction-${index}-${Date.now()}`,
+              groupName: '',
+            }))
+          );
         }
-        
-        toast.success('Recipe extracted and parsed into form fields!', { 
+
+        toast.success('Recipe extracted. Review and edit as needed.', {
           id: 'processing-recipe',
-          duration: 5000
-        });
-        
-        toast.success('Please review and edit the auto-populated fields as needed.', {
-          duration: 5000
+          duration: 5000,
         });
       } else {
-        throw new Error('No text data found in the response');
+        throw new Error('No recipe data found in the response');
       }
     } catch (error) {
       console.error('Error processing recipe image:', error);
@@ -700,195 +658,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
     }
   };
 
-  // Parse raw recipe text into components using basic heuristics
-  const parseRecipeText = (text: string): { 
-    name: string; 
-    ingredients: string[]; 
-    instructions: string[] 
-  } => {
-    // Split text into lines and remove empty ones
-    const lines = text.split('\n').map(line => line.trim()).filter(line => line);
-    
-    // Assume the first line with reasonable length is the recipe name
-    let name = '';
-    let nameLineIndex = -1;
-    
-    for (let i = 0; i < Math.min(5, lines.length); i++) {
-      if (lines[i].length > 3 && lines[i].length < 60) {
-        name = lines[i];
-        nameLineIndex = i;
-        break;
-      }
-    }
-    
-    // If no name found, use a default
-    if (!name && lines.length > 0) {
-      name = lines[0]; 
-      nameLineIndex = 0;
-    }
-    
-    // Skip the name line and start looking for ingredients and instructions
-    const remainingLines = lines.slice(nameLineIndex + 1);
-    
-    // Try to identify ingredients and instructions sections
-    const ingredientLines: string[] = [];
-    const instructionLines: string[] = [];
-    
-    let currentSection: 'none' | 'ingredients' | 'instructions' = 'none';
-    
-    // Keywords that might indicate the start of ingredients or instructions sections
-    const ingredientKeywords = ['ingredients', 'materials', 'you will need', 'what you need'];
-    const instructionKeywords = ['instructions', 'directions', 'method', 'preparation', 'steps', 'how to', 'procedure'];
-    
-    for (const line of remainingLines) {
-      // Skip very short lines that might be section separators
-      if (line.length < 3) continue;
-      
-      const lowerLine = line.toLowerCase();
-      
-      // Check if this line is a section header
-      const isIngredientHeader = ingredientKeywords.some(keyword => lowerLine.includes(keyword));
-      const isInstructionHeader = instructionKeywords.some(keyword => lowerLine.includes(keyword));
-      
-      // Determine the section based on headers or patterns
-      if (isIngredientHeader) {
-        currentSection = 'ingredients';
-        continue; // Skip the header line
-      } else if (isInstructionHeader) {
-        currentSection = 'instructions';
-        continue; // Skip the header line
-      }
-      
-      // If no explicit section is found, try to guess based on content patterns
-      if (currentSection === 'none') {
-        // Lines with measurements, fractions, or quantities often indicate ingredients
-        if (/\d+\s*(?:\d\/\d|\/)?\s*(?:cup|tbsp|tsp|oz|g|lb|ml|l|teaspoon|tablespoon|pound|ounce)/i.test(line) || 
-            /\d+\s*(?:\/)\s*\d+/.test(line)) { // Fractions
-          ingredientLines.push(line);
-          continue;
-        }
-        
-        // Lines starting with numbers followed by period or parenthesis often indicate instructions
-        if (/^\s*\d+[\.\)]/.test(line) || /^step\s+\d+:/i.test(line)) {
-          instructionLines.push(line);
-          currentSection = 'instructions'; // Assume remaining lines are also instructions
-          continue;
-        }
-        
-        // If we can't determine, default to ingredients first
-        ingredientLines.push(line);
-      } else if (currentSection === 'ingredients') {
-        // Check if we might have switched to instructions
-        if (/^\s*\d+[\.\)]/.test(line) || /^step\s+\d+:/i.test(line)) {
-          instructionLines.push(line);
-          currentSection = 'instructions';
-        } else {
-          ingredientLines.push(line);
-        }
-      } else if (currentSection === 'instructions') {
-        instructionLines.push(line);
-      }
-    }
-    
-    // If we have too few instructions but many ingredients, some ingredients might actually be instructions
-    if (instructionLines.length <= 1 && ingredientLines.length > 5) {
-      // Look for sentences in the ingredients that might be instructions
-      const possibleInstructions = ingredientLines.filter(ing => 
-        ing.length > 40 || // Long lines
-        /\.\s*$/.test(ing) || // Ends with period
-        /^[A-Z]/.test(ing.trim()) // Starts with capital letter
-      );
-      
-      if (possibleInstructions.length > 0) {
-        // Remove these from ingredients and add to instructions
-        possibleInstructions.forEach(instr => {
-          const index = ingredientLines.indexOf(instr);
-          if (index !== -1) {
-            ingredientLines.splice(index, 1);
-          }
-          instructionLines.push(instr);
-        });
-      }
-    }
-    
-    // Now process the instruction lines into actual instruction steps
-    // We'll try to identify numbered steps and merge continuation lines
-    const instructions: string[] = [];
-    let currentInstruction = '';
-    
-    for (let i = 0; i < instructionLines.length; i++) {
-      const line = instructionLines[i];
-      
-      // Check if this line starts a new numbered step
-      const numberMatch = line.match(/^\s*(\d+)[\.\)]\s*/);
-      
-      if (numberMatch) {
-        // Save the previous instruction if it exists
-        if (currentInstruction) {
-          instructions.push(currentInstruction.trim());
-          currentInstruction = '';
-        }
-        
-        // Remove the step number from the line
-        currentInstruction = line.replace(/^\s*\d+[\.\)]\s*/, '');
-      } else if (line.toLowerCase().startsWith('step') && /\d+/.test(line)) {
-        // Handle "Step X: ..." format
-        if (currentInstruction) {
-          instructions.push(currentInstruction.trim());
-          currentInstruction = '';
-        }
-        
-        // Remove the "Step X:" prefix
-        currentInstruction = line.replace(/^step\s+\d+\s*:?\s*/i, '');
-      } else {
-        // This is either a continuation of the current instruction or a non-numbered instruction
-        
-        // Check if this might be a new instruction without a number
-        const startsNewSentence = /^[A-Z]/.test(line) && 
-                                  (currentInstruction.endsWith('.') || 
-                                   currentInstruction.endsWith('!') || 
-                                   currentInstruction.endsWith('?'));
-        
-        // If this line starts with a capital letter and the previous line ends with punctuation,
-        // it might be a new instruction
-        if (startsNewSentence && currentInstruction) {
-          instructions.push(currentInstruction.trim());
-          currentInstruction = line;
-        } else if (!currentInstruction) {
-          // Start a new instruction if we don't have one
-          currentInstruction = line;
-        } else {
-          // Append to the current instruction with a space
-          currentInstruction += ' ' + line;
-        }
-      }
-    }
-    
-    // Add the last instruction if there is one
-    if (currentInstruction) {
-      instructions.push(currentInstruction.trim());
-    }
-    
-    // If we ended up with no instructions, but have instructionLines,
-    // fall back to using the raw lines
-    if (instructions.length === 0 && instructionLines.length > 0) {
-      return { 
-        name, 
-        ingredients: ingredientLines, 
-        instructions: instructionLines 
-      };
-    }
-    
-    // Clean up any very short instructions (likely parsing errors)
-    const finalInstructions = instructions.filter(instr => instr.length > 5);
-    
-    return { 
-      name, 
-      ingredients: ingredientLines, 
-      instructions: finalInstructions 
-    };
-  };
-  
   // Parse an ingredient line to extract amount, unit, and item
   const parseIngredient = (text: string): { amount: string; unit: string; item: string } => {
     // Common cooking units
@@ -1321,20 +1090,10 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
               )}
             </div>
           </div>
-          {!scanMode && !isProcessingRecipe && !extractedRecipeText && (
+          {!scanMode && !isProcessingRecipe && (
             <button type="button" onClick={() => setShowScanFeature(false)} className="mt-3 text-xs text-steel/50 hover:text-steel transition-colors flex items-center gap-1">
               <FiX className="w-3 h-3" /> Hide scanner
             </button>
-          )}
-          {extractedRecipeText && (
-            <details className="mt-4">
-              <summary className="cursor-pointer text-sm font-medium text-light-green hover:text-green transition-colors list-none flex items-center gap-1">
-                View extracted text <span className="text-xs text-steel/50 font-normal">(reference only)</span>
-              </summary>
-              <div className="mt-2 bg-eggshell rounded-xl border border-stone-100 p-3 overflow-auto max-h-60 whitespace-pre-wrap text-xs text-steel">
-                {extractedRecipeText}
-              </div>
-            </details>
           )}
         </div>
       )}

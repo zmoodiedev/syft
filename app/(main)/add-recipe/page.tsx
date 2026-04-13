@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import RecipeForm from '@/app/components/RecipeForm';
 import UrlInput from '@/app/components/UrlInput';
@@ -21,19 +22,61 @@ const OPTIONS: { id: OptionId; icon: React.ElementType; title: string; subtitle:
     { id: 'manual', icon: FiFileText, title: 'Manual entry',      subtitle: 'Start from scratch'       },
 ];
 
-function FormPanel({ id }: { id: OptionId }) {
-    if (id === 'url')    return <UrlInput />;
-    if (id === 'scan')   return <RecipeForm scanMode={true} />;
-    if (id === 'bulk')   return <BulkEntryForm />;
+// Parse a TikTok caption into separate ingredients and instructions blocks.
+// Many recipe creators use headings like "Ingredients:" and "Steps:" in their captions.
+function parseTikTokCaption(text: string): { ingredients: string; instructions: string } {
+    const normalized = text.replace(/\r\n/g, '\n').trim();
+
+    const ingredientsMatch = normalized.match(
+        /(?:^|\n)[ \t]*(?:ingredients?|what you[''\u2019]?ll need)[ \t]*:?[ \t]*\n([\s\S]*?)(?=\n[ \t]*(?:directions?|steps?|instructions?|method|how to(?:\s+make)?|to\s+make)[ \t]*:?[ \t]*\n|$)/i
+    );
+    const instructionsMatch = normalized.match(
+        /(?:^|\n)[ \t]*(?:directions?|steps?|instructions?|method|how to(?:\s+make)?|to\s+make)[ \t]*:?[ \t]*\n([\s\S]*?)(?=\n[ \t]*(?:ingredients?)[ \t]*:?[ \t]*\n|$)/i
+    );
+
+    if (ingredientsMatch || instructionsMatch) {
+        return {
+            ingredients: ingredientsMatch ? ingredientsMatch[1].trim() : '',
+            instructions: instructionsMatch ? instructionsMatch[1].trim() : '',
+        };
+    }
+
+    // No clear sections — drop everything into instructions for the user to sort out
+    return { ingredients: '', instructions: normalized };
+}
+
+interface ShareData {
+    title: string;
+    ingredients: string;
+    instructions: string;
+    sourceUrl: string;
+    hasContent: boolean;
+}
+
+function FormPanel({ id, shareData }: { id: OptionId; shareData?: ShareData }) {
+    if (id === 'url')  return <UrlInput />;
+    if (id === 'scan') return <RecipeForm scanMode={true} />;
+    if (id === 'bulk') {
+        return (
+            <BulkEntryForm
+                initialTitle={shareData?.title}
+                initialIngredients={shareData?.ingredients}
+                initialInstructions={shareData?.instructions}
+                initialSourceUrl={shareData?.sourceUrl}
+            />
+        );
+    }
     return <RecipeForm />;
 }
 
-export default function AddRecipe() {
+function AddRecipeContent() {
     const { user, userProfile } = useAuth();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [selected, setSelected] = useState<OptionId>('url');
     const [mobileView, setMobileView] = useState<'options' | 'form'>('options');
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [shareData, setShareData] = useState<ShareData | undefined>(undefined);
 
     useEffect(() => {
         if (!user || userProfile?.tier !== 'Free') return;
@@ -43,6 +86,32 @@ export default function AddRecipe() {
             }
         });
     }, [user, userProfile]);
+
+    // Handle Web Share Target — reads params injected by the OS share sheet
+    useEffect(() => {
+        const rawText = searchParams.get('text') || '';
+        const rawUrl  = searchParams.get('url')  || '';
+        const rawTitle = searchParams.get('title') || '';
+
+        if (!rawText && !rawUrl) return;
+
+        const parsed = parseTikTokCaption(rawText);
+
+        // Use the shared title only if it looks like actual recipe text
+        // (TikTok often sends "via TikTok" or nothing useful)
+        const isTikTokUrl = rawUrl.includes('tiktok.com') || rawUrl.includes('vm.tiktok.com');
+        const cleanTitle = rawTitle && !rawTitle.toLowerCase().includes('tiktok') ? rawTitle : '';
+
+        setShareData({
+            title: cleanTitle,
+            ingredients: parsed.ingredients,
+            instructions: parsed.instructions,
+            sourceUrl: rawUrl,
+            hasContent: !!(rawText || rawUrl),
+        });
+        setSelected('bulk');
+        setMobileView('form');
+    }, [searchParams]);
 
     const handleSelect = (id: OptionId) => {
         setSelected(id);
@@ -58,6 +127,26 @@ export default function AddRecipe() {
         />
         <div className="min-h-screen bg-eggshell">
             <div className="container mx-auto px-6 py-10 md:py-14">
+
+                {/* TikTok share banner */}
+                {shareData?.hasContent && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="mb-6 flex items-start gap-3 bg-light-green/10 border border-light-green/20 rounded-2xl px-5 py-4"
+                    >
+                        <span className="text-xl leading-none mt-0.5">🎵</span>
+                        <div>
+                            <p className="text-sm font-semibold text-cast-iron">Shared from TikTok</p>
+                            <p className="text-sm text-steel mt-0.5">
+                                {shareData.ingredients || shareData.instructions
+                                    ? "We parsed what we could from the caption. Review the fields below and add a name before saving."
+                                    : "Paste the recipe from the video caption into the fields below, then click Import to Recipe."}
+                            </p>
+                        </div>
+                    </motion.div>
+                )}
 
                 {/* Page header */}
                 <div className="mb-6">
@@ -124,7 +213,7 @@ export default function AddRecipe() {
                                 exit={{ opacity: 0, y: -8 }}
                                 transition={{ duration: 0.18 }}
                             >
-                                <FormPanel id={selected} />
+                                <FormPanel id={selected} shareData={shareData} />
                             </motion.div>
                         </AnimatePresence>
                     </div>
@@ -133,5 +222,13 @@ export default function AddRecipe() {
             </div>
         </div>
         </>
+    );
+}
+
+export default function AddRecipe() {
+    return (
+        <Suspense>
+            <AddRecipeContent />
+        </Suspense>
     );
 }

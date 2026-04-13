@@ -23,5 +23,14 @@
   "start_url": "/",
   "scope": "/",
   "prefer_related_applications": false,
-  "categories": ["food", "lifestyle", "utilities"]
+  "categories": ["food", "lifestyle", "utilities"],
+  "share_target": {
+    "action": "/add-recipe",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
 } 
