@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 
 export default function ComingSoonPage() {
@@ -54,6 +55,18 @@ export default function ComingSoonPage() {
       >
         Syft is a recipe manager built for people who actually cook. We&apos;re putting the finishing touches on it now.
       </motion.p>
+
+      {/* Legal links */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6, delay: 0.35 }}
+        className="mt-12 flex items-center gap-4 text-xs text-steel/50"
+      >
+        <Link href="/privacy-policy" className="hover:text-steel transition-colors">Privacy Policy</Link>
+        <span>·</span>
+        <Link href="/terms-of-service" className="hover:text-steel transition-colors">Terms of Service</Link>
+      </motion.div>
 
     </div>
   );
