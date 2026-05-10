@@ -16,7 +16,6 @@ const columns = [
       { title: 'Recipe sharing', note: 'Send recipes directly to friends.' },
       { title: 'Friends network', note: 'Add friends and browse their public collections.' },
       { title: 'Google sign-in', note: 'One tap to get started.' },
-      { title: 'Demo mode', note: 'Try Syft without an account.' },
       { title: 'Photo upload', note: 'Add your own photos to any recipe.' },
     ],
   },

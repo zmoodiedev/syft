@@ -13,7 +13,6 @@ import RecipeListItem from '@/app/components/RecipeListItem';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import Button from '@/app/components/Button';
 import { FiGrid, FiList } from 'react-icons/fi';
-import { DEMO_RECIPES } from '@/app/lib/demoData';
 import { getUserRecipeCount } from '@/app/lib/recipe';
 import { TIER_FEATURES } from '@/app/lib/tiers';
 import RecipeLimitBanner from '@/app/components/RecipeLimitBanner';
@@ -37,7 +36,7 @@ interface Recipe {
 }
 
 export default function RecipesPage() {
-    const { user, userProfile, isDemo } = useAuth();
+    const { user, userProfile } = useAuth();
     const router = useRouter();
     const [recipes, setRecipes] = useState<Recipe[]>([]);
     const [loading, setLoading] = useState(true);
@@ -53,23 +52,6 @@ export default function RecipesPage() {
     const loaderRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (isDemo) {
-            const demoData = DEMO_RECIPES.map(r => ({
-                ...r,
-                createdAt: new Date(),
-            })) as Recipe[];
-            setRecipes(demoData);
-            const usedCategories = new Set<string>();
-            demoData.forEach(recipe => {
-                if (recipe.categories && Array.isArray(recipe.categories)) {
-                    recipe.categories.forEach(cat => usedCategories.add(cat));
-                }
-            });
-            setAvailableCategories(Array.from(usedCategories).sort());
-            setLoading(false);
-            return;
-        }
-
         const fetchRecipes = async () => {
             if (!user) return;
             try {
@@ -108,10 +90,10 @@ export default function RecipesPage() {
         fetchRecipes();
 
         // Load total count for limit banner (free users only)
-        if (user && !isDemo) {
+        if (user) {
             getUserRecipeCount(user.uid).then(setTotalRecipeCount);
         }
-    }, [user, isDemo]);
+    }, [user]);
 
     const loadMore = useCallback(async () => {
         if (!user || !lastDoc || loadingMore || !hasMore) return;
@@ -213,7 +195,7 @@ export default function RecipesPage() {
                     <div className="flex items-center justify-between gap-4 mb-6">
                         <div className="flex items-center gap-3">
                             <h1 className="text-3xl font-bold text-cast-iron">
-                                {isDemo ? 'Demo Recipes' : 'My Recipes'}
+                                My Recipes
                             </h1>
                             {!loading && (
                                 <span className="text-sm font-medium text-steel/50 tabular-nums">
@@ -221,8 +203,7 @@ export default function RecipesPage() {
                                 </span>
                             )}
                         </div>
-                        {!isDemo && (
-                            <Button onClick={() => {
+                        <Button onClick={() => {
                                 const atLimit = userProfile?.tier === 'Free' &&
                                     totalRecipeCount >= TIER_FEATURES['Free'].maxRecipes;
                                 if (atLimit) {
@@ -233,16 +214,15 @@ export default function RecipesPage() {
                             }}>
                                 Add recipe
                             </Button>
-                        )}
                     </div>
 
                     {/* Lapsed-subscriber banner — takes precedence over the limit nudge */}
-                    {!isDemo && userProfile?.tier === 'Free' && userProfile?.subscriptionLapsedAt ? (
+                    {userProfile?.tier === 'Free' && userProfile?.subscriptionLapsedAt ? (
                         <LapsedBanner
                             lockedCount={recipes.filter(r => r.locked).length}
                             onReactivateClick={() => setShowUpgradeModal(true)}
                         />
-                    ) : !isDemo && userProfile?.tier === 'Free' ? (
+                    ) : userProfile?.tier === 'Free' ? (
                         /* Limit nudge banner — free users approaching the 15-recipe cap */
                         <RecipeLimitBanner
                             count={totalRecipeCount}
@@ -441,7 +421,7 @@ export default function RecipesPage() {
                                                 ? 'Try different categories or clear the filter.'
                                                 : 'Add your first recipe to get started.'}
                                     </p>
-                                    {!searchQuery && selectedCategories.length === 0 && !isDemo && (
+                                    {!searchQuery && selectedCategories.length === 0 && (
                                         <Button href="/add-recipe">Add your first recipe</Button>
                                     )}
                                 </div>

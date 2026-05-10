@@ -3,10 +3,7 @@
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useAuth } from '../context/AuthContext';
-
 export default function Hero() {
-  const { enterDemoMode } = useAuth();
 
   return (
     <section className="relative overflow-hidden bg-cream min-h-[88vh] flex flex-col">
@@ -108,16 +105,6 @@ export default function Hero() {
                 </span>
               </Link>
 
-              {/* Secondary — View the demo */}
-              <button
-                onClick={enterDemoMode}
-                className="relative flex sm:inline-flex w-full sm:w-auto group cursor-pointer"
-              >
-                {/* Text — crisp, no filter, no skew */}
-                <span className="relative z-10 text-cast-iron px-9 py-4 text-lg font-semibold group-hover:opacity-75 transition-opacity w-full text-center sm:text-left">
-                  View the demo
-                </span>
-              </button>
             </motion.div>
 
           </div>

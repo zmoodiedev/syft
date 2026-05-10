@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import Logo from '@/app/components/Logo';
 import { FiCheck, FiArrowLeft, FiArrowRight, FiLock, FiCreditCard, FiX } from 'react-icons/fi';
 import { useAuth } from '@/app/context/AuthContext';
 import { auth } from '@/app/lib/firebase';
@@ -211,14 +212,7 @@ export default function SignUpPage() {
 
                 {/* Logo */}
                 <Link href="/" className="relative z-10">
-                    <Image
-                        src="/logo_syft.svg"
-                        alt="Syft"
-                        width={0}
-                        height={0}
-                        priority
-                        className="h-[36px] w-auto brightness-0 invert"
-                    />
+                    <Logo className="h-[36px] w-auto text-white" />
                 </Link>
 
                 {/* Tagline + features */}
@@ -246,7 +240,7 @@ export default function SignUpPage() {
 
                 {/* Mobile logo */}
                 <Link href="/" className="lg:hidden mb-8">
-                    <Image src="/logo_syft.svg" alt="Syft" width={0} height={0} priority className="h-[36px] w-auto" />
+                    <Logo className="h-[36px] w-auto text-cast-iron" />
                 </Link>
 
                 <AnimatePresence mode="wait">

@@ -18,7 +18,6 @@ import { useWakeLock } from '@/app/hooks/useWakeLock';
 import { getUserRelationship } from '@/app/lib/user';
 import { getUserRecipeCount } from '@/app/lib/recipe';
 import { TIER_FEATURES } from '@/app/lib/tiers';
-import { getDemoRecipeBySlug, isDemoRecipeSlug } from '@/app/lib/demoData';
 
 interface FriendItem {
   id: string;
@@ -81,7 +80,7 @@ function formatFraction(value: string): string {
 export default function RecipeDetail() {
   const params = useParams();
   const slug = typeof params.slug === 'string' ? params.slug : params.slug?.[0];
-  const { user, loading: authLoading, isDemo, userProfile } = useAuth();
+  const { user, loading: authLoading, userProfile } = useAuth();
   const { friends, shareRecipeWithFriend } = useFriends();
   const router = useRouter();
   const [recipe, setRecipe] = useState<Recipe | null>(null);
@@ -105,17 +104,7 @@ export default function RecipeDetail() {
   useEffect(() => {
     if (authLoading) return;
 
-    if (isDemo && slug && isDemoRecipeSlug(slug)) {
-      const demoRecipe = getDemoRecipeBySlug(slug);
-      if (demoRecipe) {
-        setRecipe(demoRecipe);
-        setError('');
-      } else {
-        setError('Recipe not found');
-      }
-      setLoading(false);
-      return;
-    }
+
 
     const fetchRecipe = async () => {
       if (!slug) return;
@@ -202,7 +191,7 @@ export default function RecipeDetail() {
     };
 
     fetchRecipe();
-  }, [slug, user, authLoading, isDemo]);
+  }, [slug, user, authLoading]);
 
   useEffect(() => {
     if (!friends.length) return;
@@ -531,8 +520,7 @@ export default function RecipeDetail() {
                 My Recipes
               </Link>
 
-              {!isDemo && (
-                <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
                   {!isOwner && user && (
                     <Button
                       variant="primary"
@@ -589,7 +577,6 @@ export default function RecipeDetail() {
                     </button>
                   )}
                 </div>
-              )}
             </div>
 
             {/* Locked banner */}

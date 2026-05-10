@@ -31,10 +31,6 @@ export default function CookiePreferences() {
                     <td className="px-4 py-3 font-medium text-cast-iron">Firebase auth token</td>
                     <td className="px-4 py-3">Keeps you signed in to your account</td>
                   </tr>
-                  <tr>
-                    <td className="px-4 py-3 font-medium text-cast-iron">Session storage</td>
-                    <td className="px-4 py-3">Remembers demo mode while you browse</td>
-                  </tr>
                 </tbody>
               </table>
             </div>

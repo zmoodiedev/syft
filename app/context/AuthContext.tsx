@@ -20,13 +20,10 @@ interface AuthContextType {
     user: User | null;
     userProfile: UserProfile | null;
     loading: boolean;
-    isDemo: boolean;
     signUp: (email: string, password: string, displayName?: string, tier?: 'Free' | 'Pro', billingCycle?: 'monthly' | 'yearly') => Promise<void>;
     signIn: (email: string, password: string) => Promise<void>;
     signInWithGoogle: () => Promise<void>;
     logout: () => Promise<void>;
-    enterDemoMode: () => void;
-    exitDemoMode: (redirectTo?: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -98,35 +95,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
-    const [isDemo, setIsDemo] = useState(false);
     const router = useRouter();
     const pathname = usePathname();
-
-    // Restore demo mode from sessionStorage on mount
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const stored = sessionStorage.getItem('syft-demo-mode');
-            if (stored === 'true') {
-                setIsDemo(true);
-            }
-        }
-    }, []);
-
-    const enterDemoMode = () => {
-        setIsDemo(true);
-        if (typeof window !== 'undefined') {
-            sessionStorage.setItem('syft-demo-mode', 'true');
-        }
-        router.push('/recipes');
-    };
-
-    const exitDemoMode = (redirectTo?: string) => {
-        setIsDemo(false);
-        if (typeof window !== 'undefined') {
-            sessionStorage.removeItem('syft-demo-mode');
-        }
-        router.push(redirectTo || '/login');
-    };
 
     useEffect(() => {
         let mounted = true;
@@ -151,13 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             } else {
                 setUser(null);
                 setUserProfile(null);
-                // In demo mode, only allow /recipes paths — redirect anything else
-                const currentIsDemo = typeof window !== 'undefined' && sessionStorage.getItem('syft-demo-mode') === 'true';
-                if (currentIsDemo) {
-                    if (pathname !== '/recipes' && !pathname.startsWith('/recipes/')) {
-                        router.push('/recipes');
-                    }
-                } else if (pathname !== '/login' &&
+                if (pathname !== '/login' &&
                     pathname !== '/' &&
                     pathname !== '/pricing' &&
                     pathname !== '/about' &&
@@ -218,7 +182,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         userProfile,
         loading,
-        isDemo,
         signUp: async (email: string, password: string, displayName?: string, tier?: 'Free' | 'Pro', billingCycle?: 'monthly' | 'yearly') => {
             const allowedEmails = getAllowedEmails();
             if (allowedEmails.length > 0 && !allowedEmails.includes(email)) {
@@ -247,15 +210,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
         },
         signInWithGoogle,
-        enterDemoMode,
-        exitDemoMode,
         logout: async () => {
             await signOut(auth);
             setUserProfile(null);
-            setIsDemo(false);
-            if (typeof window !== 'undefined') {
-                sessionStorage.removeItem('syft-demo-mode');
-            }
         }
     };
 

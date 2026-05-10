@@ -14,7 +14,7 @@ import { TIER_FEATURES } from '@/app/lib/tiers';
 import UpgradeModal from './UpgradeModal';
 
 export default function Navbar() {
-    const { user, userProfile, logout, isDemo, exitDemoMode } = useAuth();
+    const { user, userProfile, logout } = useAuth();
     const { sharedRecipes } = useFriends();
     const router = useRouter();
     const pathname = usePathname();
@@ -101,99 +101,6 @@ export default function Navbar() {
             console.error('Failed to log out:', error);
         }
     };
-
-    if (isDemo) {
-        return (
-            <nav className="flex flex-row items-center flex-1">
-                {/* Demo nav links — near logo */}
-                <ul className="hidden md:flex items-center gap-1 text-sm font-medium">
-                    <li>
-                        <Link
-                            href="/recipes"
-                            className={`text-cast-iron hover:text-light-green px-3 py-2 transition-colors border-b-2 ${
-                                pathname === '/recipes' ? 'border-light-green' : 'border-transparent'
-                            }`}
-                        >
-                            Demo Recipes
-                        </Link>
-                    </li>
-                </ul>
-
-                {/* Mobile Burger Menu Button */}
-                <button
-                    className="block md:hidden text-[28px] z-[110] relative ml-auto"
-                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                    aria-label="Toggle menu"
-                >
-                    <i className={`fa-solid ${mobileMenuOpen ? 'fa-xmark' : 'fa-burger'}`}></i>
-                </button>
-
-                {/* Demo Mobile Menu */}
-                <AnimatePresence mode="wait">
-                    {mobileMenuOpen && (
-                        <motion.div
-                            className="fixed inset-0 bg-white z-[100] flex flex-col overflow-y-auto"
-                            initial={{ x: '100%' }}
-                            animate={{ x: 0 }}
-                            exit={{ x: '100%' }}
-                            transition={{ type: 'tween', duration: 0.3 }}
-                        >
-                            <div className="flex flex-col h-full p-6 pt-20">
-                                <div className="flex flex-col space-y-4 text-lg">
-                                    <Link
-                                        href="/recipes"
-                                        className="py-3 border-b border-gray-100 flex items-center"
-                                        onClick={() => setMobileMenuOpen(false)}
-                                    >
-                                        <i className="fa-solid fa-book-open mr-3 w-6 text-center"></i>
-                                        Demo Recipes
-                                    </Link>
-                                    <button
-                                        onClick={() => {
-                                            setMobileMenuOpen(false);
-                                            exitDemoMode('/signup');
-                                        }}
-                                        className="py-3 border-b border-gray-100 flex items-center text-left"
-                                    >
-                                        <i className="fa-solid fa-user-plus mr-3 w-6 text-center"></i>
-                                        Sign up
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            setMobileMenuOpen(false);
-                                            exitDemoMode('/login');
-                                        }}
-                                        className="py-3 border-b border-gray-100 flex items-center text-left"
-                                    >
-                                        <i className="fa-solid fa-right-to-bracket mr-3 w-6 text-center"></i>
-                                        Sign in
-                                    </button>
-                                </div>
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* Desktop demo auth buttons — far right */}
-                <div className="hidden md:flex items-center gap-2 ml-auto">
-                    <Button
-                        variant="ghost"
-                        className="text-sm"
-                        onClick={() => exitDemoMode()}
-                    >
-                        Sign in
-                    </Button>
-                    <Button
-                        variant="primary"
-                        className="text-sm"
-                        onClick={() => exitDemoMode('/signup')}
-                    >
-                        Sign up
-                    </Button>
-                </div>
-            </nav>
-        );
-    }
 
     return (
         <>

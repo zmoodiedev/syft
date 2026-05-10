@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import Logo from '@/app/components/Logo';
 import SignIn from '@/app/components/SignIn';
 import { useAuth } from '@/app/context/AuthContext';
 import { useEffect, useState } from 'react';
@@ -14,14 +15,9 @@ const leftFeatures = [
   { icon: 'fa-paper-plane', text: "Share straight to friends' collections" },
 ];
 
-const leftStats = [
-  { value: '12,400+', label: 'recipes' },
-  { value: '340',     label: 'users' },
-  { value: '2.3K',    label: 'meals cooked' },
-];
 
 export default function LoginPage() {
-    const { user, enterDemoMode } = useAuth();
+    const { user } = useAuth();
     const router = useRouter();
     const [mounted, setMounted] = useState(false);
 
@@ -45,10 +41,10 @@ export default function LoginPage() {
         <div className="min-h-screen flex">
 
             {/* Left panel — branding (desktop only) */}
-            <div className="hidden lg:flex lg:w-[44%] bg-cream flex-col justify-between p-12 relative overflow-hidden">
+            <div className="hidden lg:flex lg:w-[44%] bg-cream flex-col justify-between p-12 relative z-10">
 
                 {/* Kitchen — ghost layer */}
-                <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute inset-0 pointer-events-none overflow-hidden">
                     <Image
                         src="/images/branding/kitchen.png"
                         alt=""
@@ -71,14 +67,7 @@ export default function LoginPage() {
 
                 {/* Logo */}
                 <Link href="/" className="relative z-10">
-                    <Image
-                        src="/logo_syft.svg"
-                        alt="Syft"
-                        width={0}
-                        height={0}
-                        priority
-                        className="h-[36px] w-auto"
-                    />
+                    <Logo className="h-[36px] w-auto text-cast-iron" />
                 </Link>
 
                 {/* Tagline + features */}
@@ -98,20 +87,7 @@ export default function LoginPage() {
                     </ul>
                 </div>
 
-                {/* Stats */}
-                <div className="relative z-10 flex items-center gap-6">
-                    {leftStats.map((stat, i) => (
-                        <div key={stat.label} className="flex items-center gap-6">
-                            <div>
-                                <p className="text-sm font-bold text-cast-iron">{stat.value}</p>
-                                <p className="text-xs text-steel/60">{stat.label}</p>
-                            </div>
-                            {i < leftStats.length - 1 && (
-                                <span className="text-steel/20 text-sm">·</span>
-                            )}
-                        </div>
-                    ))}
-                </div>
+                <p className="text-xs text-steel/40 relative z-10">© {new Date().getFullYear()} Syft. All rights reserved.</p>
             </div>
 
             {/* Right panel — form */}
@@ -119,14 +95,7 @@ export default function LoginPage() {
 
                 {/* Mobile logo */}
                 <Link href="/" className="lg:hidden mb-8">
-                    <Image
-                        src="/logo_syft.svg"
-                        alt="Syft"
-                        width={0}
-                        height={0}
-                        priority
-                        className="h-[36px] w-auto"
-                    />
+                    <Logo className="h-[36px] w-auto text-cast-iron" />
                 </Link>
 
                 <motion.div
@@ -141,17 +110,6 @@ export default function LoginPage() {
 
                         <SignIn />
 
-                        <div className="text-center mt-6 pt-6 border-t border-stone-100">
-                            <p className="text-sm text-steel">
-                                Just want to look around?{' '}
-                                <button
-                                    onClick={enterDemoMode}
-                                    className="font-semibold text-light-green hover:underline transition-colors"
-                                >
-                                    Try the demo
-                                </button>
-                            </p>
-                        </div>
                     </div>
                 </motion.div>
             </div>
