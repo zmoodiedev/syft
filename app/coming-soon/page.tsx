@@ -7,12 +7,8 @@ export default function ComingSoonPage() {
   return (
     <div className="min-h-screen bg-eggshell flex flex-col items-center justify-center px-6 text-center">
 
-      {/* Floating Ollie */}
-      <motion.div
-        animate={{ y: [0, -14, 0] }}
-        transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
-        className="mb-8"
-      >
+      {/* Ollie */}
+      <div className="mb-8">
         <Image
           src="/images/branding/chef_ollie.png"
           alt="Ollie the Syft mascot"
@@ -20,7 +16,7 @@ export default function ComingSoonPage() {
           height={140}
           priority
         />
-      </motion.div>
+      </div>
 
       {/* Logo */}
       <motion.div
