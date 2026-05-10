@@ -80,6 +80,7 @@ async function compressImage(file: File): Promise<File> {
 
 export const uploadImage = async (
   file: File,
+  token: string,
   options?: { width?: number; height?: number; quality?: number }
 ): Promise<string> => {
   if (!file) throw new Error('No file provided');
@@ -98,6 +99,7 @@ export const uploadImage = async (
 
   const response = await fetch('/api/upload-image', {
     method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
     body: formData,
   });
 
@@ -110,10 +112,13 @@ export const uploadImage = async (
   return data.imageUrl;
 };
 
-export async function deleteImage(imageUrl: string) {
+export async function deleteImage(imageUrl: string, token: string) {
   const response = await fetch('/api/delete-image', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
     body: JSON.stringify({ imageUrl }),
   });
 

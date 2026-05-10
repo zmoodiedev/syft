@@ -1,59 +1,76 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/app/lib/firebase';
-import { doc, getDoc, deleteDoc } from 'firebase/firestore';
-import { deleteImage } from '@/lib/cloudinary';
+import { db, auth } from '@/lib/firebase-admin';
+import { v2 as cloudinary } from 'cloudinary';
+
+export const runtime = 'nodejs';
+
+cloudinary.config({
+  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+  api_key:    process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true,
+});
+
+function extractPublicId(url: string): string | null {
+  try {
+    if (!url.includes('cloudinary.com')) return null;
+    const segments = new URL(url).pathname.split('/');
+    const uploadIdx = segments.findIndex(s => s === 'upload');
+    if (uploadIdx === -1) return null;
+    const afterUpload = segments.slice(uploadIdx + 1).filter(s => !/^v\d+$/.test(s));
+    return afterUpload.join('/') || null;
+  } catch {
+    return null;
+  }
+}
 
 export async function DELETE(request: Request) {
-    try {
-        const { recipeId, userId } = await request.json();
+  const token = request.headers.get('Authorization')?.split('Bearer ')[1];
+  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-        if (!recipeId || !userId) {
-            return NextResponse.json(
-                { error: 'Recipe ID and user ID are required' },
-                { status: 400 }
-            );
-        }
+  let userId: string;
+  try {
+    const decoded = await auth.verifyIdToken(token);
+    userId = decoded.uid;
+  } catch {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
-        // Get the recipe document to check ownership and get the image URL
-        const recipeRef = doc(db, 'recipes', recipeId);
-        const recipeSnap = await getDoc(recipeRef);
-
-        if (!recipeSnap.exists()) {
-            return NextResponse.json(
-                { error: 'Recipe not found' },
-                { status: 404 }
-            );
-        }
-
-        const recipeData = recipeSnap.data();
-
-        // Verify the user owns this recipe
-        if (recipeData.userId !== userId) {
-            return NextResponse.json(
-                { error: 'Unauthorized to delete this recipe' },
-                { status: 403 }
-            );
-        }
-
-        // If there's an image URL, delete it from Cloudinary
-        if (recipeData.imageUrl) {
-            try {
-                await deleteImage(recipeData.imageUrl);
-            } catch (error) {
-                console.error('Error deleting image:', error);
-                // Continue with recipe deletion even if image deletion fails
-            }
-        }
-
-        // Delete the recipe document
-        await deleteDoc(recipeRef);
-
-        return NextResponse.json({ message: 'Recipe deleted successfully' });
-    } catch (error) {
-        console.error('Error deleting recipe:', error);
-        return NextResponse.json(
-            { error: 'Failed to delete recipe' },
-            { status: 500 }
-        );
+  try {
+    const { recipeId } = await request.json();
+    if (!recipeId) {
+      return NextResponse.json({ error: 'Recipe ID is required' }, { status: 400 });
     }
-} 
+
+    const recipeRef = db.collection('recipes').doc(recipeId);
+    const recipeSnap = await recipeRef.get();
+
+    if (!recipeSnap.exists) {
+      return NextResponse.json({ error: 'Recipe not found' }, { status: 404 });
+    }
+
+    const recipeData = recipeSnap.data()!;
+
+    if (recipeData.userId !== userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+
+    if (recipeData.imageUrl) {
+      const publicId = extractPublicId(recipeData.imageUrl);
+      if (publicId) {
+        try {
+          await cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
+        } catch (err) {
+          console.error('Error deleting recipe image from Cloudinary:', err);
+        }
+      }
+    }
+
+    await recipeRef.delete();
+
+    return NextResponse.json({ message: 'Recipe deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting recipe:', error);
+    return NextResponse.json({ error: 'Failed to delete recipe' }, { status: 500 });
+  }
+}

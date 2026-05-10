@@ -291,107 +291,232 @@ export default function RecipesPage() {
                         </div>
                     </div>
 
-                    {/* Category filters */}
-                    {availableCategories.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mb-6">
-                            {availableCategories.map((category: string) => (
-                                <button
-                                    key={category}
-                                    onClick={() => handleCategoryToggle(category)}
-                                    className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                                        selectedCategories.includes(category)
-                                            ? 'bg-light-green text-white'
-                                            : 'bg-white text-steel border border-stone-200 hover:border-light-green hover:text-light-green'
-                                    }`}
-                                    aria-pressed={selectedCategories.includes(category)}
-                                >
-                                    {category}
-                                </button>
-                            ))}
-                            {selectedCategories.length > 0 && (
-                                <button
-                                    onClick={() => setSelectedCategories([])}
-                                    className="px-3 py-1 rounded-full text-xs font-medium text-steel/60 hover:text-cast-iron transition-colors"
-                                >
-                                    Clear
-                                </button>
-                            )}
-                        </div>
-                    )}
+                    {/* Sidebar + content layout */}
+                    <div className="flex gap-6 items-start">
 
-                    {/* Content */}
-                    {loading ? (
-                        <div className="flex justify-center py-24">
-                            <div className="animate-spin rounded-full h-10 w-10 border-2 border-stone-200 border-t-light-green" />
-                        </div>
-                    ) : sortedRecipes.length === 0 ? (
-                        <div className="text-center py-24">
-                            <div className="w-14 h-14 bg-tomato/10 rounded-2xl flex items-center justify-center mx-auto mb-5">
-                                <i className="fa-solid fa-utensils text-tomato text-xl" />
-                            </div>
-                            <h3 className="text-xl font-bold text-cast-iron mb-2">
-                                {searchQuery
-                                    ? 'No recipes match your search'
-                                    : selectedCategories.length > 0
-                                        ? 'No recipes in those categories'
-                                        : 'No recipes yet'}
-                            </h3>
-                            <p className="text-steel text-sm mb-6">
-                                {searchQuery
-                                    ? 'Try different search terms.'
-                                    : selectedCategories.length > 0
-                                        ? 'Try different categories or clear the filter.'
-                                        : 'Add your first recipe to get started.'}
-                            </p>
-                            {!searchQuery && selectedCategories.length === 0 && !isDemo && (
-                                <Button href="/add-recipe">Add your first recipe</Button>
-                            )}
-                        </div>
-                    ) : (
-                        <>
-                            {viewMode === 'cards' ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                                    {sortedRecipes.map((recipe, index) => (
-                                        <RecipeCard
-                                            key={recipe.id}
-                                            recipe={recipe}
-                                            priority={index < 3}
-                                        />
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="space-y-6">
-                                    {Object.entries(groupedRecipes)
-                                        .sort(([a], [b]) => a.localeCompare(b))
-                                        .map(([letter, letterRecipes]) => (
-                                            <div key={letter}>
-                                                <p className="text-xs font-semibold text-steel/50 uppercase tracking-widest mb-2 px-1">
-                                                    {letter}
-                                                </p>
-                                                <div className="space-y-2">
-                                                    {letterRecipes.map((recipe, index) => (
-                                                        <RecipeListItem
-                                                            key={recipe.id}
-                                                            recipe={recipe}
-                                                            index={index}
+                        {/* Category sidebar — desktop */}
+                        {(loading || availableCategories.length > 0) && (
+                            <div className="hidden md:block w-64 flex-shrink-0">
+                                {loading ? (
+                                    <div className="sticky top-6 bg-white rounded-2xl border border-stone-100 shadow-sm p-4 animate-pulse">
+                                        <div className="h-2.5 bg-stone-200 rounded-full w-20 mb-4" />
+                                        <div className="flex flex-col gap-1.5">
+                                            {[72, 56, 88, 64, 80].map((w, i) => (
+                                                <div key={i} className="h-8 bg-stone-100 rounded-lg" style={{ width: `${w}%` }} />
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="sticky top-6 bg-white rounded-2xl border border-stone-100 shadow-sm p-4">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <p className="text-[0.75rem] font-semibold text-steel/50 uppercase tracking-wider">Filter</p>
+                                            {selectedCategories.length > 0 && (
+                                                <button
+                                                    onClick={() => setSelectedCategories([])}
+                                                    className="text-xs font-medium text-light-green hover:text-green transition-colors"
+                                                >
+                                                    Clear
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className="flex flex-col gap-0.5">
+                                            {availableCategories.map((category: string) => {
+                                                const checked = selectedCategories.includes(category);
+                                                return (
+                                                    <label
+                                                        key={category}
+                                                        className="flex items-center gap-3 px-2 py-2 rounded-lg cursor-pointer hover:bg-eggshell transition-colors group"
+                                                    >
+                                                        <div className={`w-4 h-4 rounded flex-shrink-0 border transition-colors flex items-center justify-center ${
+                                                            checked
+                                                                ? 'bg-light-green border-light-green'
+                                                                : 'border-stone-300 group-hover:border-light-green/60'
+                                                        }`}>
+                                                            {checked && (
+                                                                <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 10 10" fill="none">
+                                                                    <path d="M1.5 5L4 7.5L8.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                                                </svg>
+                                                            )}
+                                                        </div>
+                                                        <input
+                                                            type="checkbox"
+                                                            className="sr-only"
+                                                            checked={checked}
+                                                            onChange={() => handleCategoryToggle(category)}
                                                         />
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        ))}
-                                </div>
-                            )}
+                                                        <span className={`text-sm transition-colors ${checked ? 'text-cast-iron font-medium' : 'text-steel'}`}>
+                                                            {category}
+                                                        </span>
+                                                    </label>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
-                            {/* Infinite scroll sentinel */}
-                            {hasMore && (
-                                <div ref={loaderRef} className="py-8 flex justify-center">
-                                    {loadingMore && (
-                                        <div className="animate-spin rounded-full h-7 w-7 border-2 border-stone-200 border-t-light-green" />
+                        {/* Main content */}
+                        <div className="flex-1 min-w-0">
+
+                            {/* Category pills — mobile only */}
+                            {(loading || availableCategories.length > 0) && (
+                                <div className="flex flex-wrap gap-2 mb-6 md:hidden">
+                                    {loading ? (
+                                        [52, 68, 44, 60, 56].map((w, i) => (
+                                            <div key={i} className="h-6 rounded-full bg-stone-200 animate-pulse" style={{ width: `${w}px` }} />
+                                        ))
+                                    ) : (
+                                        <>
+                                            {availableCategories.map((category: string) => (
+                                                <button
+                                                    key={category}
+                                                    onClick={() => handleCategoryToggle(category)}
+                                                    className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                                                        selectedCategories.includes(category)
+                                                            ? 'bg-light-green text-white'
+                                                            : 'bg-white text-steel border border-stone-200 hover:border-light-green hover:text-light-green'
+                                                    }`}
+                                                    aria-pressed={selectedCategories.includes(category)}
+                                                >
+                                                    {category}
+                                                </button>
+                                            ))}
+                                            {selectedCategories.length > 0 && (
+                                                <button
+                                                    onClick={() => setSelectedCategories([])}
+                                                    className="px-3 py-1 rounded-full text-xs font-medium text-steel/60 hover:text-cast-iron transition-colors"
+                                                >
+                                                    Clear
+                                                </button>
+                                            )}
+                                        </>
                                     )}
                                 </div>
                             )}
-                        </>
-                    )}
+
+                            {loading ? (
+                                viewMode === 'cards' ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                                        {Array.from({ length: 6 }).map((_, i) => (
+                                            <div key={i} className="bg-white rounded-2xl overflow-hidden shadow-sm animate-pulse">
+                                                <div className="h-52 bg-stone-200" />
+                                                <div className="p-3.5 space-y-2">
+                                                    <div className="h-4 bg-stone-200 rounded-full w-3/4" />
+                                                    <div className="h-3 bg-stone-200 rounded-full w-2/5" />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {Array.from({ length: 6 }).map((_, i) => (
+                                            <div key={i} className="flex items-center bg-white border border-stone-100 rounded-2xl shadow-sm overflow-hidden animate-pulse">
+                                                <div className="w-28 h-28 flex-shrink-0 bg-stone-200" />
+                                                <div className="flex-1 min-w-0 px-5 py-4 space-y-2.5">
+                                                    <div className="h-2.5 bg-stone-200 rounded-full w-14" />
+                                                    <div className="h-4 bg-stone-200 rounded-full w-2/3" />
+                                                    <div className="h-2.5 bg-stone-200 rounded-full w-1/3" />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )
+                            ) : sortedRecipes.length === 0 ? (
+                                <div className="text-center py-24">
+                                    <div className="w-14 h-14 bg-tomato/10 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                                        <i className="fa-solid fa-utensils text-tomato text-xl" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-cast-iron mb-2">
+                                        {searchQuery
+                                            ? 'No recipes match your search'
+                                            : selectedCategories.length > 0
+                                                ? 'No recipes in those categories'
+                                                : 'No recipes yet'}
+                                    </h3>
+                                    <p className="text-steel text-sm mb-6">
+                                        {searchQuery
+                                            ? 'Try different search terms.'
+                                            : selectedCategories.length > 0
+                                                ? 'Try different categories or clear the filter.'
+                                                : 'Add your first recipe to get started.'}
+                                    </p>
+                                    {!searchQuery && selectedCategories.length === 0 && !isDemo && (
+                                        <Button href="/add-recipe">Add your first recipe</Button>
+                                    )}
+                                </div>
+                            ) : (
+                                <>
+                                    {viewMode === 'cards' ? (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                                            {sortedRecipes.map((recipe, index) => (
+                                                <RecipeCard
+                                                    key={recipe.id}
+                                                    recipe={recipe}
+                                                    priority={index < 3}
+                                                />
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-6">
+                                            {Object.entries(groupedRecipes)
+                                                .sort(([a], [b]) => a.localeCompare(b))
+                                                .map(([letter, letterRecipes]) => (
+                                                    <div key={letter}>
+                                                        <p className="text-xs font-semibold text-steel/50 uppercase tracking-widest mb-2 px-1">
+                                                            {letter}
+                                                        </p>
+                                                        <div className="space-y-2">
+                                                            {letterRecipes.map((recipe, index) => (
+                                                                <RecipeListItem
+                                                                    key={recipe.id}
+                                                                    recipe={recipe}
+                                                                    index={index}
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                        </div>
+                                    )}
+
+                                    {/* Infinite scroll sentinel */}
+                                    {hasMore && (
+                                        <div ref={loaderRef} className="pt-2">
+                                            {loadingMore && (
+                                                viewMode === 'cards' ? (
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                                                        {Array.from({ length: 3 }).map((_, i) => (
+                                                            <div key={i} className="bg-white rounded-2xl overflow-hidden shadow-sm animate-pulse">
+                                                                <div className="h-52 bg-stone-200" />
+                                                                <div className="p-3.5 space-y-2">
+                                                                    <div className="h-4 bg-stone-200 rounded-full w-3/4" />
+                                                                    <div className="h-3 bg-stone-200 rounded-full w-2/5" />
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="space-y-2">
+                                                        {Array.from({ length: 3 }).map((_, i) => (
+                                                            <div key={i} className="flex items-center bg-white border border-stone-100 rounded-2xl shadow-sm overflow-hidden animate-pulse">
+                                                                <div className="w-28 h-28 flex-shrink-0 bg-stone-200" />
+                                                                <div className="flex-1 min-w-0 px-5 py-4 space-y-2.5">
+                                                                    <div className="h-2.5 bg-stone-200 rounded-full w-14" />
+                                                                    <div className="h-4 bg-stone-200 rounded-full w-2/3" />
+                                                                    <div className="h-2.5 bg-stone-200 rounded-full w-1/3" />
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )
+                                            )}
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
         </ProtectedRoute>

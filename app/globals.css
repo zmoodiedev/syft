@@ -2,8 +2,18 @@
 
 @layer base {
 
+  html {
+    font-size: 18px;
+  }
+
+  @media (min-width: 768px) {
+    html {
+      font-size: 16px;
+    }
+  }
+
   body {
-    font-size: 16px;
+    font-size: 1rem;
     font-family: var(--font-jakarta), sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -50,6 +60,9 @@
 }
 
 @theme inline {
+  --text-xs: 0.8125rem;
+  --text-sm: 0.9375rem;
+
   --color-background: #FAF6EE;
   --color-foreground: #2C1A0E;
   --color-cast-iron: #2C1A0E;

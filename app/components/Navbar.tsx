@@ -104,22 +104,24 @@ export default function Navbar() {
 
     if (isDemo) {
         return (
-            <nav className="flex flex-row gap-[1rem] items-center">
-                <ul className="flex-row gap-10 text-base font-medium hidden md:flex mr-8">
+            <nav className="flex flex-row items-center flex-1">
+                {/* Demo nav links — near logo */}
+                <ul className="hidden md:flex items-center gap-1 text-sm font-medium">
                     <li>
                         <Link
                             href="/recipes"
-                            className={`text-cast-iron hover:text-light-green px-3 py-2 transition-colors ${
-                                pathname === '/recipes' ? 'border-b-2 border-light-green' : ''
+                            className={`text-cast-iron hover:text-light-green px-3 py-2 transition-colors border-b-2 ${
+                                pathname === '/recipes' ? 'border-light-green' : 'border-transparent'
                             }`}
                         >
                             Demo Recipes
                         </Link>
                     </li>
                 </ul>
+
                 {/* Mobile Burger Menu Button */}
                 <button
-                    className="block md:hidden text-[28px] z-[110] relative"
+                    className="block md:hidden text-[28px] z-[110] relative ml-auto"
                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                     aria-label="Toggle menu"
                 >
@@ -172,8 +174,8 @@ export default function Navbar() {
                     )}
                 </AnimatePresence>
 
-                {/* Desktop demo buttons */}
-                <div className="hidden md:flex items-center gap-2">
+                {/* Desktop demo auth buttons — far right */}
+                <div className="hidden md:flex items-center gap-2 ml-auto">
                     <Button
                         variant="ghost"
                         className="text-sm"
@@ -200,31 +202,50 @@ export default function Navbar() {
             onClose={() => setShowUpgradeModal(false)}
             reason="recipe_limit"
         />
-        <nav className="flex flex-row gap-[1rem] items-center">
-            {user && (
-                <ul className="flex-row gap-10 text-base font-medium hidden md:flex mr-8 items-center">
-                    <li>
-                        <Link
-                            href="/recipes"
-                            className={`text-cast-iron hover:text-light-green px-3 py-2 transition-colors border-b-2 ${
-                                pathname === '/recipes' ? 'border-light-green' : 'border-transparent'
-                            }`}
-                        >
-                            My Recipes
-                        </Link>
-                    </li>
-                    <li>
-                        <button
-                            onClick={handleAddRecipe}
-                            className={`text-base font-medium leading-normal text-cast-iron hover:text-light-green px-3 py-2 transition-colors border-b-2 ${
-                                pathname === '/add-recipe' ? 'border-light-green' : 'border-transparent'
-                            }`}
-                        >
-                            Add Recipe
-                        </button>
-                    </li>
-                </ul>
-            )}
+        <nav className="flex flex-row items-center flex-1">
+            {/* Desktop nav links — near logo */}
+            <ul className="hidden md:flex items-center gap-1 text-sm font-medium">
+                {user ? (
+                    <>
+                        <li>
+                            <Link
+                                href="/recipes"
+                                className={`text-cast-iron hover:text-light-green px-3 py-2 transition-colors border-b-2 ${
+                                    pathname === '/recipes' ? 'border-light-green' : 'border-transparent'
+                                }`}
+                            >
+                                My Recipes
+                            </Link>
+                        </li>
+                        <li>
+                            <button
+                                onClick={handleAddRecipe}
+                                className={`text-sm font-medium leading-normal text-cast-iron hover:text-light-green px-3 py-2 transition-colors border-b-2 ${
+                                    pathname === '/add-recipe' ? 'border-light-green' : 'border-transparent'
+                                }`}
+                            >
+                                Add Recipe
+                            </button>
+                        </li>
+                    </>
+                ) : (
+                    <>
+                        <li>
+                            <Link href="/pricing" className={`px-3 py-2 transition-colors ${pathname === '/pricing' ? 'text-cast-iron' : 'text-cast-iron/60 hover:text-cast-iron'}`}>
+                                Pricing
+                            </Link>
+                        </li>
+                        <li>
+                            <Link href="/about" className={`px-3 py-2 transition-colors ${pathname === '/about' ? 'text-cast-iron' : 'text-cast-iron/60 hover:text-cast-iron'}`}>
+                                About
+                            </Link>
+                        </li>
+                    </>
+                )}
+            </ul>
+
+            {/* Auth / profile — pushed to far right */}
+            <div className="ml-auto flex items-center gap-3">
             {user ? (
                 <>
                     {/* Mobile Burger Menu Button */}
@@ -450,19 +471,7 @@ export default function Navbar() {
                     </div>
                 </>
             ) : (
-                <div className="flex items-center gap-3">
-                    <ul className="hidden md:flex items-center gap-6 mr-2 text-sm font-medium">
-                        <li>
-                            <Link href="/pricing" className={`transition-colors ${pathname === '/pricing' ? 'text-cast-iron' : 'text-cast-iron/60 hover:text-cast-iron'}`}>
-                                Pricing
-                            </Link>
-                        </li>
-                        <li>
-                            <Link href="/about" className={`transition-colors ${pathname === '/about' ? 'text-cast-iron' : 'text-cast-iron/60 hover:text-cast-iron'}`}>
-                                About
-                            </Link>
-                        </li>
-                    </ul>
+                <>
                     <Button
                         variant="ghost"
                         href="/login"
@@ -477,8 +486,9 @@ export default function Navbar() {
                     >
                         Sign up
                     </Button>
-                </div>
+                </>
             )}
+            </div>
         </nav>
         </>
     );

@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import * as cheerio from 'cheerio';
 import { auth } from '@/lib/firebase-admin';
 import Anthropic from '@anthropic-ai/sdk';
+import { lookup } from 'dns/promises';
+import { isIP } from 'net';
+import { scraperLimit, checkRateLimit } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 
@@ -124,6 +127,60 @@ async function extractWithClaude($: ReturnType<typeof cheerio.load>, sourceUrl: 
     };
 }
 
+// ---------------------------------------------------------------------------
+// SSRF guard
+// ---------------------------------------------------------------------------
+
+const MAX_RESPONSE_BYTES = 5 * 1024 * 1024; // 5 MB
+
+function isPrivateIP(ip: string): boolean {
+  if (ip === '127.0.0.1' || ip === '::1' || ip === '0.0.0.0' || ip === '::') return true;
+  if (ip === '169.254.169.254') return true; // cloud metadata endpoint
+  const parts = ip.split('.').map(Number);
+  if (parts.length === 4) {
+    if (parts[0] === 10) return true;
+    if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return true;
+    if (parts[0] === 192 && parts[1] === 168) return true;
+    if (parts[0] === 0) return true;
+  }
+  return false;
+}
+
+async function validateRecipeUrl(rawUrl: string): Promise<string> {
+  let parsed: URL;
+  try {
+    parsed = new URL(rawUrl);
+  } catch {
+    throw new Error('Invalid URL format.');
+  }
+
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    throw new Error('Only HTTP and HTTPS URLs are supported.');
+  }
+
+  const hostname = parsed.hostname;
+  if (isIP(hostname)) {
+    if (isPrivateIP(hostname)) throw new Error('This URL cannot be accessed.');
+  } else {
+    try {
+      const addresses = await lookup(hostname, { all: true });
+      for (const addr of addresses) {
+        if (isPrivateIP(addr.address)) throw new Error('This URL cannot be accessed.');
+      }
+    } catch (err) {
+      if (err instanceof Error && err.message === 'This URL cannot be accessed.') throw err;
+      throw new Error(
+        `Could not connect to ${hostname}. The site may be blocking automated access. ` +
+        'Try uploading a photo of the recipe instead (Scan a Recipe), or paste the text manually (Bulk Entry).'
+      );
+    }
+  }
+
+  return parsed.href;
+}
+
+// ---------------------------------------------------------------------------
+
 // Sites that require a login or return nothing useful even with Claude.
 // These get a clear early error rather than wasting an API call.
 const BLOCKED_WEBSITES: string[] = [
@@ -165,17 +222,25 @@ export async function POST(request: Request) {
     if (!token) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    let userId: string;
     try {
-        await auth.verifyIdToken(token);
+        const decoded = await auth.verifyIdToken(token);
+        userId = decoded.uid;
     } catch {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const rateLimitRes = await checkRateLimit(scraperLimit, userId);
+    if (rateLimitRes) return rateLimitRes;
+
     try {
-        const { url } = await request.json();
+        const { url: rawUrl } = await request.json();
+
+        // Validate URL and block SSRF
+        const url = await validateRecipeUrl(rawUrl);
 
         // Check if the URL is from a known blocked website
-        const isBlockedWebsite = BLOCKED_WEBSITES.some((domain: string) => 
+        const isBlockedWebsite = BLOCKED_WEBSITES.some((domain: string) =>
             url.toLowerCase().includes(domain)
         );
 
@@ -197,19 +262,25 @@ export async function POST(request: Request) {
             'Pragma': 'no-cache'
         };
 
-        // Fetch the webpage content with headers and redirect handling
+        // Fetch the webpage content with a timeout and redirect handling
         let response: Response;
         try {
             response = await fetch(url, {
                 headers,
                 redirect: 'follow',
                 cache: 'no-store',
+                signal: AbortSignal.timeout(15000),
             });
         } catch {
             throw new Error(
                 `Could not connect to ${new URL(url).hostname}. The site may be blocking automated access. ` +
                 'Try uploading a photo of the recipe instead (Scan a Recipe), or paste the text manually (Bulk Entry).'
             );
+        }
+
+        const contentLength = Number(response.headers.get('content-length') ?? 0);
+        if (contentLength > MAX_RESPONSE_BYTES) {
+            throw new Error('The page is too large to process.');
         }
 
         if (!response.ok) {

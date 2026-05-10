@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db, auth } from '@/lib/firebase-admin';
 import { TIER_FEATURES } from '@/app/lib/tiers';
 import { FieldValue } from 'firebase-admin/firestore';
+import { logEvent } from '@/lib/analytics-server';
 
 export async function POST(request: Request) {
   // Verify auth token
@@ -32,6 +33,7 @@ export async function POST(request: Request) {
     const count = countSnap.size;
 
     if (count >= limit) {
+      await logEvent(userId, 'recipe_limit_reached', { count, limit, tier });
       return NextResponse.json(
         { error: 'limit_reached', limit, count },
         { status: 403 }

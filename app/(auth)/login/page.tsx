@@ -14,6 +14,12 @@ const leftFeatures = [
   { icon: 'fa-paper-plane', text: "Share straight to friends' collections" },
 ];
 
+const leftStats = [
+  { value: '12,400+', label: 'recipes' },
+  { value: '340',     label: 'users' },
+  { value: '2.3K',    label: 'meals cooked' },
+];
+
 export default function LoginPage() {
     const { user, enterDemoMode } = useAuth();
     const router = useRouter();
@@ -39,7 +45,7 @@ export default function LoginPage() {
         <div className="min-h-screen flex">
 
             {/* Left panel — branding (desktop only) */}
-            <div className="hidden lg:flex lg:w-[44%] bg-cast-iron flex-col justify-between p-12 relative">
+            <div className="hidden lg:flex lg:w-[44%] bg-cream flex-col justify-between p-12 relative overflow-hidden">
 
                 {/* Kitchen — ghost layer */}
                 <div className="absolute inset-0 pointer-events-none">
@@ -47,9 +53,9 @@ export default function LoginPage() {
                         src="/images/branding/kitchen.png"
                         alt=""
                         fill
-                        className="object-cover opacity-[0.07]"
+                        className="object-cover opacity-[0.18]"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-cast-iron/60 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-cream/70 to-transparent" />
                 </div>
 
                 {/* Ollie — bottom-right corner, leaning off edge */}
@@ -71,20 +77,20 @@ export default function LoginPage() {
                         width={0}
                         height={0}
                         priority
-                        className="h-[36px] w-auto brightness-0 invert"
+                        className="h-[36px] w-auto"
                     />
                 </Link>
 
                 {/* Tagline + features */}
                 <div className="relative z-10">
-                    <h2 className="text-4xl font-bold text-white leading-tight mb-8">
-                        Your recipes,<br />organized.
+                    <h2 className="text-4xl font-bold text-cast-iron leading-tight mb-8">
+                        A little kitchen,<br />a lot of good eating.
                     </h2>
                     <ul className="space-y-4">
                         {leftFeatures.map(item => (
-                            <li key={item.icon} className="flex items-center gap-3 text-white/60 text-sm">
-                                <div className="w-7 h-7 bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i className={`fa-solid ${item.icon} text-white/60 text-xs`} />
+                            <li key={item.icon} className="flex items-center gap-3 text-steel text-sm">
+                                <div className="w-7 h-7 bg-cast-iron/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i className={`fa-solid ${item.icon} text-cast-iron/60 text-xs`} />
                                 </div>
                                 {item.text}
                             </li>
@@ -92,7 +98,20 @@ export default function LoginPage() {
                     </ul>
                 </div>
 
-                <p className="text-white/20 text-xs relative z-10">© {new Date().getFullYear()} Syft. All rights reserved.</p>
+                {/* Stats */}
+                <div className="relative z-10 flex items-center gap-6">
+                    {leftStats.map((stat, i) => (
+                        <div key={stat.label} className="flex items-center gap-6">
+                            <div>
+                                <p className="text-sm font-bold text-cast-iron">{stat.value}</p>
+                                <p className="text-xs text-steel/60">{stat.label}</p>
+                            </div>
+                            {i < leftStats.length - 1 && (
+                                <span className="text-steel/20 text-sm">·</span>
+                            )}
+                        </div>
+                    ))}
+                </div>
             </div>
 
             {/* Right panel — form */}
@@ -117,8 +136,8 @@ export default function LoginPage() {
                     className="w-full max-w-md"
                 >
                     <div className="bg-white rounded-3xl shadow-sm border border-stone-100 p-8">
-                        <h2 className="text-2xl font-bold text-cast-iron mb-1">Welcome back</h2>
-                        <p className="text-steel text-sm mb-7">Sign in to your Syft account.</p>
+                        <h2 className="text-2xl font-bold text-cast-iron mb-1">Welcome back.</h2>
+                        <p className="text-steel text-sm mb-7">Pick up where you left off. Your saved recipes are waiting.</p>
 
                         <SignIn />
 

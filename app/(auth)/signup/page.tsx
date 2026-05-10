@@ -293,7 +293,7 @@ export default function SignUpPage() {
                                     >
                                         {plan.badge && (
                                             <div className="absolute -top-2.5 left-4">
-                                                <span className={`${plan.badgeColor} text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide`}>
+                                                <span className={`${plan.badgeColor} text-white text-[0.6875rem] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide`}>
                                                     {plan.badge}
                                                 </span>
                                             </div>
@@ -307,7 +307,7 @@ export default function SignUpPage() {
                                                         <span className="text-xs text-steel">{plan.label}</span>
                                                     )}
                                                     {plan.savings && (
-                                                        <span className="text-[10px] font-semibold text-light-green bg-light-green/10 border border-light-green/20 px-2 py-0.5 rounded-full">
+                                                        <span className="text-[0.6875rem] font-semibold text-light-green bg-light-green/10 border border-light-green/20 px-2 py-0.5 rounded-full">
                                                             {plan.savings}
                                                         </span>
                                                     )}

@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog } from '@headlessui/react';
 import { motion } from 'framer-motion';
 import { FiX, FiCheck } from 'react-icons/fi';
 import { useAuth } from '@/app/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
+import { logEvent } from '@/app/lib/analytics';
 
 export type UpgradeReason = 'recipe_limit' | 'social_features' | 'recipe_sharing';
 
@@ -39,6 +40,11 @@ export default function UpgradeModal({ isOpen, onClose, reason = 'recipe_limit' 
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const copy = COPY[reason];
+
+  useEffect(() => {
+    if (isOpen && user) logEvent(user, 'upgrade_modal_opened', { reason });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   const handleUpgrade = async (planId: 'monthly' | 'yearly') => {
     if (!user) {

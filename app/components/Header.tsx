@@ -21,17 +21,17 @@ export default function Header() {
     if (!mounted) {
         return (
             <header className={`w-full h-[var(--header-height)] p-4 z-[100] ${!isHomePage ? 'bg-white' : ''} ${isHomePage ? 'absolute' : ''}`}>
-                <div className="w-full container mx-auto flex flex-row justify-between items-center h-full">
+                <div className="w-full container mx-auto flex flex-row items-center h-full gap-6">
                     <div className="h-[57px] w-[100px]" />
                     <div className="h-[40px] w-[100px]" />
                 </div>
             </header>
         );
     }
-    
+
     return (
         <header className={`w-full h-[var(--header-height)] p-4 z-[100] ${!isHomePage ? 'bg-white border-b border-gray-100 shadow-sm' : ''} ${isHomePage ? 'absolute' : ''}`}>
-            <div className="w-full container mx-auto flex flex-row justify-between items-center h-full">
+            <div className="w-full container mx-auto flex flex-row items-center h-full gap-6">
                 <Link href="/">
                     <Logo className="h-[36px] w-auto text-cast-iron" />
                 </Link>

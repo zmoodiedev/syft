@@ -157,38 +157,35 @@ function AddRecipeContent() {
 
                     {/* Sidebar */}
                     <div className={`w-full lg:w-64 xl:w-72 flex-shrink-0 lg:sticky lg:top-8 ${mobileView === 'form' ? 'hidden lg:block' : 'block'}`}>
-                        <div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
-                            <div className="bg-cast-iron px-5 py-4">
-                                <p className="text-sm font-semibold text-white">Method</p>
-                                <p className="text-xs text-white/50 mt-0.5">How do you want to add it?</p>
-                            </div>
-                            <div className="p-2">
-                                {OPTIONS.map((opt) => {
-                                    const Icon = opt.icon;
-                                    const active = selected === opt.id;
-                                    return (
-                                        <button
-                                            key={opt.id}
-                                            onClick={() => handleSelect(opt.id)}
-                                            className={`w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
-                                                active ? 'bg-light-green/10' : 'hover:bg-stone-50'
-                                            }`}
-                                        >
-                                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
-                                                active ? 'bg-light-green' : 'bg-stone-100'
-                                            }`}>
-                                                <Icon className={`w-4 h-4 transition-colors ${active ? 'text-white' : 'text-steel'}`} />
-                                            </div>
-                                            <div className="min-w-0">
-                                                <p className={`text-sm font-medium leading-tight ${active ? 'text-light-green' : 'text-cast-iron'}`}>
-                                                    {opt.title}
-                                                </p>
-                                                <p className="text-xs text-steel/50 truncate">{opt.subtitle}</p>
-                                            </div>
-                                        </button>
-                                    );
-                                })}
-                            </div>
+                        <p className="text-xs font-semibold text-steel/50 uppercase tracking-wider mb-3 px-1">Method</p>
+                        <div className="flex flex-col gap-1">
+                            {OPTIONS.map((opt) => {
+                                const Icon = opt.icon;
+                                const active = selected === opt.id;
+                                return (
+                                    <button
+                                        key={opt.id}
+                                        onClick={() => handleSelect(opt.id)}
+                                        className={`w-full text-left flex items-center gap-3.5 px-4 py-3.5 rounded-2xl transition-colors ${
+                                            active
+                                                ? 'bg-white border border-stone-100 shadow-sm'
+                                                : 'hover:bg-white/60 border border-transparent'
+                                        }`}
+                                    >
+                                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${
+                                            active ? 'bg-light-green' : 'bg-stone-100'
+                                        }`}>
+                                            <Icon className={`w-4 h-4 transition-colors ${active ? 'text-white' : 'text-steel'}`} />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className={`text-sm font-semibold leading-tight transition-colors ${active ? 'text-cast-iron' : 'text-steel'}`}>
+                                                {opt.title}
+                                            </p>
+                                            <p className="text-xs text-steel/50 truncate mt-0.5">{opt.subtitle}</p>
+                                        </div>
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
 

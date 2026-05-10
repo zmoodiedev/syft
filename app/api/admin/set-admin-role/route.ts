@@ -1,7 +1,18 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/firebase-admin';
+import { db, auth } from '@/lib/firebase-admin';
+
+export const runtime = 'nodejs';
 
 export async function POST(request: Request) {
+  // Require a valid Firebase session in addition to the shared secret
+  const token = request.headers.get('Authorization')?.split('Bearer ')[1];
+  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  try {
+    await auth.verifyIdToken(token);
+  } catch {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const secret = process.env.ADMIN_MIGRATION_SECRET;
   if (!secret) {
     console.error('ADMIN_MIGRATION_SECRET is not set');

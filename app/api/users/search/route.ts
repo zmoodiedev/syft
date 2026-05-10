@@ -1,40 +1,49 @@
-import { db } from '@/lib/firebase';
-import { collection, getDocs } from 'firebase/firestore';
 import { NextResponse } from 'next/server';
+import { auth, db } from '@/lib/firebase-admin';
 
-interface User {
-  id: string;
-  email?: string;
-  displayName?: string;
-  photoURL?: string;
-}
+export const runtime = 'nodejs';
 
 export async function GET(request: Request) {
   try {
+    // Require authentication
+    const token = request.headers.get('Authorization')?.split('Bearer ')[1];
+    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const decoded = await auth.verifyIdToken(token);
+    const requestingUserId = decoded.uid;
+
     const { searchParams } = new URL(request.url);
-    const q = searchParams.get('q')?.toLowerCase() || '';
-    if (!q) {
-      return NextResponse.json([], { status: 200 });
+    const q = searchParams.get('q')?.toLowerCase().trim() || '';
+    if (!q) return NextResponse.json([]);
+
+    const snapshot = await db.collection('users').get();
+
+    interface UserDoc {
+      id: string;
+      displayName?: string;
+      photoURL?: string;
+      profileVisibility?: string;
     }
 
-    const usersRef = collection(db, 'users');
-    const snapshot = await getDocs(usersRef);
-    const users = snapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() } as User))
-      .filter(user =>
-        (user.email && user.email.toLowerCase().includes(q)) ||
-        (user.displayName && user.displayName.toLowerCase().includes(q))
-      )
+    const results = (snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as UserDoc[])
+      .filter(user => {
+        // Exclude the searching user
+        if (user.id === requestingUserId) return false;
+        // Exclude private profiles
+        if (user.profileVisibility === 'private') return false;
+        // Match on display name only — never expose emails
+        return user.displayName?.toLowerCase().includes(q);
+      })
+      .slice(0, 20)
       .map(user => ({
         id: user.id,
-        email: user.email,
-        displayName: user.displayName,
-        photoURL: user.photoURL || null
+        displayName: user.displayName ?? null,
+        photoURL: user.photoURL ?? null,
       }));
 
-    return NextResponse.json(users);
+    return NextResponse.json(results);
   } catch (error) {
     console.error('Error searching users:', error);
     return NextResponse.json({ error: 'Failed to search users' }, { status: 500 });
   }
-} 
+}

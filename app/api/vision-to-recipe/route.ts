@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { auth } from '@/lib/firebase-admin';
+import { visionLimit, checkRateLimit } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 
@@ -43,11 +44,16 @@ export async function POST(request: NextRequest) {
   if (!token) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  let userId: string;
   try {
-    await auth.verifyIdToken(token);
+    const decoded = await auth.verifyIdToken(token);
+    userId = decoded.uid;
   } catch {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const rateLimitRes = await checkRateLimit(visionLimit, userId);
+  if (rateLimitRes) return rateLimitRes;
 
   try {
     const formData = await request.formData();
@@ -55,6 +61,10 @@ export async function POST(request: NextRequest) {
 
     if (!file) {
       return NextResponse.json({ error: 'No image file received' }, { status: 400 });
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json({ error: 'Image must be under 10 MB' }, { status: 400 });
     }
 
     const bytes = await file.arrayBuffer();

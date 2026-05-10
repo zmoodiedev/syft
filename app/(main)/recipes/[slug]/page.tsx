@@ -222,8 +222,9 @@ export default function RecipeDetail() {
     if (!user || !recipe || !slug) return;
     setIsDeleting(true);
     try {
+      const token = await user.getIdToken();
       if (recipe.imageUrl) {
-        try { await deleteImage(recipe.imageUrl); } catch (error) { console.error('Error deleting image:', error); }
+        try { await deleteImage(recipe.imageUrl, token); } catch (error) { console.error('Error deleting image:', error); }
       }
       await deleteDoc(doc(db, 'recipes', slug));
       setShowDeleteConfirm(false);
@@ -437,15 +438,11 @@ export default function RecipeDetail() {
         <>
           {/* Hero */}
           <div className="relative w-full h-[50vh] min-h-[300px]">
-            {/* Visibility badge */}
-            {isOwner && (
-              <div className={`absolute top-4 right-4 z-20 text-white text-xs font-medium px-2.5 py-1.5 rounded-full flex items-center gap-1.5 ${
-                String(recipe.visibility || 'friends').toLowerCase() === 'private' ? 'bg-tomato' : 'bg-orange-500'
-              }`}>
-                {String(recipe.visibility || 'friends').toLowerCase() === 'private'
-                  ? <FiLock className="w-3 h-3" />
-                  : <FiUsers className="w-3 h-3" />}
-                {String(recipe.visibility || 'friends').toLowerCase() === 'private' ? 'Private' : 'Friends only'}
+            {/* Private badge */}
+            {isOwner && String(recipe.visibility ?? '').toLowerCase() === 'private' && (
+              <div className="absolute top-4 right-4 z-20 text-white text-xs font-medium px-2.5 py-1.5 rounded-full flex items-center gap-1.5 bg-tomato">
+                <FiLock className="w-3 h-3" />
+                Private
               </div>
             )}
 
@@ -465,15 +462,8 @@ export default function RecipeDetail() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
                 </>
               ) : (
-                <div className="absolute inset-0 bg-cream">
-                  <Image
-                    src="/images/branding/kitchen.png"
-                    alt=""
-                    fill
-                    sizes="100vw"
-                    className="object-cover opacity-30"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                <div className="absolute inset-0 bg-stone-100 flex items-center justify-center">
+                  <i className="fa-solid fa-utensils text-stone-300 text-4xl" />
                 </div>
               )}
             </div>
@@ -491,12 +481,12 @@ export default function RecipeDetail() {
                   </div>
                 )}
 
-                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 drop-shadow-md">
+                <h1 className={`text-3xl md:text-4xl lg:text-5xl font-bold mb-3 ${recipe.imageUrl ? 'text-white drop-shadow-md' : 'text-cast-iron'}`}>
                   {recipe.name}
                 </h1>
 
                 {/* Meta row */}
-                <div className="flex flex-wrap gap-4 text-white/80 text-sm">
+                <div className={`flex flex-wrap gap-4 text-sm ${recipe.imageUrl ? 'text-white/80' : 'text-steel'}`}>
                   {recipe.prepTime && (
                     <div className="flex items-center gap-1.5">
                       <FiClock className="w-4 h-4" />

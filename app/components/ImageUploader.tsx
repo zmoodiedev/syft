@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { uploadImage } from '@/lib/cloudinary';
 import Button from './Button';
+import { useAuth } from '@/app/context/AuthContext';
 
 interface ImageUploaderProps {
   initialImageUrl?: string | null;
@@ -14,6 +15,7 @@ export default function ImageUploader({
   onImageUpload,
   className = ''
 }: ImageUploaderProps) {
+  const { user } = useAuth();
   const [imageUrl, setImageUrl] = useState(initialImageUrl || '');
   const [isPreviewingImage, setIsPreviewingImage] = useState(!!initialImageUrl);
   const [isUploading, setIsUploading] = useState(false);
@@ -76,7 +78,8 @@ export default function ImageUploader({
       }
       
       // Upload image to Cloudinary
-      const uploadedImageUrl = await uploadImage(file, {
+      const token = user ? await user.getIdToken() : '';
+      const uploadedImageUrl = await uploadImage(file, token, {
         width: 1200,
         quality: 80
       });

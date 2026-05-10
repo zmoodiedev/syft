@@ -683,7 +683,8 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
       setIsUploading(true);
       
       // Upload directly using optimized Cloudinary client utility
-      const imageUrl = await uploadImage(file, {
+      const token = user ? await user.getIdToken() : '';
+      const imageUrl = await uploadImage(file, token, {
         width: 1200,
         quality: 80
       });

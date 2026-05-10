@@ -11,9 +11,7 @@ import Image from 'next/image';
 interface UserSearchResult {
     id: string;
     displayName: string | null;
-    email: string | null;
     photoURL: string | null;
-    tier: string | null;
 }
 
 export default function AddFriend() {
@@ -34,7 +32,10 @@ export default function AddFriend() {
         setHasSearched(true);
 
         try {
-            const response = await fetch(`/api/users/search?q=${encodeURIComponent(searchQuery)}`);
+            const token = await user!.getIdToken();
+            const response = await fetch(`/api/users/search?q=${encodeURIComponent(searchQuery)}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
             if (!response.ok) {
                 throw new Error('Search failed');
             }
@@ -135,7 +136,7 @@ export default function AddFriend() {
                                     />
                                 ) : (
                                     <span className="text-light-green font-medium">
-                                        {result.displayName?.charAt(0) || result.email?.charAt(0) || '?'}
+                                        {result.displayName?.charAt(0) || '?'}
                                     </span>
                                 )}
                             </div>

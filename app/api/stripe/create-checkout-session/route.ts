@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { stripe, PRICE_IDS } from '@/lib/stripe';
 import { db, auth } from '@/lib/firebase-admin';
+import { logEvent } from '@/lib/analytics-server';
 
 export async function POST(request: Request) {
   try {
@@ -54,6 +55,7 @@ export async function POST(request: Request) {
       },
     });
 
+    await logEvent(userId, 'checkout_started', { planId, currency });
     return NextResponse.json({ url: session.url });
   } catch (error) {
     console.error('Stripe checkout session error:', error);

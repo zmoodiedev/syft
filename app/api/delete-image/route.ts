@@ -1,6 +1,7 @@
 import 'server-only';
 import { NextRequest, NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
+import { auth } from '@/lib/firebase-admin';
 
 // Specify Node.js runtime for Cloudinary compatibility
 export const runtime = 'nodejs';
@@ -14,6 +15,14 @@ cloudinary.config({
 });
 
 export async function POST(request: NextRequest) {
+  const token = request.headers.get('Authorization')?.split('Bearer ')[1];
+  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  try {
+    await auth.verifyIdToken(token);
+  } catch {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const { imageUrl } = await request.json();
 

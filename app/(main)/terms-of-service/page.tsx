@@ -41,6 +41,7 @@ export default function TermsOfService() {
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-cast-iron">5. Your content</h2>
             <p>You own the recipes and content you create on Syft. By uploading content, you grant us a limited license to store and display it as part of the service. We do not claim ownership of your data.</p>
+            <p>You are responsible for ensuring you have the right to use any content you upload, including photos. Do not upload images taken from other websites without permission from the original author. Syft is not liable for copyright infringement resulting from content you choose to upload.</p>
             <p>You can delete your account and your data at any time.</p>
           </section>
 

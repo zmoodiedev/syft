@@ -1,6 +1,8 @@
 import 'server-only';
 import { NextRequest, NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
+import { auth } from '@/lib/firebase-admin';
+import { uploadLimit, checkRateLimit } from '@/lib/rate-limit';
 
 // Specify Node.js runtime for Cloudinary compatibility
 export const runtime = 'nodejs';
@@ -17,6 +19,19 @@ cloudinary.config({
 type ResourceType = 'image' | 'auto' | 'video' | 'raw';
 
 export async function POST(request: NextRequest) {
+  const token = request.headers.get('Authorization')?.split('Bearer ')[1];
+  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  let userId: string;
+  try {
+    const decoded = await auth.verifyIdToken(token);
+    userId = decoded.uid;
+  } catch {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const rateLimitRes = await checkRateLimit(uploadLimit, userId);
+  if (rateLimitRes) return rateLimitRes;
+
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File | null;

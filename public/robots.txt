@@ -1,0 +1,19 @@
+User-agent: *
+Allow: /
+Allow: /pricing
+Allow: /about
+Allow: /contact
+Allow: /roadmap
+Allow: /terms-of-service
+Allow: /privacy-policy
+Allow: /cookie-preferences
+
+# Private app routes
+Disallow: /admin/
+Disallow: /api/
+Disallow: /billing
+Disallow: /add-recipe
+Disallow: /profile/edit
+Disallow: /recipes/edit/
+
+Sitemap: https://syft.cooking/sitemap.xml

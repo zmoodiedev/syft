@@ -1,104 +1,78 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/app/lib/firebase';
-import { collection, getDocs, doc, getDoc, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 
-// Since we don't have admin auth on the client, let's provide a basic security check using a secret key
-const ADMIN_SECRET = process.env.ADMIN_MIGRATION_SECRET || 'default-secret-key-not-secure';
+export const runtime = 'nodejs';
 
 export async function GET(request: Request) {
+  const secret = process.env.ADMIN_MIGRATION_SECRET;
+  if (!secret) {
+    return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 });
+  }
+
+  // Accept secret via Authorization header to keep it out of server logs
+  const provided = request.headers.get('Authorization')?.split('Bearer ')[1];
+  if (!provided || provided !== secret) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
-    // Get the URL parameters
-    const url = new URL(request.url);
-    const secretKey = url.searchParams.get('secret');
-    
-    // Verify the secret key
-    if (!secretKey || secretKey !== ADMIN_SECRET) {
-      return NextResponse.json(
-        { error: 'Unauthorized. Invalid or missing secret key.' },
-        { status: 401 }
-      );
+    const recipesSnap = await db.collection('recipes').get();
+
+    if (recipesSnap.empty) {
+      return NextResponse.json({ message: 'No recipes found to migrate', migratedCount: 0 });
     }
 
-    // Get all recipes
-    const recipesRef = collection(db, 'recipes');
-    const recipesSnapshot = await getDocs(recipesRef);
-    
-    if (recipesSnapshot.empty) {
-      return NextResponse.json({ 
-        message: 'No recipes found to migrate',
-        migratedCount: 0 
-      });
-    }
-
-    // Create a batch to make updates more efficient
-    let batch = writeBatch(db);
+    const userVisibilityCache = new Map<string, string>();
+    let batch = db.batch();
     let migratedCount = 0;
-    const userVisibilitySettings = new Map();
+    let batchOps = 0;
 
-    // Process each recipe
-    for (const recipeDoc of recipesSnapshot.docs) {
+    for (const recipeDoc of recipesSnap.docs) {
       const recipeData = recipeDoc.data();
-      const userId = recipeData.userId;
-      
-      // Skip if recipe already has visibility field
       if (recipeData.visibility) continue;
-      
-      // Get user's visibility settings (cached to reduce database reads)
-      let userVisibility = 'public'; // Default to public
-      
+
+      const userId = recipeData.userId as string | undefined;
+      let userVisibility = 'public';
+
       if (userId) {
-        if (userVisibilitySettings.has(userId)) {
-          // Use cached settings
-          userVisibility = userVisibilitySettings.get(userId);
+        if (userVisibilityCache.has(userId)) {
+          userVisibility = userVisibilityCache.get(userId)!;
         } else {
-          // Get settings from database
           try {
-            const userRef = doc(db, 'users', userId);
-            const userDoc = await getDoc(userRef);
-            
-            if (userDoc.exists()) {
-              const userData = userDoc.data();
-              userVisibility = userData.recipeVisibility || 'public';
-              // Cache for future recipes by same user
-              userVisibilitySettings.set(userId, userVisibility);
+            const userDoc = await db.collection('users').doc(userId).get();
+            if (userDoc.exists) {
+              userVisibility = userDoc.data()?.recipeVisibility ?? 'public';
             }
-          } catch (error) {
-            console.error(`Error getting visibility for user ${userId}:`, error);
-            // Continue with default visibility
+            userVisibilityCache.set(userId, userVisibility);
+          } catch (err) {
+            console.error(`Error getting visibility for user ${userId}:`, err);
           }
         }
       }
-      
-      // Update the recipe with visibility field
+
       batch.update(recipeDoc.ref, {
         visibility: userVisibility,
-        updatedAt: serverTimestamp()
+        updatedAt: FieldValue.serverTimestamp(),
       });
-      
       migratedCount++;
-      
-      // Firestore has a limit of 500 operations per batch
-      if (migratedCount % 400 === 0) {
+      batchOps++;
+
+      if (batchOps === 400) {
         await batch.commit();
-        // Create a new batch
-        batch = writeBatch(db);
+        batch = db.batch();
+        batchOps = 0;
       }
     }
-    
-    // Commit any remaining updates
-    if (migratedCount % 400 !== 0) {
-      await batch.commit();
-    }
-    
+
+    if (batchOps > 0) await batch.commit();
+
     return NextResponse.json({
       message: 'Recipe visibility migration completed successfully',
-      migratedCount
+      migratedCount,
     });
   } catch (error) {
     console.error('Error migrating recipe visibility:', error);
-    return NextResponse.json(
-      { error: 'Failed to migrate recipe visibility' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to migrate recipe visibility' }, { status: 500 });
   }
-} 
+}

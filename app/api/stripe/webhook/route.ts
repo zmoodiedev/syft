@@ -3,6 +3,7 @@ import Stripe from 'stripe';
 import { stripe } from '@/lib/stripe';
 import { db } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
+import { logEvent } from '@/lib/analytics-server';
 
 // Raw body required for Stripe signature verification
 export const runtime = 'nodejs';
@@ -159,6 +160,9 @@ export async function POST(request: Request) {
         await unlockAllRecipes(userId);
         // Auto-accept any friend requests that were pending due to the free tier
         await autoAcceptGatedFriendRequests(userId);
+        await logEvent(userId, 'subscription_activated', {
+          billingCycle: interval === 'year' ? 'yearly' : 'monthly',
+        });
         break;
       }
 
@@ -217,6 +221,7 @@ export async function POST(request: Request) {
 
         // Lock recipes beyond the free-tier limit
         await lockOverflowRecipes(userId);
+        await logEvent(userId, 'subscription_cancelled');
         break;
       }
 
