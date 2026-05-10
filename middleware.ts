@@ -8,9 +8,11 @@ export function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // Pass through: the splash page itself, static files, and API routes
+  // Pass through: the splash page itself, legal pages, static files, and API routes
   if (
     pathname === '/coming-soon' ||
+    pathname === '/privacy-policy' ||
+    pathname === '/terms-of-service' ||
     pathname.startsWith('/api/') ||
     pathname.startsWith('/_next/') ||
     pathname.startsWith('/images/') ||
