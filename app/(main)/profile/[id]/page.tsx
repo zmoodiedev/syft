@@ -456,7 +456,7 @@ export default function ProfilePage() {
         >
           <div className="container mx-auto px-4 sm:px-6 max-w-6xl pt-10">
             {/* Avatar + actions row */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
+            <div className="flex flex-col items-center sm:flex-row sm:items-center gap-4 mb-4">
               {/* Avatar */}
               <div className="h-28 w-28 rounded-2xl overflow-hidden bg-light-green flex-shrink-0 shadow-sm">
                 {profile.photoURL ? (
@@ -475,9 +475,9 @@ export default function ProfilePage() {
               </div>
 
               {/* Name + tier + actions */}
-              <div className="flex-1 sm:pb-1 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex-1 sm:pb-1 flex flex-col items-center sm:items-start sm:flex-row sm:justify-between gap-3 w-full">
+                <div className="text-center sm:text-left">
+                  <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
                     <h1 className="text-2xl font-bold text-cast-iron leading-tight">{profile.displayName || 'User'}</h1>
                     {isOwnProfile && <UserTierBadge tier={profile.tier} />}
                   </div>
@@ -514,8 +514,8 @@ export default function ProfilePage() {
             </div>
 
             {/* Bio + Stats */}
-            <div className="flex items-start gap-6 pb-6">
-              <div className="flex-1">
+            <div className="flex flex-col items-center sm:flex-row sm:items-start gap-4 sm:gap-6 pb-6">
+              <div className="flex-1 text-center sm:text-left">
                 {profile.bio && (
                   <p className="text-steel">{profile.bio}</p>
                 )}

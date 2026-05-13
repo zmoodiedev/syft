@@ -511,7 +511,7 @@ export default function RecipeDetail() {
           <div className="container max-w-6xl mx-auto px-6 py-8 pb-20">
 
             {/* Action bar */}
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-8">
               <Link
                 href="/recipes"
                 className="inline-flex items-center gap-1 text-sm font-medium text-steel hover:text-cast-iron transition-colors"
