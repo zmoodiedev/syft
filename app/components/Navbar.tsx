@@ -33,7 +33,7 @@ export default function Navbar() {
     // Fetch unread notification count
     useEffect(() => {
         if (!user) return;
-        
+
         const fetchNotificationCount = async () => {
             try {
                 const count = await getUnreadNotificationCount(user.uid);
@@ -42,13 +42,20 @@ export default function Navbar() {
                 console.error('Error fetching notification count:', error);
             }
         };
-        
+
         fetchNotificationCount();
-        
-        // You could add a polling mechanism here if needed
-        const interval = setInterval(fetchNotificationCount, 60000); // Check every minute
-        
-        return () => clearInterval(interval);
+        const interval = setInterval(fetchNotificationCount, 60000);
+
+        const handleNotificationsRead = (e: Event) => {
+            const count = (e as CustomEvent<{ count: number }>).detail.count;
+            setUnreadNotificationCount(count);
+        };
+        window.addEventListener('syft:notifications-read', handleNotificationsRead);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('syft:notifications-read', handleNotificationsRead);
+        };
     }, [user]);
     
     // Close mobile menu when window is resized to desktop size

@@ -758,6 +758,7 @@ export default function ProfilePage() {
                       await markAllNotificationsAsRead(user!.uid);
                       setUnreadNotificationCount(0);
                       setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+                      window.dispatchEvent(new CustomEvent('syft:notifications-read', { detail: { count: 0 } }));
                     }}
                     className="text-xs font-medium text-light-green hover:text-green transition-colors"
                   >
@@ -774,7 +775,11 @@ export default function ProfilePage() {
                       onDelete={(id) => {
                         setNotifications(notifications.filter(n => n.id !== id));
                         if (!notification.isRead) {
-                          setUnreadNotificationCount(prev => Math.max(0, prev - 1));
+                          setUnreadNotificationCount(prev => {
+                            const next = Math.max(0, prev - 1);
+                            window.dispatchEvent(new CustomEvent('syft:notifications-read', { detail: { count: next } }));
+                            return next;
+                          });
                         }
                       }}
                     />
