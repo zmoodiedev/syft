@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import RecipeForm from './RecipeForm';
 import Button from './Button';
 import { FiArrowLeft } from 'react-icons/fi';
@@ -48,12 +48,13 @@ export default function UrlInput({ initialUrl, autoSubmit }: { initialUrl?: stri
         }
     }, [user]);
 
+    const hasAutoSubmitted = useRef(false);
     useEffect(() => {
-        if (autoSubmit && initialUrl) {
+        if (autoSubmit && initialUrl && user && !hasAutoSubmitted.current) {
+            hasAutoSubmitted.current = true;
             doImport(initialUrl);
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [autoSubmit, initialUrl, user, doImport]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
