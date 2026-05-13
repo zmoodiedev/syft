@@ -21,6 +21,7 @@ export async function GET(request: Request) {
     interface UserDoc {
       id: string;
       displayName?: string;
+      email?: string;
       photoURL?: string;
       profileVisibility?: string;
     }
@@ -31,8 +32,10 @@ export async function GET(request: Request) {
         if (user.id === requestingUserId) return false;
         // Exclude private profiles
         if (user.profileVisibility === 'private') return false;
-        // Match on display name only — never expose emails
-        return user.displayName?.toLowerCase().includes(q);
+        // Match on display name or email — results never expose the email field
+        const nameMatch = user.displayName?.toLowerCase().includes(q) ?? false;
+        const emailMatch = user.email?.toLowerCase().includes(q) ?? false;
+        return nameMatch || emailMatch;
       })
       .slice(0, 20)
       .map(user => ({

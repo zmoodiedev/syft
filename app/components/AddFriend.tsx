@@ -119,7 +119,21 @@ export default function AddFriend() {
             )}
 
             <div className="space-y-4">
-                {searchResults.map((result) => (
+                {isSearching && (
+                    <>
+                        {[...Array(3)].map((_, i) => (
+                            <div key={i} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg animate-pulse">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-gray-200 rounded-full flex-shrink-0" />
+                                    <div className="w-32 h-4 bg-gray-200 rounded-full" />
+                                </div>
+                                <div className="w-24 h-9 bg-gray-200 rounded-lg" />
+                            </div>
+                        ))}
+                    </>
+                )}
+
+                {!isSearching && searchResults.map((result) => (
                     <div
                         key={result.id}
                         className="flex items-center justify-between p-4 bg-gray-50 rounded-lg flex-col md:flex-row"
@@ -154,7 +168,7 @@ export default function AddFriend() {
                     </div>
                 ))}
                 
-                {searchResults.length === 0 && searchQuery && !isSearching && hasSearched && !error && (
+                {!isSearching && searchResults.length === 0 && searchQuery && hasSearched && !error && (
                     <p className="text-center text-gray-500 py-4">No users found matching &quot;{searchQuery}&quot;</p>
                 )}
             </div>
