@@ -180,13 +180,15 @@ export async function getUserStats(userId: string) {
             console.error('Error checking friendship:', friendError);
           }
           
-          // Count recipes based on friendship status
+          // Count recipes based on visibility and friendship status
           recipeCount = 0;
           recipesSnapshot.forEach(doc => {
             const data = doc.data();
             const visibility = data.visibility?.toLowerCase() || 'friends';
 
-            if (visibility === 'friends' && isFriend) {
+            if (visibility === 'public') {
+              recipeCount++;
+            } else if (visibility === 'friends' && isFriend) {
               recipeCount++;
             }
           });

@@ -44,7 +44,9 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('recipes');
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [profileAccessDenied, setProfileAccessDenied] = useState(false);
   const [profileFriends, setProfileFriends] = useState<ProfileFriend[]>([]);
+  const [sentRequestIds, setSentRequestIds] = useState<Set<string>>(new Set());
   const [friendToRemove, setFriendToRemove] = useState<{ id: string; name: string } | null>(null);
   const [isRemovingFriend, setIsRemovingFriend] = useState(false);
   const [categoryToRemove, setCategoryToRemove] = useState<string | null>(null);
@@ -94,94 +96,83 @@ export default function ProfilePage() {
       setHasMoreRecipes(true);
       setNotifications([]);
       setUnreadNotificationCount(0);
-      
+      setProfileAccessDenied(false);
+
       try {
-        let profileData = null;
+        // Always load the basic profile so we can show name/avatar on the access-denied screen
+        let profileData: UserProfile | null = null;
         try {
-          profileData = await getUserProfile(id as string);
-          if (profileData) {
-            setProfile(profileData as UserProfile);
-            profileData = profileData as UserProfile;
+          const raw = await getUserProfile(id as string);
+          if (raw) {
+            profileData = raw as UserProfile;
+            setProfile(profileData);
           }
         } catch (profileError) {
           console.error('Error loading user profile:', profileError);
         }
-        
-        if (profileData) {
-          const isOwnProfile = user?.uid === id;
-          
-          if (!isOwnProfile && (profileData as UserProfile).profileVisibility === 'private') {
-            if (!user) {
-              setProfile(null);
-              setLoading(false);
-              return;
-            } else {
-              const relationshipData = await getUserRelationship(user.uid, id as string);
-              if (!relationshipData.isFriend) {
-                setProfile(null);
-                setLoading(false);
-                return;
-              }
-            }
-          }
-          
-          // Public profile - continue loading, but adapt what we show for non-authenticated users
-          const currentUserId = user?.uid;
-          
-          // Load user stats - continue if this fails
-          try {
-            const stats = await getUserStats(id as string);
-            setUserStats(stats);
-          } catch (statsError) {
-            console.error('Error loading user stats:', statsError);
-            // Continue with default stats
+
+        if (!profileData) {
+          setLoading(false);
+          return;
+        }
+
+        const isOwnProfile = user?.uid === id;
+
+        if (!isOwnProfile) {
+          // Always require friendship to view another user's profile
+          if (!user) {
+            setProfileAccessDenied(true);
+            setLoading(false);
+            return;
           }
 
-          // Load the profile user's friends (used when viewing another user's profile)
-          if (!isOwnProfile) {
-            const pf = await getProfileFriends(id as string);
-            setProfileFriends(pf);
-          }
-          
-          // Load initial batch of user recipes
+          let relationshipData: UserRelationship = { isFriend: false, isPendingFriend: false, isFollowing: false };
           try {
-            const result = await getUserRecipes(id as string, 6, undefined, currentUserId);
-            setRecipes(result.recipes);
-            setLastVisible(result.lastVisible);
-            setHasMoreRecipes(result.recipes.length === 6 && result.lastVisible !== null);
-          } catch (recipesError) {
-            console.error('Error loading user recipes:', recipesError);
-            // Continue with empty recipes array
+            relationshipData = await getUserRelationship(user.uid, id as string);
+          } catch (e) {
+            console.error('Error loading relationship:', e);
           }
-          
-          // If this is the user's own profile, load notifications
-          if (isOwnProfile) {
-            try {
-              const userNotifications = await getUserNotifications(id as string);
-              setNotifications(userNotifications);
-              
-              const unreadCount = await getUnreadNotificationCount(id as string);
-              setUnreadNotificationCount(unreadCount);
-            } catch (notificationsError) {
-              console.error('Error loading notifications:', notificationsError);
-              // Continue with empty notifications
-            }
+          setRelationship(relationshipData);
+
+          if (!relationshipData.isFriend) {
+            setProfileAccessDenied(true);
+            setLoading(false);
+            return;
           }
         }
-        
-        // If not the user's own profile, load relationship info
-        if (user && id !== user.uid && profileData) {
+
+        // Access granted — load full profile data
+        const currentUserId = user?.uid;
+
+        try {
+          const stats = await getUserStats(id as string);
+          setUserStats(stats);
+        } catch (statsError) {
+          console.error('Error loading user stats:', statsError);
+        }
+
+        if (!isOwnProfile) {
+          const pf = await getProfileFriends(id as string);
+          setProfileFriends(pf);
+        }
+
+        try {
+          const result = await getUserRecipes(id as string, 6, undefined, currentUserId);
+          setRecipes(result.recipes);
+          setLastVisible(result.lastVisible);
+          setHasMoreRecipes(result.recipes.length === 6 && result.lastVisible !== null);
+        } catch (recipesError) {
+          console.error('Error loading user recipes:', recipesError);
+        }
+
+        if (isOwnProfile) {
           try {
-            const relationshipData = await getUserRelationship(user.uid, id as string);
-            setRelationship(relationshipData);
-          } catch (relationshipError) {
-            console.error('Error loading relationship data:', relationshipError);
-            // Create a default relationship with no permissions
-            setRelationship({
-              isFriend: false,
-              isPendingFriend: false,
-              isFollowing: false
-            });
+            const userNotifications = await getUserNotifications(id as string);
+            setNotifications(userNotifications);
+            const unreadCount = await getUnreadNotificationCount(id as string);
+            setUnreadNotificationCount(unreadCount);
+          } catch (notificationsError) {
+            console.error('Error loading notifications:', notificationsError);
           }
         }
       } catch (error) {
@@ -380,7 +371,51 @@ export default function ProfilePage() {
           <i className="fa-solid fa-user-slash text-cast-iron text-xl" />
         </div>
         <h1 className="text-2xl font-bold text-cast-iron">User not found</h1>
-        <p className="text-steel text-sm">This user doesn&apos;t exist or their profile is private.</p>
+        <p className="text-steel text-sm">This profile doesn&apos;t exist.</p>
+      </div>
+    );
+  }
+
+  if (profileAccessDenied) {
+    return (
+      <div className="min-h-screen bg-eggshell flex flex-col items-center justify-center px-4">
+        <div className="flex flex-col items-center text-center max-w-sm">
+          <div className="h-28 w-28 rounded-2xl overflow-hidden bg-light-green flex-shrink-0 shadow-sm mb-5">
+            {profile.photoURL ? (
+              <Image
+                src={profile.photoURL}
+                alt={profile.displayName || 'User'}
+                width={112}
+                height={112}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="h-full w-full flex items-center justify-center">
+                <FiUser className="h-12 w-12 text-white" />
+              </div>
+            )}
+          </div>
+          <h1 className="text-2xl font-bold text-cast-iron mb-1">{profile.displayName || 'User'}</h1>
+          <div className="flex items-center justify-center gap-1.5 text-steel mb-6">
+            <i className="fa-solid fa-lock text-xs" />
+            <p className="text-sm">Add {profile.displayName || 'this user'} as a friend to view their profile.</p>
+          </div>
+          {user ? (
+            relationship?.isPendingFriend ? (
+              <Button variant="secondary" className="flex items-center gap-2" disabled>
+                <FiUserCheck size={15} />
+                Request Sent
+              </Button>
+            ) : (
+              <Button variant="secondary" className="flex items-center gap-2" onClick={handleSendFriendRequest}>
+                <FiUserPlus size={15} />
+                Add Friend
+              </Button>
+            )
+          ) : (
+            <Button variant="primary" href="/login">Sign in to connect</Button>
+          )}
+        </div>
       </div>
     );
   }
@@ -649,14 +684,42 @@ export default function ProfilePage() {
                             </div>
                             <p className="flex-1 text-sm font-medium text-cast-iron truncate">{friend.displayName || 'User'}</p>
                             <div className="flex items-center gap-1.5 flex-shrink-0">
-                              <Button variant="outline" size="sm" href={`/profile/${friend.id}`} className="text-xs">View</Button>
-                              {isOwnProfile && (
-                                <button
-                                  onClick={() => setFriendToRemove({ id: friend.id, name: friend.displayName || 'this friend' })}
-                                  className="text-xs font-medium text-steel/50 hover:text-tomato transition-colors px-2 py-1"
-                                >
-                                  Remove
-                                </button>
+                              {isOwnProfile ? (
+                                <>
+                                  <Button variant="outline" size="sm" href={`/profile/${friend.id}`} className="text-xs">View</Button>
+                                  <button
+                                    onClick={() => setFriendToRemove({ id: friend.id, name: friend.displayName || 'this friend' })}
+                                    className="text-xs font-medium text-steel/50 hover:text-tomato transition-colors px-2 py-1"
+                                  >
+                                    Remove
+                                  </button>
+                                </>
+                              ) : friend.id === user?.uid ? null : (
+                                friends.some(f => f.id === friend.id) ? (
+                                  <span className="text-xs font-medium text-steel/50 px-2 py-1">Friends</span>
+                                ) : sentRequestIds.has(friend.id) || outgoingRequests.some(r => r.receiverId === friend.id) ? (
+                                  <Button variant="outline" size="sm" className="text-xs" disabled>
+                                    <FiUserCheck size={12} className="mr-1" />Sent
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-xs flex items-center gap-1"
+                                    onClick={async () => {
+                                      if (userProfile?.tier === 'Free') { setShowUpgradeModal(true); return; }
+                                      try {
+                                        await sendFriendRequest(friend.id);
+                                        setSentRequestIds(prev => new Set([...prev, friend.id]));
+                                        toast.success('Friend request sent');
+                                      } catch {
+                                        toast.error('Failed to send friend request');
+                                      }
+                                    }}
+                                  >
+                                    <FiUserPlus size={12} />Add Friend
+                                  </Button>
+                                )
                               )}
                             </div>
                           </div>

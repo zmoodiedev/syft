@@ -192,7 +192,7 @@ export default function RecipesPage() {
                 <div className="container mx-auto px-6 py-10 md:py-14">
 
                     {/* Header */}
-                    <div className="flex items-center justify-between gap-4 mb-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
                         <div className="flex items-center gap-3">
                             <h1 className="text-3xl font-bold text-cast-iron">
                                 My Recipes

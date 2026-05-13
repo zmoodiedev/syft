@@ -71,7 +71,18 @@ export async function DELETE(request: Request) {
       for (const d of recipesSnap.docs) {
         const imageUrl = d.data().imageUrl;
         if (imageUrl) {
-          try { await destroyCloudinaryImage(imageUrl); } catch {}
+          try {
+            // Only delete from Cloudinary if no other user's recipe references the same image.
+            // Accepted shared recipe copies retain the original imageUrl — deleting it would break those copies.
+            const otherRefs = await db.collection('recipes')
+              .where('imageUrl', '==', imageUrl)
+              .where('userId', '!=', userId)
+              .limit(1)
+              .get();
+            if (otherRefs.empty) {
+              await destroyCloudinaryImage(imageUrl);
+            }
+          } catch {}
         }
         recipeBatch.delete(d.ref);
       }
