@@ -180,6 +180,93 @@ async function validateRecipeUrl(rawUrl: string): Promise<string> {
 }
 
 // ---------------------------------------------------------------------------
+// TikTok — oEmbed-based extraction
+// TikTok pages are JS-rendered and return no usable HTML. The oEmbed endpoint
+// exposes the video title (= caption), which often contains the full recipe.
+// ---------------------------------------------------------------------------
+
+function isTikTokUrl(url: string): boolean {
+    try {
+        const { hostname } = new URL(url);
+        return hostname === 'tiktok.com' || hostname.endsWith('.tiktok.com');
+    } catch {
+        return false;
+    }
+}
+
+async function extractFromTikTok(url: string): Promise<Recipe> {
+    let oembedRes: Response;
+    try {
+        oembedRes = await fetch(
+            `https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`,
+            {
+                headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Syftbot/1.0)' },
+                signal: AbortSignal.timeout(10000),
+            }
+        );
+    } catch {
+        throw new Error(
+            'Could not reach TikTok to fetch the video description. Check your connection and try again.'
+        );
+    }
+
+    if (!oembedRes.ok) {
+        throw new Error(
+            'Could not fetch the TikTok video info. The video may be private, deleted, or unavailable.'
+        );
+    }
+
+    const oembed = await oembedRes.json() as { title?: string; author_name?: string; thumbnail_url?: string };
+    const description = oembed.title?.trim() || '';
+
+    if (!description) {
+        throw new Error(
+            'This TikTok video has no caption. Add the recipe text manually using Bulk Entry.'
+        );
+    }
+
+    const response = await anthropic.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1024,
+        tools: [RECIPE_TOOL],
+        tool_choice: { type: 'tool', name: 'extract_recipe' },
+        messages: [{
+            role: 'user',
+            content: `Extract the recipe from this TikTok video caption.\n\nCreator: @${oembed.author_name || 'unknown'}\n\nCaption:\n${description}`,
+        }],
+    });
+
+    const toolUse = response.content.find((b): b is Anthropic.ToolUseBlock => b.type === 'tool_use');
+    if (!toolUse) {
+        throw new Error('Could not extract a recipe from this TikTok caption.');
+    }
+
+    const r = toolUse.input as {
+        name: string; servings?: string; prepTime?: string; cookTime?: string;
+        ingredients: { amount: string; unit: string; item: string }[];
+        instructions: string[]; imageUrl?: string; categories?: string[];
+    };
+
+    if (!r.name || (!r.ingredients?.length && !r.instructions?.length)) {
+        throw new Error(
+            'No recipe found in this TikTok caption. The video may not contain one, or the description is too short.'
+        );
+    }
+
+    return {
+        name:         r.name,
+        servings:     r.servings  || '',
+        prepTime:     r.prepTime  || '',
+        cookTime:     r.cookTime  || '',
+        ingredients:  r.ingredients  || [],
+        instructions: r.instructions || [],
+        imageUrl:     r.imageUrl || oembed.thumbnail_url,
+        categories:   r.categories   || [],
+        sourceUrl:    url,
+    };
+}
+
+// ---------------------------------------------------------------------------
 
 // Sites that require a login or return nothing useful even with Claude.
 // These get a clear early error rather than wasting an API call.
@@ -249,6 +336,12 @@ export async function POST(request: Request) {
                 `This website (${new URL(url).hostname}) is known to block automated recipe scraping. ` +
                 'Please copy the recipe manually or try a different recipe website.'
             );
+        }
+
+        // TikTok pages are JS-rendered — use oEmbed to get the caption instead
+        if (isTikTokUrl(url)) {
+            const recipe = await extractFromTikTok(url);
+            return NextResponse.json(recipe);
         }
 
         // Add headers to mimic a browser request

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import RecipeForm from './RecipeForm';
 import Button from './Button';
 import { FiArrowLeft } from 'react-icons/fi';
@@ -18,37 +18,26 @@ interface ScrapedRecipe {
     sourceUrl: string;
 }
 
-export default function UrlInput() {
+export default function UrlInput({ initialUrl, autoSubmit }: { initialUrl?: string; autoSubmit?: boolean } = {}) {
     const { user } = useAuth();
-    const [url, setUrl] = useState('');
+    const [url, setUrl] = useState(initialUrl || '');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [scrapedRecipe, setScrapedRecipe] = useState<ScrapedRecipe | null>(null);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!url || !user) return;
-
+    const doImport = useCallback(async (urlToImport: string) => {
+        if (!urlToImport || !user) return;
         setLoading(true);
         setError(null);
-
         try {
             const token = await user.getIdToken();
             const response = await fetch('/api/scrape-recipe', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-                body: JSON.stringify({ url }),
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ url: urlToImport }),
             });
-
             const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || 'Failed to scrape recipe');
-            }
-
+            if (!response.ok) throw new Error(data.error || 'Failed to scrape recipe');
             setScrapedRecipe(data);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to scrape recipe. Please check the URL and try again.';
@@ -57,6 +46,18 @@ export default function UrlInput() {
         } finally {
             setLoading(false);
         }
+    }, [user]);
+
+    useEffect(() => {
+        if (autoSubmit && initialUrl) {
+            doImport(initialUrl);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        await doImport(url);
     };
 
     if (scrapedRecipe) {

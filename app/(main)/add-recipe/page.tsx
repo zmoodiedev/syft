@@ -51,10 +51,11 @@ interface ShareData {
     instructions: string;
     sourceUrl: string;
     hasContent: boolean;
+    urlToImport?: string;
 }
 
 function FormPanel({ id, shareData }: { id: OptionId; shareData?: ShareData }) {
-    if (id === 'url')  return <UrlInput />;
+    if (id === 'url')  return <UrlInput initialUrl={shareData?.urlToImport} autoSubmit={!!shareData?.urlToImport} />;
     if (id === 'scan') return <RecipeForm scanMode={true} />;
     if (id === 'bulk') {
         return (
@@ -95,12 +96,29 @@ function AddRecipeContent() {
 
         if (!rawText && !rawUrl) return;
 
-        const parsed = parseTikTokCaption(rawText);
-
-        // Use the shared title only if it looks like actual recipe text
-        // (TikTok often sends "via TikTok" or nothing useful)
         const cleanTitle = rawTitle && !rawTitle.toLowerCase().includes('tiktok') ? rawTitle : '';
 
+        // TikTok (and many other apps) put the video URL in `text` with no caption.
+        // Detect this: if rawText is a bare URL (no whitespace, no newlines), treat the
+        // whole share as a URL import rather than trying to parse it as recipe text.
+        const isJustUrl = /^https?:\/\/\S+$/.test(rawText.trim());
+        const urlToImport = isJustUrl ? rawText.trim() : (rawUrl && !rawText ? rawUrl : undefined);
+
+        if (urlToImport) {
+            setShareData({
+                title: cleanTitle,
+                ingredients: '',
+                instructions: '',
+                sourceUrl: urlToImport,
+                hasContent: true,
+                urlToImport,
+            });
+            setSelected('url');
+            setMobileView('form');
+            return;
+        }
+
+        const parsed = parseTikTokCaption(rawText);
         setShareData({
             title: cleanTitle,
             ingredients: parsed.ingredients,
@@ -139,7 +157,9 @@ function AddRecipeContent() {
                         <div>
                             <p className="text-sm font-semibold text-cast-iron">Shared from TikTok</p>
                             <p className="text-sm text-steel mt-0.5">
-                                {shareData.ingredients || shareData.instructions
+                                {shareData.urlToImport
+                                    ? "Importing the recipe from the video now."
+                                    : shareData.ingredients || shareData.instructions
                                     ? "We parsed what we could from the caption. Review the fields below and add a name before saving."
                                     : "Paste the recipe from the video caption into the fields below, then click Import to Recipe."}
                             </p>
