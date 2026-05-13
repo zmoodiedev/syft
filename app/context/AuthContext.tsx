@@ -198,12 +198,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const profile = await fetchUserProfile(result.user.uid);
             if (profile) setUserProfile(profile);
         } catch (error) {
-            // Ignore cancelled-popup-request — fires when a double-click cancels the first popup
-            if (
-                error instanceof Error &&
-                (error as { code?: string }).code === 'auth/cancelled-popup-request'
-            ) {
-                return;
+            const code = (error as { code?: string }).code;
+            if (code === 'auth/cancelled-popup-request') return;
+            if (code === 'auth/account-exists-with-different-credential') {
+                throw new Error('An account with this email already exists. Please sign in with your email and password instead.');
             }
             console.error('Authentication error:', error);
             throw error;
