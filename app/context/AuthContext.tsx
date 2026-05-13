@@ -6,6 +6,8 @@ import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     signInWithPopup,
+    signInWithRedirect,
+    getRedirectResult,
     GoogleAuthProvider,
     signOut,
     onAuthStateChanged,
@@ -33,6 +35,11 @@ const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 export function useAuth() {
     return useContext(AuthContext);
 }
+
+const isIOS = () =>
+    typeof navigator !== 'undefined' &&
+    (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
 
 const getAllowedEmails = (): string[] => {
     const allowedEmailsStr = process.env.NEXT_PUBLIC_ALLOWED_EMAILS;
@@ -101,6 +108,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
 
     useEffect(() => {
+        getRedirectResult(auth)
+            .then(async (result) => {
+                if (!result) return;
+                const userEmail = result.user.email;
+                const allowedEmails = getAllowedEmails();
+                if (!userEmail || (allowedEmails.length > 0 && !allowedEmails.includes(userEmail))) {
+                    await signOut(auth);
+                    return;
+                }
+                await createUserProfile(result.user);
+                const profile = await fetchUserProfile(result.user.uid);
+                if (profile) setUserProfile(profile);
+            })
+            .catch((error) => {
+                if ((error as { code?: string }).code !== 'auth/cancelled-popup-request') {
+                    console.error('Redirect sign-in error:', error);
+                }
+            });
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    useEffect(() => {
         let mounted = true;
 
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -148,27 +176,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, [router, pathname]);
 
     const signInWithGoogle = async () => {
+        const provider = new GoogleAuthProvider();
+
+        // iOS Safari blocks popups opened during async calls — use redirect instead
+        if (isIOS()) {
+            await signInWithRedirect(auth, provider);
+            return; // page navigates away; result is handled by getRedirectResult on return
+        }
+
         try {
-            const provider = new GoogleAuthProvider();
             const result = await signInWithPopup(auth, provider);
             const userEmail = result.user.email;
             const allowedEmails = getAllowedEmails();
-            
+
             if (!userEmail || (allowedEmails.length > 0 && !allowedEmails.includes(userEmail))) {
                 await signOut(auth);
                 throw new Error('Access denied. Syft is currently in beta and only open to selected users.');
             }
 
             await createUserProfile(result.user);
-            // Get user profile data
             const profile = await fetchUserProfile(result.user.uid);
-            if (profile) {
-                setUserProfile(profile);
-            }
-            // No need to redirect here as onAuthStateChanged will handle it
+            if (profile) setUserProfile(profile);
         } catch (error) {
-            // Ignore cancelled-popup-request — this fires when a second popup
-            // attempt cancels the first (e.g. double-click). Not a real failure.
+            // Ignore cancelled-popup-request — fires when a double-click cancels the first popup
             if (
                 error instanceof Error &&
                 (error as { code?: string }).code === 'auth/cancelled-popup-request'

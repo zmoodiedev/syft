@@ -154,7 +154,7 @@ export default function AddFriend() {
                     </div>
                 ))}
                 
-                {searchResults.length === 0 && searchQuery && !isSearching && hasSearched && (
+                {searchResults.length === 0 && searchQuery && !isSearching && hasSearched && !error && (
                     <p className="text-center text-gray-500 py-4">No users found matching &quot;{searchQuery}&quot;</p>
                 )}
             </div>
