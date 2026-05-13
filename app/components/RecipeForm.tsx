@@ -1164,7 +1164,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
               <FiPlus className="w-4 h-4" /> Add ingredient
             </button>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
               <input
                 type="text"
                 placeholder="New section (e.g. For the sauce)"
@@ -1175,7 +1175,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
                   if (e.key === 'Enter') { e.preventDefault(); addIngredientGroup(); }
                 }}
               />
-              <button type="button" onClick={addIngredientGroup} className="text-sm font-medium text-light-green hover:text-green transition-colors px-2 py-1.5 whitespace-nowrap">
+              <button type="button" onClick={addIngredientGroup} className="text-sm font-medium text-light-green hover:text-green transition-colors px-2 py-1.5 whitespace-nowrap self-start">
                 + Add section
               </button>
             </div>
@@ -1250,7 +1250,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
               <FiPlus className="w-4 h-4" /> Add step
             </button>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
               <input
                 type="text"
                 placeholder="New section (e.g. For the sauce)"
@@ -1261,7 +1261,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
                   if (e.key === 'Enter') { e.preventDefault(); addInstructionGroup(); }
                 }}
               />
-              <button type="button" onClick={addInstructionGroup} className="text-sm font-medium text-light-green hover:text-green transition-colors px-2 py-1.5 whitespace-nowrap">
+              <button type="button" onClick={addInstructionGroup} className="text-sm font-medium text-light-green hover:text-green transition-colors px-2 py-1.5 whitespace-nowrap self-start">
                 + Add section
               </button>
             </div>
