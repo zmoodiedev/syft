@@ -6,14 +6,14 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import Logo from '@/app/components/Logo';
-import { FiCheck, FiArrowLeft, FiArrowRight, FiLock, FiCreditCard, FiX } from 'react-icons/fi';
+import { FiCheck, FiArrowLeft, FiArrowRight, FiLock, FiCreditCard, FiX, FiMail, FiRefreshCw } from 'react-icons/fi';
 import { useAuth } from '@/app/context/AuthContext';
 import { auth } from '@/app/lib/firebase';
 import { toast } from 'react-hot-toast';
 
 type PlanId = 'free' | 'monthly' | 'yearly';
 type Currency = 'USD' | 'CAD';
-type Step = 1 | 2 | 3;
+type Step = 1 | 2 | 3 | 4;
 
 const PLANS = [
     {
@@ -67,8 +67,52 @@ const slideVariants = {
     exit:   { opacity: 0, x: -20 },
 };
 
+function LeftPanel() {
+    return (
+        <div className="hidden lg:flex lg:w-[44%] bg-cream flex-col justify-between p-12 relative z-10">
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                <Image
+                    src="/images/branding/kitchen.png"
+                    alt=""
+                    fill
+                    className="object-cover opacity-[0.18]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-cream/70 to-transparent" />
+            </div>
+            <div className="absolute bottom-0 -right-14 pointer-events-none z-10">
+                <Image
+                    src="/images/branding/chef_ollie.png"
+                    alt=""
+                    width={300}
+                    height={330}
+                    className="w-[320px] h-auto"
+                />
+            </div>
+            <Link href="/" className="relative z-10">
+                <Logo className="h-[36px] w-auto text-cast-iron" />
+            </Link>
+            <div className="relative z-10">
+                <h2 className="text-4xl font-bold text-cast-iron leading-tight mb-8">
+                    A little kitchen,<br />a lot of good eating.
+                </h2>
+                <ul className="space-y-4">
+                    {leftFeatures.map(item => (
+                        <li key={item.icon} className="flex items-center gap-3 text-steel text-sm">
+                            <div className="w-7 h-7 bg-cast-iron/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <i className={`fa-solid ${item.icon} text-cast-iron/60 text-xs`} />
+                            </div>
+                            {item.text}
+                        </li>
+                    ))}
+                </ul>
+            </div>
+            <p className="text-xs text-steel/40 relative z-10">© {new Date().getFullYear()} Syft. All rights reserved.</p>
+        </div>
+    );
+}
+
 export default function SignUpPage() {
-    const { user, signUp, signInWithGoogle } = useAuth();
+    const { user, signUp, signInWithGoogle, resendVerificationEmail } = useAuth();
     const router = useRouter();
 
     const [step, setStep]                       = useState<Step>(1);
@@ -83,9 +127,13 @@ export default function SignUpPage() {
     const [error, setError]                     = useState('');
     const [submitting, setSubmitting]           = useState(false);
     const [checkoutLoading, setCheckoutLoading] = useState(false);
+    const [verifying, setVerifying]             = useState(false);
+    const [verifyError, setVerifyError]         = useState('');
+    const [resending, setResending]             = useState(false);
+    const [resendSent, setResendSent]           = useState(false);
 
     useEffect(() => {
-        if (user) router.push('/recipes');
+        if (user?.emailVerified) router.push(`/profile/${user.uid}`);
     }, [user, router]);
 
     const formatPrice = (planId: PlanId) => {
@@ -118,7 +166,7 @@ export default function SignUpPage() {
                 selectedPlan !== 'free' ? selectedPlan : undefined
             );
             if (selectedPlan === 'free') {
-                router.push('/recipes');
+                setStep(4);
             } else {
                 setStep(3);
             }
@@ -144,7 +192,7 @@ export default function SignUpPage() {
             if (selectedPlan !== 'free') {
                 setStep(3);
             } else {
-                router.push('/recipes');
+                router.push(`/profile/${auth.currentUser?.uid}`);
             }
         } catch (err) {
             if ((err as { code?: string }).code === 'auth/cancelled-popup-request') return;
@@ -182,58 +230,54 @@ export default function SignUpPage() {
         }
     };
 
+    // ── Toggle this to re-open signups ──────────────────────────────────────
+    const SIGNUPS_OPEN = false;
+    // ────────────────────────────────────────────────────────────────────────
+
+    if (!SIGNUPS_OPEN) {
+        return (
+            <div className="min-h-screen flex">
+                <LeftPanel />
+                <div className="flex-1 bg-eggshell flex flex-col items-center justify-center p-6 md:p-10">
+                    <Link href="/" className="lg:hidden mb-8">
+                        <Logo className="h-[36px] w-auto text-cast-iron" />
+                    </Link>
+                    <motion.div
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4 }}
+                        className="w-full max-w-md text-center"
+                    >
+                        <div className="bg-white rounded-3xl shadow-sm border border-stone-100 p-10">
+                            <Image
+                                src="/images/branding/chef_ollie.png"
+                                alt="Ollie"
+                                width={80}
+                                height={80}
+                                className="mx-auto mb-6"
+                            />
+                            <h2 className="text-2xl font-bold text-cast-iron mb-3">Sign ups opening soon</h2>
+                            <p className="text-steel text-sm leading-relaxed mb-8">
+                                We&apos;re putting the finishing touches on Syft. Check back soon.
+                            </p>
+                            <Link href="/login" className="text-sm font-semibold text-light-green hover:underline">
+                                Already have an account? Sign in
+                            </Link>
+                        </div>
+                        <div className="mt-6 flex items-center justify-center gap-4 text-xs text-steel/40">
+                            <Link href="/privacy-policy" className="hover:text-steel transition-colors">Privacy Policy</Link>
+                            <span>·</span>
+                            <Link href="/terms-of-service" className="hover:text-steel transition-colors">Terms of Service</Link>
+                        </div>
+                    </motion.div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen flex">
-
-            {/* Left panel — branding (desktop only) */}
-            <div className="hidden lg:flex lg:w-[44%] bg-cast-iron flex-col justify-between p-12 relative">
-
-                {/* Kitchen — ghost layer */}
-                <div className="absolute inset-0 pointer-events-none">
-                    <Image
-                        src="/images/branding/kitchen.png"
-                        alt=""
-                        fill
-                        className="object-cover opacity-[0.07]"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-cast-iron/60 to-transparent" />
-                </div>
-
-                {/* Ollie & Arthur — bottom-right corner, leaning off edge */}
-                <div className="absolute bottom-0 -right-16 pointer-events-none z-10">
-                    <Image
-                        src="/images/branding/ollie_arthur.png"
-                        alt=""
-                        width={380}
-                        height={275}
-                        className="w-[420px] h-auto"
-                    />
-                </div>
-
-                {/* Logo */}
-                <Link href="/" className="relative z-10">
-                    <Logo className="h-[36px] w-auto text-white" />
-                </Link>
-
-                {/* Tagline + features */}
-                <div className="relative z-10">
-                    <h2 className="text-4xl font-bold text-white leading-tight mb-8">
-                        Start cooking<br />smarter.
-                    </h2>
-                    <ul className="space-y-4">
-                        {leftFeatures.map(item => (
-                            <li key={item.icon} className="flex items-center gap-3 text-white/60 text-sm">
-                                <div className="w-7 h-7 bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i className={`fa-solid ${item.icon} text-white/60 text-xs`} />
-                                </div>
-                                {item.text}
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-
-                <p className="text-white/20 text-xs relative z-10">© {new Date().getFullYear()} Syft. All rights reserved.</p>
-            </div>
+            <LeftPanel />
 
             {/* Right panel — steps */}
             <div className="flex-1 bg-eggshell flex flex-col items-center justify-center p-6 md:p-10 overflow-y-auto">
@@ -292,14 +336,11 @@ export default function SignUpPage() {
                                                 </span>
                                             </div>
                                         )}
-
                                         <div className="flex items-start justify-between gap-4">
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2 mb-1.5">
                                                     <span className="text-base font-bold text-cast-iron">{plan.name}</span>
-                                                    {'label' in plan && (
-                                                        <span className="text-xs text-steel">{plan.label}</span>
-                                                    )}
+                                                    {'label' in plan && <span className="text-xs text-steel">{plan.label}</span>}
                                                     {plan.savings && (
                                                         <span className="text-[0.6875rem] font-semibold text-light-green bg-light-green/10 border border-light-green/20 px-2 py-0.5 rounded-full">
                                                             {plan.savings}
@@ -308,9 +349,7 @@ export default function SignUpPage() {
                                                 </div>
                                                 <div className="flex items-baseline gap-1 mb-2.5">
                                                     <span className="text-2xl font-bold text-cast-iron">{formatPrice(plan.id)}</span>
-                                                    {plan.priceUSD > 0 && (
-                                                        <span className="text-xs text-steel">{plan.period}</span>
-                                                    )}
+                                                    {plan.priceUSD > 0 && <span className="text-xs text-steel">{plan.period}</span>}
                                                 </div>
                                                 <div className="flex flex-wrap gap-x-4 gap-y-1">
                                                     {plan.features.map(f => (
@@ -321,13 +360,10 @@ export default function SignUpPage() {
                                                     ))}
                                                 </div>
                                             </div>
-
                                             <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 mt-0.5 flex items-center justify-center transition-colors ${
                                                 selectedPlan === plan.id ? 'border-light-green bg-light-green' : 'border-stone-300'
                                             }`}>
-                                                {selectedPlan === plan.id && (
-                                                    <div className="w-2 h-2 rounded-full bg-white" />
-                                                )}
+                                                {selectedPlan === plan.id && <div className="w-2 h-2 rounded-full bg-white" />}
                                             </div>
                                         </div>
                                     </button>
@@ -341,7 +377,6 @@ export default function SignUpPage() {
                                 Continue with {selectedPlan === 'free' ? 'Free' : `Pro ${selectedPlan === 'monthly' ? 'Monthly' : 'Yearly'}`}
                                 <FiArrowRight className="w-4 h-4" />
                             </button>
-
                             <p className="text-center mt-5 text-sm text-steel">
                                 Already have an account?{' '}
                                 <Link href="/login" className="font-semibold text-light-green hover:underline">Sign in</Link>
@@ -370,108 +405,48 @@ export default function SignUpPage() {
                                     {planLabel()}
                                 </span>
                             </div>
-
                             <div className="bg-white rounded-3xl shadow-sm border border-stone-100 p-8">
                                 <h2 className="text-2xl font-bold text-cast-iron mb-1">Create your account</h2>
                                 <p className="text-steel text-sm mb-7">
                                     {selectedPlan === 'free' ? 'No credit card needed.' : 'Payment details on the next step.'}
                                 </p>
-
                                 {error && (
                                     <div className="mb-5 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm flex items-start gap-2">
                                         <FiX className="w-4 h-4 flex-shrink-0 mt-0.5" />
                                         {error}
                                     </div>
                                 )}
-
                                 <form onSubmit={handleCreateAccount} className="space-y-4">
                                     <div>
-                                        <label htmlFor="displayName" className="block text-sm font-medium text-cast-iron mb-1.5">
-                                            Your name
-                                        </label>
-                                        <input
-                                            type="text"
-                                            id="displayName"
-                                            value={displayName}
-                                            onChange={e => setDisplayName(e.target.value)}
-                                            placeholder="How should we call you?"
-                                            className="border border-stone-200 rounded-xl w-full py-3 px-4 text-sm text-cast-iron placeholder:text-steel/40 focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors"
-                                            required
-                                        />
+                                        <label htmlFor="displayName" className="block text-sm font-medium text-cast-iron mb-1.5">Your name</label>
+                                        <input type="text" id="displayName" value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="How should we call you?" className="border border-stone-200 rounded-xl w-full py-3 px-4 text-sm text-cast-iron placeholder:text-steel/40 focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors" required />
                                     </div>
                                     <div>
-                                        <label htmlFor="email" className="block text-sm font-medium text-cast-iron mb-1.5">
-                                            Email
-                                        </label>
-                                        <input
-                                            type="email"
-                                            id="email"
-                                            value={email}
-                                            onChange={e => setEmail(e.target.value)}
-                                            className="border border-stone-200 rounded-xl w-full py-3 px-4 text-sm text-cast-iron focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors"
-                                            required
-                                        />
+                                        <label htmlFor="email" className="block text-sm font-medium text-cast-iron mb-1.5">Email</label>
+                                        <input type="email" id="email" value={email} onChange={e => setEmail(e.target.value)} className="border border-stone-200 rounded-xl w-full py-3 px-4 text-sm text-cast-iron focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors" required />
                                     </div>
                                     <div>
-                                        <label htmlFor="password" className="block text-sm font-medium text-cast-iron mb-1.5">
-                                            Password
-                                        </label>
-                                        <input
-                                            type="password"
-                                            id="password"
-                                            value={password}
-                                            onChange={e => setPassword(e.target.value)}
-                                            placeholder="Min. 6 characters"
-                                            className="border border-stone-200 rounded-xl w-full py-3 px-4 text-sm text-cast-iron placeholder:text-steel/40 focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors"
-                                            required
-                                        />
+                                        <label htmlFor="password" className="block text-sm font-medium text-cast-iron mb-1.5">Password</label>
+                                        <input type="password" id="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Min. 6 characters" className="border border-stone-200 rounded-xl w-full py-3 px-4 text-sm text-cast-iron placeholder:text-steel/40 focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors" required />
                                     </div>
                                     <div>
-                                        <label htmlFor="confirmPassword" className="block text-sm font-medium text-cast-iron mb-1.5">
-                                            Confirm password
-                                        </label>
-                                        <input
-                                            type="password"
-                                            id="confirmPassword"
-                                            value={confirmPassword}
-                                            onChange={e => setConfirmPassword(e.target.value)}
-                                            className="border border-stone-200 rounded-xl w-full py-3 px-4 text-sm text-cast-iron focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors"
-                                            required
-                                        />
+                                        <label htmlFor="confirmPassword" className="block text-sm font-medium text-cast-iron mb-1.5">Confirm password</label>
+                                        <input type="password" id="confirmPassword" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="border border-stone-200 rounded-xl w-full py-3 px-4 text-sm text-cast-iron focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors" required />
                                     </div>
-
-                                    <button
-                                        type="submit"
-                                        disabled={submitting}
-                                        className="w-full bg-light-green text-white py-3 px-4 rounded-xl font-semibold hover:bg-green transition-colors disabled:opacity-60 flex items-center justify-center gap-2 mt-2"
-                                    >
+                                    <button type="submit" disabled={submitting} className="w-full bg-light-green text-white py-3 px-4 rounded-xl font-semibold hover:bg-green transition-colors disabled:opacity-60 flex items-center justify-center gap-2 mt-2">
                                         {submitting ? (
-                                            <>
-                                                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-                                                Creating account...
-                                            </>
+                                            <><div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />Creating account...</>
                                         ) : (
-                                            <>
-                                                {selectedPlan === 'free' ? 'Create account' : 'Continue to payment'}
-                                                <FiArrowRight className="w-4 h-4" />
-                                            </>
+                                            <>{selectedPlan === 'free' ? 'Create account' : 'Continue to payment'}<FiArrowRight className="w-4 h-4" /></>
                                         )}
                                     </button>
                                 </form>
-
                                 <div className="mt-6">
                                     <div className="relative">
-                                        <div className="absolute inset-0 flex items-center">
-                                            <div className="w-full border-t border-stone-100" />
-                                        </div>
-                                        <div className="relative flex justify-center text-sm">
-                                            <span className="px-3 bg-white text-steel">Or continue with</span>
-                                        </div>
+                                        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-stone-100" /></div>
+                                        <div className="relative flex justify-center text-sm"><span className="px-3 bg-white text-steel">Or continue with</span></div>
                                     </div>
-                                    <button
-                                        onClick={handleGoogleSignUp}
-                                        className="mt-4 w-full flex items-center justify-center bg-white border border-stone-200 text-cast-iron py-3 px-4 rounded-xl text-sm font-medium hover:bg-stone-50 transition-all"
-                                    >
+                                    <button onClick={handleGoogleSignUp} className="mt-4 w-full flex items-center justify-center bg-white border border-stone-200 text-cast-iron py-3 px-4 rounded-xl text-sm font-medium hover:bg-stone-50 transition-all">
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" className="mr-2">
                                             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                                             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
@@ -481,12 +456,8 @@ export default function SignUpPage() {
                                         Sign up with Google
                                     </button>
                                 </div>
-
                                 <div className="text-center mt-6 pt-5 border-t border-stone-100">
-                                    <p className="text-sm text-steel">
-                                        Already have an account?{' '}
-                                        <Link href="/login" className="font-semibold text-light-green hover:underline">Sign in</Link>
-                                    </p>
+                                    <p className="text-sm text-steel">Already have an account?{' '}<Link href="/login" className="font-semibold text-light-green hover:underline">Sign in</Link></p>
                                 </div>
                             </div>
                         </motion.div>
@@ -505,11 +476,9 @@ export default function SignUpPage() {
                                 <FiLock className="w-3.5 h-3.5 text-light-green" />
                                 <span className="text-xs font-semibold text-steel/60 uppercase tracking-wider">Secure checkout</span>
                             </div>
-
                             <div className="bg-white rounded-3xl shadow-sm border border-stone-100 p-8">
                                 <h2 className="text-2xl font-bold text-cast-iron mb-1">Set up billing</h2>
                                 <p className="text-steel text-sm mb-6">Review your plan and enter payment details.</p>
-
                                 <div className="bg-eggshell rounded-2xl p-4 mb-5 border border-stone-100">
                                     <p className="text-xs font-semibold text-steel/50 uppercase tracking-wider mb-3">Order summary</p>
                                     <div className="flex items-center justify-between">
@@ -529,8 +498,6 @@ export default function SignUpPage() {
                                         </div>
                                     )}
                                 </div>
-
-                                {/* Payment fields — decorative, collected by Stripe */}
                                 <div className="space-y-4 mb-6 opacity-40 pointer-events-none select-none" aria-hidden="true">
                                     <div>
                                         <label className="block text-sm font-medium text-cast-iron mb-1.5">Card number</label>
@@ -542,46 +509,95 @@ export default function SignUpPage() {
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
                                             <label className="block text-sm font-medium text-cast-iron mb-1.5">Expiry</label>
-                                            <div className="border border-stone-200 rounded-xl py-3 px-4 bg-stone-50">
-                                                <span className="text-steel/50 text-sm">MM / YY</span>
-                                            </div>
+                                            <div className="border border-stone-200 rounded-xl py-3 px-4 bg-stone-50"><span className="text-steel/50 text-sm">MM / YY</span></div>
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-cast-iron mb-1.5">CVC</label>
-                                            <div className="border border-stone-200 rounded-xl py-3 px-4 bg-stone-50">
-                                                <span className="text-steel/50 text-sm">•••</span>
-                                            </div>
+                                            <div className="border border-stone-200 rounded-xl py-3 px-4 bg-stone-50"><span className="text-steel/50 text-sm">•••</span></div>
                                         </div>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-cast-iron mb-1.5">Name on card</label>
-                                        <div className="border border-stone-200 rounded-xl py-3 px-4 bg-stone-50">
-                                            <span className="text-steel/50 text-sm">Full name</span>
-                                        </div>
+                                        <div className="border border-stone-200 rounded-xl py-3 px-4 bg-stone-50"><span className="text-steel/50 text-sm">Full name</span></div>
                                     </div>
                                 </div>
-
-                                <button
-                                    onClick={handleStartSubscription}
-                                    disabled={checkoutLoading}
-                                    className="w-full bg-light-green text-white py-3 px-4 rounded-xl font-semibold hover:bg-green transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
-                                >
+                                <button onClick={handleStartSubscription} disabled={checkoutLoading} className="w-full bg-light-green text-white py-3 px-4 rounded-xl font-semibold hover:bg-green transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
                                     {checkoutLoading ? (
-                                        <>
-                                            <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-                                            Redirecting to checkout...
-                                        </>
+                                        <><div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />Redirecting to checkout...</>
                                     ) : (
-                                        <>
-                                            <FiLock className="w-4 h-4" />
-                                            Start subscription
-                                        </>
+                                        <><FiLock className="w-4 h-4" />Start subscription</>
                                     )}
                                 </button>
+                                <p className="text-center text-xs text-steel/50 mt-4">You&apos;ll be taken to Stripe&apos;s secure checkout. Cancel anytime.</p>
+                            </div>
+                        </motion.div>
+                    )}
 
-                                <p className="text-center text-xs text-steel/50 mt-4">
-                                    You&apos;ll be taken to Stripe&apos;s secure checkout. Cancel anytime.
-                                </p>
+                    {/* ── Step 4: Verify email ── */}
+                    {step === 4 && (
+                        <motion.div
+                            key="step4"
+                            variants={slideVariants}
+                            initial="enter" animate="center" exit="exit"
+                            transition={{ duration: 0.2 }}
+                            className="w-full max-w-md"
+                        >
+                            <div className="bg-white rounded-3xl shadow-sm border border-stone-100 p-8 text-center">
+                                <div className="w-14 h-14 bg-light-green/10 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                                    <FiMail className="w-6 h-6 text-light-green" />
+                                </div>
+                                <h2 className="text-2xl font-bold text-cast-iron mb-2">Check your inbox</h2>
+                                <p className="text-steel text-sm mb-1">We sent a verification link to</p>
+                                <p className="text-cast-iron text-sm font-semibold mb-6">{email}</p>
+                                <p className="text-steel text-sm mb-2">Click the link in the email to verify your account, then come back here.</p>
+                                <p className="text-steel/50 text-xs mb-8">Can&apos;t find it? Check your spam folder.</p>
+                                {verifyError && (
+                                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm flex items-start gap-2 text-left">
+                                        <FiX className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                                        {verifyError}
+                                    </div>
+                                )}
+                                <button
+                                    onClick={async () => {
+                                        setVerifying(true);
+                                        setVerifyError('');
+                                        try {
+                                            await auth.currentUser?.reload();
+                                            if (auth.currentUser?.emailVerified) {
+                                                router.push(`/profile/${auth.currentUser.uid}`);
+                                            } else {
+                                                setVerifyError("Your email hasn't been verified yet. Check your inbox and click the link.");
+                                            }
+                                        } catch {
+                                            setVerifyError('Something went wrong. Please try again.');
+                                        } finally {
+                                            setVerifying(false);
+                                        }
+                                    }}
+                                    disabled={verifying}
+                                    className="w-full bg-light-green text-white py-3 px-4 rounded-xl font-semibold hover:bg-green transition-colors disabled:opacity-60 flex items-center justify-center gap-2 mb-4"
+                                >
+                                    {verifying ? <><div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />Checking...</> : "I've verified my email"}
+                                </button>
+                                <button
+                                    onClick={async () => {
+                                        setResending(true);
+                                        setResendSent(false);
+                                        try {
+                                            await resendVerificationEmail();
+                                            setResendSent(true);
+                                        } catch {
+                                            toast.error('Could not resend email. Please wait a moment and try again.');
+                                        } finally {
+                                            setResending(false);
+                                        }
+                                    }}
+                                    disabled={resending}
+                                    className="w-full flex items-center justify-center gap-2 text-sm font-medium text-steel hover:text-cast-iron transition-colors py-2"
+                                >
+                                    <FiRefreshCw className={`w-3.5 h-3.5 ${resending ? 'animate-spin' : ''}`} />
+                                    {resendSent ? 'Email sent!' : 'Resend verification email'}
+                                </button>
                             </div>
                         </motion.div>
                     )}

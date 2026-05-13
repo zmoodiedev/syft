@@ -9,7 +9,8 @@ import {
     GoogleAuthProvider,
     signOut,
     onAuthStateChanged,
-    updateProfile
+    updateProfile,
+    sendEmailVerification
 } from 'firebase/auth';
 import { auth, db } from '../lib/firebase';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
@@ -24,6 +25,7 @@ interface AuthContextType {
     signIn: (email: string, password: string) => Promise<void>;
     signInWithGoogle: () => Promise<void>;
     logout: () => Promise<void>;
+    resendVerificationEmail: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -191,6 +193,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (displayName) {
                 await updateProfile(result.user, { displayName });
             }
+            await sendEmailVerification(result.user);
             await createUserProfile(result.user, displayName, tier, billingCycle);
             const profile = await fetchUserProfile(result.user.uid);
             if (profile) {
@@ -203,6 +206,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 throw new Error('Access denied. Syft is currently in beta and only open to selected users.');
             }
             const result = await signInWithEmailAndPassword(auth, email, password);
+            if (!result.user.emailVerified) {
+                try { await sendEmailVerification(result.user); } catch {}
+                await signOut(auth);
+                throw new Error('email-not-verified');
+            }
             await createUserProfile(result.user);
             const profile = await fetchUserProfile(result.user.uid);
             if (profile) {
@@ -213,7 +221,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout: async () => {
             await signOut(auth);
             setUserProfile(null);
-        }
+        },
+        resendVerificationEmail: async () => {
+            if (auth.currentUser) {
+                await sendEmailVerification(auth.currentUser);
+            }
+        },
     };
 
     return (

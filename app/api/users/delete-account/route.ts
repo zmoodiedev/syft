@@ -43,83 +43,103 @@ export async function DELETE(request: Request) {
     const userDoc = await db.collection('users').doc(userId).get();
     const userData = userDoc.data();
 
-    // Cancel active Stripe subscription immediately
-    if (userData?.stripeCustomerId) {
-      try {
+    // Delete Firestore user document first so the profile is immediately inaccessible
+    await db.collection('users').doc(userId).delete();
+
+    // Delete Firebase Auth user so they can't log back in
+    await auth.deleteUser(userId);
+
+    // Remaining steps are best-effort cleanup — errors are logged but don't fail the request
+    try {
+      // Cancel active Stripe subscription
+      if (userData?.stripeCustomerId) {
         const subscriptions = await stripe.subscriptions.list({
           customer: userData.stripeCustomerId,
           status: 'active',
           limit: 5,
         });
         await Promise.all(subscriptions.data.map(sub => stripe.subscriptions.cancel(sub.id)));
-      } catch (err) {
-        console.error('Error cancelling subscription during account deletion:', err);
       }
+    } catch (err) {
+      console.error('Error cancelling subscription during account deletion:', err);
     }
 
-    // Delete all recipes + their Cloudinary images
-    const recipesSnap = await db.collection('recipes').where('userId', '==', userId).get();
-    const recipeBatch = db.batch();
-    for (const d of recipesSnap.docs) {
-      const imageUrl = d.data().imageUrl;
-      if (imageUrl) {
-        try { await destroyCloudinaryImage(imageUrl); } catch {}
+    try {
+      // Delete all recipes + their Cloudinary images
+      const recipesSnap = await db.collection('recipes').where('userId', '==', userId).get();
+      const recipeBatch = db.batch();
+      for (const d of recipesSnap.docs) {
+        const imageUrl = d.data().imageUrl;
+        if (imageUrl) {
+          try { await destroyCloudinaryImage(imageUrl); } catch {}
+        }
+        recipeBatch.delete(d.ref);
       }
-      recipeBatch.delete(d.ref);
-    }
-    if (!recipesSnap.empty) await recipeBatch.commit();
-
-    // Delete shared recipe links
-    const sharedSnap = await db.collection('sharedRecipes').where('userId', '==', userId).get();
-    if (!sharedSnap.empty) {
-      const sharedBatch = db.batch();
-      for (const d of sharedSnap.docs) sharedBatch.delete(d.ref);
-      await sharedBatch.commit();
+      if (!recipesSnap.empty) await recipeBatch.commit();
+    } catch (err) {
+      console.error('Error deleting recipes during account deletion:', err);
     }
 
-    // Delete friendships
-    const friendshipsSnap = await db.collection('friendships')
-      .where('userIds', 'array-contains', userId)
-      .get();
-    if (!friendshipsSnap.empty) {
-      const friendBatch = db.batch();
-      for (const d of friendshipsSnap.docs) friendBatch.delete(d.ref);
-      await friendBatch.commit();
+    try {
+      // Delete shared recipe links
+      const sharedSnap = await db.collection('sharedRecipes').where('userId', '==', userId).get();
+      if (!sharedSnap.empty) {
+        const sharedBatch = db.batch();
+        for (const d of sharedSnap.docs) sharedBatch.delete(d.ref);
+        await sharedBatch.commit();
+      }
+    } catch (err) {
+      console.error('Error deleting shared recipes during account deletion:', err);
     }
 
-    // Delete friend requests (sent and received)
-    const [sentSnap, recvSnap] = await Promise.all([
-      db.collection('friendRequests').where('senderId', '==', userId).get(),
-      db.collection('friendRequests').where('receiverId', '==', userId).get(),
-    ]);
-    const allReqs = [...sentSnap.docs, ...recvSnap.docs];
-    if (allReqs.length > 0) {
-      const reqBatch = db.batch();
-      for (const d of allReqs) reqBatch.delete(d.ref);
-      await reqBatch.commit();
+    try {
+      // Delete friendships
+      const friendshipsSnap = await db.collection('friendships')
+        .where('userIds', 'array-contains', userId)
+        .get();
+      if (!friendshipsSnap.empty) {
+        const friendBatch = db.batch();
+        for (const d of friendshipsSnap.docs) friendBatch.delete(d.ref);
+        await friendBatch.commit();
+      }
+
+      // Delete friend requests (sent and received)
+      const [sentSnap, recvSnap] = await Promise.all([
+        db.collection('friendRequests').where('senderId', '==', userId).get(),
+        db.collection('friendRequests').where('receiverId', '==', userId).get(),
+      ]);
+      const allReqs = [...sentSnap.docs, ...recvSnap.docs];
+      if (allReqs.length > 0) {
+        const reqBatch = db.batch();
+        for (const d of allReqs) reqBatch.delete(d.ref);
+        await reqBatch.commit();
+      }
+    } catch (err) {
+      console.error('Error deleting friendships/requests during account deletion:', err);
     }
 
-    // Delete notifications
-    const notifSnap = await db.collection('notifications').where('userId', '==', userId).get();
-    if (!notifSnap.empty) {
-      const notifBatch = db.batch();
-      for (const d of notifSnap.docs) notifBatch.delete(d.ref);
-      await notifBatch.commit();
+    try {
+      // Delete notifications
+      const notifSnap = await db.collection('notifications').where('userId', '==', userId).get();
+      if (!notifSnap.empty) {
+        const notifBatch = db.batch();
+        for (const d of notifSnap.docs) notifBatch.delete(d.ref);
+        await notifBatch.commit();
+      }
+    } catch (err) {
+      console.error('Error deleting notifications during account deletion:', err);
     }
 
-    // Delete profile photo from Cloudinary
-    if (userData?.photoURL) {
-      try { await destroyCloudinaryImage(userData.photoURL); } catch {}
+    try {
+      // Delete profile photo from Cloudinary
+      if (userData?.photoURL) {
+        await destroyCloudinaryImage(userData.photoURL);
+      }
+    } catch (err) {
+      console.error('Error deleting profile photo during account deletion:', err);
     }
 
-    // Delete Firestore user document
-    await db.collection('users').doc(userId).delete();
-
-    // Log before deleting Auth user (userId still valid for the event)
     await logEvent(userId, 'account_deleted');
-
-    // Delete Firebase Auth user
-    await auth.deleteUser(userId);
 
     return NextResponse.json({ success: true });
   } catch (error) {

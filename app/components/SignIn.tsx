@@ -19,8 +19,14 @@ export default function SignIn() {
             setError('');
             router.push('/recipes');
         } catch (err) {
-            if (err instanceof Error && err.message.includes('Access denied')) {
-                setError(err.message);
+            if (err instanceof Error) {
+                if (err.message === 'email-not-verified') {
+                    setError('email-not-verified');
+                } else if (err.message.includes('Access denied')) {
+                    setError(err.message);
+                } else {
+                    setError('Failed to sign in. Please check your credentials.');
+                }
             } else {
                 setError('Failed to sign in. Please check your credentials.');
             }
@@ -48,11 +54,16 @@ export default function SignIn() {
     return (
         <div className="relative w-full">
 
-            {error && (
+            {error === 'email-not-verified' ? (
+                <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm">
+                    <p className="font-semibold text-amber-800 mb-1">Email not verified</p>
+                    <p className="text-amber-700">We sent a new verification link to <span className="font-medium">{email}</span>. Check your inbox and click the link, then try signing in again.</p>
+                </div>
+            ) : error ? (
                 <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
                     {error}
                 </div>
-            )}
+            ) : null}
 
             <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
