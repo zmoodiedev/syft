@@ -1,5 +1,5 @@
 import { db } from '@/lib/firebase';
-import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, deleteDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { UserProfile, UserRelationship, DEFAULT_USER_SETTINGS } from '@/app/models/User';
 import { auth } from '@/lib/firebase';
 
@@ -416,3 +416,28 @@ export async function acceptFriendRequest(requestId: string) {
     throw error;
   }
 } 
+export interface ProfileFriend {
+  id: string;
+  displayName: string | null;
+  photoURL: string | null;
+}
+
+export async function getProfileFriends(userId: string): Promise<ProfileFriend[]> {
+  try {
+    const snap = await getDocs(query(collection(db, 'friendships'), where('userIds', 'array-contains', userId)));
+    const friends = await Promise.all(
+      snap.docs.map(async (d) => {
+        const friendId = (d.data().userIds as string[]).find((uid) => uid !== userId);
+        if (!friendId) return null;
+        const userDoc = await getDoc(doc(db, 'users', friendId));
+        if (!userDoc.exists()) return null;
+        const data = userDoc.data();
+        return { id: friendId, displayName: data.displayName ?? null, photoURL: data.photoURL ?? null };
+      })
+    );
+    return friends.filter((f): f is ProfileFriend => f !== null);
+  } catch (error) {
+    console.error('Error loading profile friends:', error);
+    return [];
+  }
+}

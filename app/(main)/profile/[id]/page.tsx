@@ -9,7 +9,7 @@ import RecipeCard from '@/app/components/RecipeCard';
 import { useAuth } from '@/app/context/AuthContext';
 import { useFriends } from '@/app/context/FriendsContext';
 import AddFriend from '@/app/components/AddFriend';
-import { getUserProfile, getUserRelationship, updateUserProfile } from '@/app/lib/user';
+import { getUserProfile, getUserRelationship, updateUserProfile, getProfileFriends, ProfileFriend } from '@/app/lib/user';
 import { getUserRecipes, getUserStats } from '@/app/lib/recipe';
 import { getUserNotifications, getUnreadNotificationCount, markAllNotificationsAsRead } from '@/app/lib/notification';
 import { UserProfile, UserRelationship, UserStats, Notification } from '@/app/models/User';
@@ -44,6 +44,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('recipes');
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [profileFriends, setProfileFriends] = useState<ProfileFriend[]>([]);
   const [friendToRemove, setFriendToRemove] = useState<{ id: string; name: string } | null>(null);
   const [isRemovingFriend, setIsRemovingFriend] = useState(false);
   const [categoryToRemove, setCategoryToRemove] = useState<string | null>(null);
@@ -134,6 +135,12 @@ export default function ProfilePage() {
           } catch (statsError) {
             console.error('Error loading user stats:', statsError);
             // Continue with default stats
+          }
+
+          // Load the profile user's friends (used when viewing another user's profile)
+          if (!isOwnProfile) {
+            const pf = await getProfileFriends(id as string);
+            setProfileFriends(pf);
           }
           
           // Load initial batch of user recipes
@@ -625,41 +632,46 @@ export default function ProfilePage() {
               ) : (
                 <>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-                    {((isOwnProfile && friends.length > 0) ||
-                      ((profile as UserProfile).friendsVisibility === 'public' && friends.length > 0) ||
-                      (relationship?.isFriend && friends.length > 0)) ? (
-                      friends.map(friend => (
-                        <div key={friend.id} className="flex items-center gap-3 p-3 rounded-2xl bg-white border border-stone-100 hover:border-stone-200 transition-colors">
-                          <div className="h-10 w-10 rounded-full overflow-hidden bg-light-green/10 flex-shrink-0 flex items-center justify-center">
-                            {friend.photoURL ? (
-                              <Image src={friend.photoURL} alt={friend.displayName || 'Friend'} width={40} height={40} className="h-full w-full object-cover" />
-                            ) : (
-                              <FiUser className="h-5 w-5 text-light-green" />
-                            )}
+                    {(() => {
+                      const displayFriends = isOwnProfile ? friends : profileFriends;
+                      const canSeeFriends = isOwnProfile ||
+                        (profile as UserProfile).friendsVisibility === 'public' ||
+                        !!relationship?.isFriend;
+                      if (canSeeFriends && displayFriends.length > 0) {
+                        return displayFriends.map(friend => (
+                          <div key={friend.id} className="flex items-center gap-3 p-3 rounded-2xl bg-white border border-stone-100 hover:border-stone-200 transition-colors">
+                            <div className="h-10 w-10 rounded-full overflow-hidden bg-light-green/10 flex-shrink-0 flex items-center justify-center">
+                              {friend.photoURL ? (
+                                <Image src={friend.photoURL} alt={friend.displayName || 'Friend'} width={40} height={40} className="h-full w-full object-cover" />
+                              ) : (
+                                <FiUser className="h-5 w-5 text-light-green" />
+                              )}
+                            </div>
+                            <p className="flex-1 text-sm font-medium text-cast-iron truncate">{friend.displayName || 'User'}</p>
+                            <div className="flex items-center gap-1.5 flex-shrink-0">
+                              <Button variant="outline" size="sm" href={`/profile/${friend.id}`} className="text-xs">View</Button>
+                              {isOwnProfile && (
+                                <button
+                                  onClick={() => setFriendToRemove({ id: friend.id, name: friend.displayName || 'this friend' })}
+                                  className="text-xs font-medium text-steel/50 hover:text-tomato transition-colors px-2 py-1"
+                                >
+                                  Remove
+                                </button>
+                              )}
+                            </div>
                           </div>
-                          <p className="flex-1 text-sm font-medium text-cast-iron truncate">{friend.displayName || 'User'}</p>
-                          <div className="flex items-center gap-1.5 flex-shrink-0">
-                            <Button variant="outline" size="sm" href={`/profile/${friend.id}`} className="text-xs">View</Button>
-                            {isOwnProfile && (
-                              <button
-                                onClick={() => setFriendToRemove({ id: friend.id, name: friend.displayName || 'this friend' })}
-                                className="text-xs font-medium text-steel/50 hover:text-tomato transition-colors px-2 py-1"
-                              >
-                                Remove
-                              </button>
-                            )}
-                          </div>
+                        ));
+                      }
+                      return (
+                        <div className="col-span-full text-center py-12">
+                          <p className="text-sm text-steel">
+                            {(profile as UserProfile).friendsVisibility === 'private' && !isOwnProfile && !relationship?.isFriend
+                              ? "This user's friends list is private."
+                              : 'No friends to display.'}
+                          </p>
                         </div>
-                      ))
-                    ) : (
-                      <div className="col-span-full text-center py-12">
-                        <p className="text-sm text-steel">
-                          {(profile as UserProfile).friendsVisibility === 'private' && !isOwnProfile && !relationship?.isFriend
-                            ? "This user's friends list is private."
-                            : 'No friends to display.'}
-                        </p>
-                      </div>
-                    )}
+                      );
+                    })()}
                   </div>
 
                   {isOwnProfile && outgoingRequests.length > 0 && (
