@@ -11,7 +11,7 @@ import { useAuth } from '@/app/context/AuthContext';
 import { auth } from '@/app/lib/firebase';
 import { toast } from 'react-hot-toast';
 
-import { useDetectedCurrency } from '@/app/hooks/useDetectedCurrency';
+import { useDetectedCurrency, Currency } from '@/app/hooks/useDetectedCurrency';
 
 type PlanId = 'free' | 'monthly' | 'yearly';
 type Step = 1 | 2 | 3 | 4;

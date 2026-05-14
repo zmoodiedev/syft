@@ -3,7 +3,7 @@
 import { FiCheck, FiX } from 'react-icons/fi';
 import { useAuth } from '@/app/context/AuthContext';
 import { useState } from 'react';
-import { useDetectedCurrency } from '@/app/hooks/useDetectedCurrency';
+import { useDetectedCurrency, Currency } from '@/app/hooks/useDetectedCurrency';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
