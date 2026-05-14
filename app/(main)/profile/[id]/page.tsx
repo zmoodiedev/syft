@@ -61,6 +61,14 @@ export default function ProfilePage() {
   // Check if this is the current user's profile
   const isOwnProfile = user?.uid === id;
   
+  // Show success toast after Stripe checkout redirect
+  useEffect(() => {
+    if (searchParams.get('upgraded') === 'true') {
+      toast.success("You're on Pro! All features are now unlocked.");
+      window.history.replaceState({}, '', `/profile/${id}`);
+    }
+  }, [id, searchParams]);
+
   // Set active tab from URL parameter and handle auto-scrolling
   useEffect(() => {
     if (tabParam && ['recipes', 'friends', 'categories', 'notifications'].includes(tabParam)) {

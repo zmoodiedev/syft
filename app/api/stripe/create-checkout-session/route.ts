@@ -47,8 +47,8 @@ export async function POST(request: Request) {
       mode: 'subscription',
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${appUrl}/billing?success=true`,
-      cancel_url: `${appUrl}/signup`,
+      success_url: `${appUrl}/profile/${userId}?upgraded=true`,
+      cancel_url: `${appUrl}/pricing`,
       metadata: { userId },
       subscription_data: {
         metadata: { userId }, // copied to subscription for webhook events
