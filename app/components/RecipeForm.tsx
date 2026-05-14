@@ -990,7 +990,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
       onClose={() => setShowUpgradeModal(false)}
       reason="recipe_limit"
     />
-    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5 overflow-x-hidden">
 
       {/* Scan banner */}
       {showScanFeature && (
@@ -1310,16 +1310,16 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
                 </>
               )}
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 min-w-0">
               <input
                 id="imageUrl"
                 placeholder="Or paste an image URL"
-                className="flex-1 border border-stone-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2.5 px-4 text-sm"
+                className="flex-1 min-w-0 border border-stone-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2.5 px-3 text-sm"
                 type="text"
                 value={imageUrl}
                 onChange={handleImageUrlChange}
               />
-              <button type="button" onClick={validateAndPreviewImage} className="border border-stone-200 text-steel hover:border-light-green hover:text-light-green rounded-xl px-4 py-2.5 text-sm font-medium transition-colors whitespace-nowrap">
+              <button type="button" onClick={validateAndPreviewImage} className="flex-shrink-0 border border-stone-200 text-steel hover:border-light-green hover:text-light-green rounded-xl px-3 py-2.5 text-sm font-medium transition-colors">
                 Preview
               </button>
             </div>
@@ -1338,8 +1338,9 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
             <input
               id="sourceUrl"
               placeholder="https://example.com/recipe"
-              className="block w-full border border-stone-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2.5 px-4 text-sm"
-              type="url"
+              className="block w-full min-w-0 border border-stone-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2.5 px-4 text-sm"
+              type="text"
+              inputMode="url"
               {...register('sourceUrl')}
             />
           </div>
@@ -1370,15 +1371,15 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
                 ))}
               </div>
             )}
-            <div className="flex gap-2">
+            <div className="flex gap-2 min-w-0">
               <input
                 type="text"
                 placeholder="New category..."
-                className="flex-1 border border-stone-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2 px-3 text-sm"
+                className="flex-1 min-w-0 border border-stone-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2 px-3 text-sm"
                 value={newCategory}
                 onChange={(e) => setNewCategory(e.target.value)}
               />
-              <button type="button" onClick={handleAddNewCategory} className="inline-flex items-center gap-1.5 border border-light-green text-light-green hover:bg-light-green hover:text-white rounded-xl px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap">
+              <button type="button" onClick={handleAddNewCategory} className="flex-shrink-0 inline-flex items-center gap-1.5 border border-light-green text-light-green hover:bg-light-green hover:text-white rounded-xl px-3 py-2 text-sm font-medium transition-colors">
                 <FiPlus className="w-3.5 h-3.5" /> Add
               </button>
             </div>
