@@ -8,10 +8,9 @@ import { useAuth } from '@/app/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { logEvent } from '@/app/lib/analytics';
+import { useDetectedCurrency } from '@/app/hooks/useDetectedCurrency';
 
 export type UpgradeReason = 'recipe_limit' | 'social_features' | 'recipe_sharing';
-
-type Currency = 'USD' | 'CAD';
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -46,7 +45,7 @@ export default function UpgradeModal({ isOpen, onClose, reason = 'recipe_limit' 
   const { user } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [currency, setCurrency] = useState<Currency>('USD');
+  const [currency, setCurrency] = useDetectedCurrency();
   const copy = COPY[reason];
 
   useEffect(() => {
@@ -145,7 +144,7 @@ export default function UpgradeModal({ isOpen, onClose, reason = 'recipe_limit' 
                 disabled={loading}
                 className="w-full bg-light-green text-white py-3 rounded-xl text-sm font-semibold hover:bg-green transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
               >
-                Go Pro — {PRICES.yearly[currency]}/yr
+                Go Pro — {PRICES.yearly[currency]}/yr · {currency}
                 <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">Best value</span>
               </button>
               <button
@@ -153,7 +152,7 @@ export default function UpgradeModal({ isOpen, onClose, reason = 'recipe_limit' 
                 disabled={loading}
                 className="w-full bg-white border border-gray-200 text-cast-iron py-3 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors disabled:opacity-60"
               >
-                Go Pro — {PRICES.monthly[currency]}/month
+                Go Pro — {PRICES.monthly[currency]}/month · {currency}
               </button>
             </div>
 

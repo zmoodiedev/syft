@@ -11,8 +11,9 @@ import { useAuth } from '@/app/context/AuthContext';
 import { auth } from '@/app/lib/firebase';
 import { toast } from 'react-hot-toast';
 
+import { useDetectedCurrency } from '@/app/hooks/useDetectedCurrency';
+
 type PlanId = 'free' | 'monthly' | 'yearly';
-type Currency = 'USD' | 'CAD';
 type Step = 1 | 2 | 3 | 4;
 
 const PLANS = [
@@ -117,7 +118,7 @@ export default function SignUpPage() {
 
     const [step, setStep]                       = useState<Step>(1);
     const [selectedPlan, setSelectedPlan]       = useState<PlanId>('monthly');
-    const [currency, setCurrency]               = useState<Currency>('USD');
+    const [currency, setCurrency]               = useDetectedCurrency();
 
     // Step 2 form
     const [displayName, setDisplayName]         = useState('');

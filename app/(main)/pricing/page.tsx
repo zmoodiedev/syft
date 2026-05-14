@@ -3,11 +3,11 @@
 import { FiCheck, FiX } from 'react-icons/fi';
 import { useAuth } from '@/app/context/AuthContext';
 import { useState } from 'react';
+import { useDetectedCurrency } from '@/app/hooks/useDetectedCurrency';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 
-type Currency = 'USD' | 'CAD';
 
 interface PricingTier {
   id: string;
@@ -94,7 +94,7 @@ const faqItems = [
 
 export default function PricingPage() {
   const { user } = useAuth();
-  const [currency, setCurrency] = useState<Currency>('USD');
+  const [currency, setCurrency] = useDetectedCurrency();
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
 
   const currentPlan = user ? 'free' : null;

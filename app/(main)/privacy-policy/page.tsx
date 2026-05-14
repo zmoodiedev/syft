@@ -5,7 +5,7 @@ export default function PrivacyPolicy() {
 
         <div className="mb-10">
           <h1 className="text-4xl font-bold text-cast-iron mb-3">Privacy Policy</h1>
-          <p className="text-steel text-sm">Last updated: April 9, 2026</p>
+          <p className="text-steel text-sm">Last updated: May 14, 2026</p>
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 md:p-12 space-y-10 text-steel leading-relaxed">
@@ -41,6 +41,7 @@ export default function PrivacyPolicy() {
               <li><strong className="text-cast-iron">Cloudinary.</strong> Image hosting and storage. <a href="https://cloudinary.com/privacy" target="_blank" rel="noopener noreferrer" className="text-light-green hover:underline">Privacy policy.</a></li>
               <li><strong className="text-cast-iron">Google Analytics.</strong> Anonymous usage analytics. <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-light-green hover:underline">Privacy policy.</a></li>
               <li><strong className="text-cast-iron">Stripe.</strong> Payment processing for Pro subscriptions. Syft never sees or stores your card details. <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer" className="text-light-green hover:underline">Privacy policy.</a></li>
+              <li><strong className="text-cast-iron">ipapi.</strong> IP-based country detection, used solely to pre-select your local currency on pricing screens. Your IP address is sent to ipapi for this lookup and is not stored by Syft. <a href="https://ipapi.co/privacy/" target="_blank" rel="noopener noreferrer" className="text-light-green hover:underline">Privacy policy.</a></li>
             </ul>
           </section>
 

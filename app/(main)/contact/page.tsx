@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useState } from 'react';
+import { toast } from 'react-hot-toast';
 
 const reasons = [
   { icon: 'fa-bug',         iconColor: 'text-tomato',       bgColor: 'bg-tomato/10',       label: 'Found a bug' },
@@ -15,13 +16,24 @@ export default function ContactPage() {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [sending, setSending] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const subject = encodeURIComponent(`Syft contact from ${name}`);
-    const body = encodeURIComponent(`From: ${name} <${email}>\n\n${message}`);
-    window.location.href = `mailto:contact@syft.cooking?subject=${subject}&body=${body}`;
-    setSubmitted(true);
+    setSending(true);
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, message }),
+      });
+      if (!res.ok) throw new Error();
+      setSubmitted(true);
+    } catch {
+      toast.error('Something went wrong. Please try again.');
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -88,12 +100,9 @@ export default function ContactPage() {
                 <div className="w-14 h-14 bg-light-green/10 rounded-2xl flex items-center justify-center mx-auto mb-5">
                   <i className="fa-solid fa-envelope-open text-light-green text-xl" />
                 </div>
-                <h2 className="text-xl font-bold text-cast-iron mb-2">Opening your email client...</h2>
+                <h2 className="text-xl font-bold text-cast-iron mb-2">Message sent!</h2>
                 <p className="text-steel text-sm">
-                  If nothing opened,{' '}
-                  <a href="mailto:contact@syft.cooking" className="text-light-green font-semibold hover:underline">
-                    email us directly.
-                  </a>
+                  Thanks for reaching out. We&apos;ll get back to you within a day or two.
                 </p>
               </div>
             ) : (
@@ -149,9 +158,10 @@ export default function ContactPage() {
 
                 <button
                   type="submit"
-                  className="w-full bg-light-green text-white py-3 rounded-xl text-sm font-semibold hover:bg-green transition-colors"
+                  disabled={sending}
+                  className="w-full bg-light-green text-white py-3 rounded-xl text-sm font-semibold hover:bg-green transition-colors disabled:opacity-60"
                 >
-                  Send message
+                  {sending ? 'Sending...' : 'Send message'}
                 </button>
               </form>
             )}
