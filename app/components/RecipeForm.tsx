@@ -5,7 +5,7 @@ import { db } from '@/app/lib/firebase';
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
-import { uploadImage } from '@/lib/cloudinary';
+import { uploadImage, deleteImage } from '@/lib/cloudinary';
 import UpgradeModal from './UpgradeModal';
 import Button from './Button';
 import { FiLock, FiUsers, FiPlus, FiX } from 'react-icons/fi';
@@ -682,15 +682,21 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
     
     try {
       setIsUploading(true);
-      
-      // Upload directly using optimized Cloudinary client utility
+
       const token = user ? await user.getIdToken() : '';
-      const imageUrl = await uploadImage(file, token, {
+
+      // Delete the existing Cloudinary image before uploading the replacement
+      if (imageUrl && imageUrl.includes('cloudinary.com')) {
+        try { await deleteImage(imageUrl, token); } catch {}
+      }
+
+      // Upload directly using optimized Cloudinary client utility
+      const newImageUrl = await uploadImage(file, token, {
         width: 1200,
         quality: 80
       });
-      
-      setImageUrl(imageUrl);
+
+      setImageUrl(newImageUrl);
       setIsPreviewingImage(true);
       toast.success('Image uploaded successfully');
     } catch (error) {
