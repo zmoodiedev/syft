@@ -52,6 +52,7 @@ export default function BillingPage() {
   const [portalLoading, setPortalLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [upgradePolling, setUpgradePolling] = useState(false);
+  const [pollingTimedOut, setPollingTimedOut] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   useEffect(() => {
@@ -85,10 +86,16 @@ export default function BillingPage() {
       const data = await getUserProfile(user.uid) as BillingProfile;
       attempts += 1;
 
-      if (data?.tier === 'Pro' || attempts >= MAX_ATTEMPTS) {
+      if (data?.tier === 'Pro') {
         setProfile(data);
         setLoading(false);
         setUpgradePolling(false);
+      } else if (attempts >= MAX_ATTEMPTS) {
+        setProfile(data);
+        setLoading(false);
+        setUpgradePolling(false);
+        setPollingTimedOut(true);
+        setShowSuccess(false);
       } else {
         setTimeout(poll, 2000);
       }
@@ -186,6 +193,17 @@ export default function BillingPage() {
               <div>
                 <p className="text-sm font-semibold text-cast-iron">You&apos;re on Pro!</p>
                 <p className="text-xs text-steel mt-0.5">Your subscription is active. All Pro features are now unlocked.</p>
+              </div>
+            </div>
+          )}
+
+          {/* Processing banner — webhook hasn't updated tier yet */}
+          {pollingTimedOut && (
+            <div className="mb-5 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4">
+              <FiAlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-cast-iron">Subscription processing</p>
+                <p className="text-xs text-steel mt-0.5">Your payment went through. It can take a minute or two for your plan to activate. Refresh the page shortly.</p>
               </div>
             </div>
           )}

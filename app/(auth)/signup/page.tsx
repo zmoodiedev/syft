@@ -231,7 +231,7 @@ export default function SignUpPage() {
     };
 
     // ── Toggle this to re-open signups ──────────────────────────────────────
-    const SIGNUPS_OPEN = false;
+    const SIGNUPS_OPEN = true;
     // ────────────────────────────────────────────────────────────────────────
 
     if (!SIGNUPS_OPEN) {
