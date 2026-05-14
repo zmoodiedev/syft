@@ -414,7 +414,7 @@ export default function RecipeDetail() {
           <div className="animate-spin rounded-full h-10 w-10 border-2 border-stone-200 border-t-light-green" />
         </div>
       ) : error ? (
-        <div className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center">
+        <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 sm:px-6 text-center">
           <div className="w-14 h-14 bg-tomato/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
             <i className="fa-solid fa-utensils text-tomato text-xl" />
           </div>
@@ -458,7 +458,7 @@ export default function RecipeDetail() {
             </div>
 
             <div className="absolute bottom-0 left-0 right-0">
-              <div className="container max-w-6xl mx-auto px-6 pb-8">
+              <div className="container max-w-6xl mx-auto px-4 sm:px-6 pb-8">
                 {/* Categories */}
                 {recipe.categories && recipe.categories.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-3">
@@ -508,7 +508,7 @@ export default function RecipeDetail() {
           </div>
 
           {/* Content */}
-          <div className="container max-w-6xl mx-auto px-6 py-8 pb-20">
+          <div className="container max-w-6xl mx-auto px-4 sm:px-6 py-8 pb-20">
 
             {/* Action bar */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-8">
@@ -651,7 +651,7 @@ export default function RecipeDetail() {
           </div>
         </>
       ) : (
-        <div className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center">
+        <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 sm:px-6 text-center">
           <div className="w-14 h-14 bg-tomato/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
             <i className="fa-solid fa-utensils text-tomato text-xl" />
           </div>
@@ -665,7 +665,7 @@ export default function RecipeDetail() {
       {/* Share Modal */}
       {isShareModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-xl">
+          <div className="bg-white rounded-3xl p-5 sm:p-8 max-w-md w-full shadow-xl">
             <h2 className="text-xl font-bold text-cast-iron mb-5">Share</h2>
 
             <div className="relative mb-4">

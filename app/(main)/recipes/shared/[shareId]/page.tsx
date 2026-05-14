@@ -286,7 +286,7 @@ export default function SharedRecipePage() {
           </div>
         </div>
 
-        <div className="container mx-auto px-6 py-8 max-w-3xl">
+        <div className="container mx-auto px-4 sm:px-6 py-8 max-w-3xl">
 
           {/* Meta row */}
           <div className="flex flex-wrap items-center gap-4 mb-8 text-sm text-steel">

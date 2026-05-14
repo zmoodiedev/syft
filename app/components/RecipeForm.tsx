@@ -106,6 +106,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
   const [instructionGroups, setInstructionGroups] = useState<string[]>(['']);
   const [newInstructionGroupName, setNewInstructionGroupName] = useState<string>('');
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showMoreOptions, setShowMoreOptions] = useState(false);
   const { register, handleSubmit, formState: { errors }, setValue } = useForm<Recipe>({
     defaultValues: {
       name: initialData?.name || '',
@@ -993,7 +994,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
 
       {/* Scan banner */}
       {showScanFeature && (
-        <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-4 sm:p-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <h3 className="text-lg font-bold text-cast-iron">
@@ -1033,7 +1034,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
       )}
 
       {/* Basics */}
-      <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-6 space-y-5">
+      <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-4 sm:p-6 space-y-5">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold text-cast-iron">Basics</h2>
           <div className="flex items-center bg-stone-100 p-1 rounded-xl">
@@ -1074,7 +1075,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
           {errors.name && <p className="mt-1 text-sm text-red-500">Recipe name is required</p>}
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
           <div>
             <label htmlFor="servings" className="block text-sm font-medium text-cast-iron mb-1.5">Servings</label>
             <input id="servings" type="text" placeholder="e.g. 4" className="block w-full border border-stone-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2.5 px-3 text-sm" {...register('servings')} />
@@ -1094,7 +1095,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
 
         {/* Ingredients */}
-        <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-4 sm:p-6">
           <h2 className="text-lg font-bold text-cast-iron mb-4">Ingredients</h2>
 
           <div className="space-y-1">
@@ -1124,31 +1125,33 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
                       groupIngredients.map((ingredient) => {
                         const globalIndex = ingredients.findIndex(ing => ing.id === ingredient.id);
                         return (
-                          <div key={ingredient.id} className="flex items-center gap-2 py-1">
+                          <div key={ingredient.id} className="flex flex-wrap sm:flex-nowrap items-center gap-x-2 gap-y-1.5 py-2 sm:py-1 border-b border-stone-100 last:border-0">
                             <input
                               placeholder="Amt"
-                              className="w-14 border border-stone-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2 px-2 text-sm text-center"
+                              className="w-14 shrink-0 border border-stone-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2 px-2 text-sm text-center"
                               value={ingredient.amount}
                               onChange={(e) => updateIngredient(globalIndex, 'amount', e.target.value)}
                             />
                             <input
                               placeholder="Unit"
-                              className="w-[4.5rem] border border-stone-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2 px-2 text-sm"
+                              className="w-[4.5rem] shrink-0 border border-stone-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2 px-2 text-sm"
                               value={ingredient.unit}
                               onChange={(e) => updateIngredient(globalIndex, 'unit', e.target.value)}
                             />
-                            <input
-                              placeholder="Ingredient"
-                              required
-                              className="flex-1 min-w-0 border border-stone-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2 px-3 text-sm"
-                              value={ingredient.item}
-                              onChange={(e) => updateIngredient(globalIndex, 'item', e.target.value)}
-                            />
-                            {ingredients.length > 1 && (
-                              <button type="button" onClick={() => removeIngredient(globalIndex)} className="text-steel/30 hover:text-red-400 transition-colors flex-shrink-0 p-1">
-                                <FiX className="w-4 h-4" />
-                              </button>
-                            )}
+                            <div className="basis-full sm:basis-auto sm:flex-1 min-w-0 flex items-center gap-2">
+                              <input
+                                placeholder="Ingredient"
+                                required
+                                className="flex-1 min-w-0 border border-stone-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors py-2 px-3 text-sm"
+                                value={ingredient.item}
+                                onChange={(e) => updateIngredient(globalIndex, 'item', e.target.value)}
+                              />
+                              {ingredients.length > 1 && (
+                                <button type="button" onClick={() => removeIngredient(globalIndex)} className="text-steel/30 hover:text-red-400 transition-colors flex-shrink-0 p-1">
+                                  <FiX className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
                           </div>
                         );
                       })
@@ -1183,7 +1186,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
         </div>
 
         {/* Instructions */}
-        <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-4 sm:p-6">
           <h2 className="text-lg font-bold text-cast-iron mb-4">Instructions</h2>
 
           <div className="space-y-1">
@@ -1270,12 +1273,17 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
       </div>
 
       {/* More options */}
-      <details className="group bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
-        <summary className="flex items-center justify-between px-6 py-4 cursor-pointer select-none list-none">
+      <div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setShowMoreOptions(v => !v)}
+          className="w-full flex items-center justify-between px-4 sm:px-6 py-4 cursor-pointer select-none"
+        >
           <span className="text-sm font-medium text-cast-iron">More options</span>
-          <span className="text-steel/40 text-xs">▼</span>
-        </summary>
-        <div className="px-6 pb-6 pt-5 border-t border-stone-100 space-y-6">
+          <span className={`text-steel/40 text-xs transition-transform duration-200 ${showMoreOptions ? 'rotate-180' : ''}`}>▼</span>
+        </button>
+        {showMoreOptions && (
+        <div className="px-4 sm:px-6 pb-6 pt-5 border-t border-stone-100 space-y-6">
 
           {/* Image */}
           <div>
@@ -1377,7 +1385,8 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
           </div>
 
         </div>
-      </details>
+        )}
+      </div>
 
       {/* Submit */}
       <button

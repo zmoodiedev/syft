@@ -189,7 +189,7 @@ export default function RecipesPage() {
                 reason="recipe_limit"
             />
             <div className="min-h-screen bg-eggshell">
-                <div className="container mx-auto px-6 py-10 md:py-14">
+                <div className="container mx-auto px-4 sm:px-6 py-10 md:py-14">
 
                     {/* Header */}
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">

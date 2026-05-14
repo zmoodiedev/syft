@@ -405,7 +405,7 @@ export default function SignUpPage() {
                                     {planLabel()}
                                 </span>
                             </div>
-                            <div className="bg-white rounded-3xl shadow-sm border border-stone-100 p-8">
+                            <div className="bg-white rounded-3xl shadow-sm border border-stone-100 p-6 sm:p-8">
                                 <h2 className="text-2xl font-bold text-cast-iron mb-1">Create your account</h2>
                                 <p className="text-steel text-sm mb-7">
                                     {selectedPlan === 'free' ? 'No credit card needed.' : 'Payment details on the next step.'}
@@ -476,7 +476,7 @@ export default function SignUpPage() {
                                 <FiLock className="w-3.5 h-3.5 text-light-green" />
                                 <span className="text-xs font-semibold text-steel/60 uppercase tracking-wider">Secure checkout</span>
                             </div>
-                            <div className="bg-white rounded-3xl shadow-sm border border-stone-100 p-8">
+                            <div className="bg-white rounded-3xl shadow-sm border border-stone-100 p-6 sm:p-8">
                                 <h2 className="text-2xl font-bold text-cast-iron mb-1">Set up billing</h2>
                                 <p className="text-steel text-sm mb-6">Review your plan and enter payment details.</p>
                                 <div className="bg-eggshell rounded-2xl p-4 mb-5 border border-stone-100">

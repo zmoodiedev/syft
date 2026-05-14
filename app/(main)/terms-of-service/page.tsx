@@ -1,7 +1,7 @@
 export default function TermsOfService() {
   return (
     <div className="min-h-screen bg-eggshell">
-      <div className="container mx-auto px-6 py-16 md:py-24 max-w-3xl">
+      <div className="container mx-auto px-4 sm:px-6 py-16 md:py-24 max-w-3xl">
 
         <div className="mb-10">
           <h1 className="text-4xl font-bold text-cast-iron mb-3">Terms of Service</h1>

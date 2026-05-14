@@ -150,7 +150,7 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-eggshell">
-      <div className="container mx-auto px-6 py-16 md:py-24 max-w-6xl">
+      <div className="container mx-auto px-4 sm:px-6 py-16 md:py-24 max-w-6xl">
 
         {/* Header */}
         <motion.div

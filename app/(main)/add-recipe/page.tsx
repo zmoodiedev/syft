@@ -143,7 +143,7 @@ function AddRecipeContent() {
             reason="recipe_limit"
         />
         <div className="min-h-screen bg-eggshell">
-            <div className="container mx-auto px-6 py-10 md:py-14">
+            <div className="container mx-auto px-4 sm:px-6 py-10 md:py-14">
 
                 {/* TikTok share banner */}
                 {shareData?.hasContent && (

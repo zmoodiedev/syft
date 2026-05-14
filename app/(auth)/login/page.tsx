@@ -91,7 +91,7 @@ export default function LoginPage() {
             </div>
 
             {/* Right panel — form */}
-            <div className="flex-1 bg-eggshell flex flex-col items-center justify-center p-8">
+            <div className="flex-1 bg-eggshell flex flex-col items-center justify-center p-4 sm:p-8">
 
                 {/* Mobile logo */}
                 <Link href="/" className="lg:hidden mb-8">
@@ -104,7 +104,7 @@ export default function LoginPage() {
                     transition={{ duration: 0.5 }}
                     className="w-full max-w-md"
                 >
-                    <div className="bg-white rounded-3xl shadow-sm border border-stone-100 p-8">
+                    <div className="bg-white rounded-3xl shadow-sm border border-stone-100 p-6 sm:p-8">
                         <h2 className="text-2xl font-bold text-cast-iron mb-1">Welcome back.</h2>
                         <p className="text-steel text-sm mb-7">Pick up where you left off. Your saved recipes are waiting.</p>
 

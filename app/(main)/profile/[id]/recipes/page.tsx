@@ -120,7 +120,7 @@ export default function ProfileRecipesPage() {
 
     return (
         <div className="min-h-screen bg-eggshell">
-            <div className="container mx-auto px-6 py-10">
+            <div className="container mx-auto px-4 sm:px-6 py-10">
 
                 {/* Back link */}
                 <Link

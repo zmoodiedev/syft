@@ -7,7 +7,7 @@ export default function WhoWeAre() {
     <div className="min-h-screen bg-eggshell">
 
       {/* Hero */}
-      <div className="container mx-auto px-6 pt-20 pb-16 md:pt-28 md:pb-24 max-w-6xl">
+      <div className="container mx-auto px-4 sm:px-6 pt-20 pb-16 md:pt-28 md:pb-24 max-w-6xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -28,7 +28,7 @@ export default function WhoWeAre() {
 
       {/* Story */}
       <div className="bg-white border-y border-gray-100">
-        <div className="container mx-auto px-6 py-16 md:py-20 max-w-4xl">
+        <div className="container mx-auto px-4 sm:px-6 py-16 md:py-20 max-w-4xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -62,7 +62,7 @@ export default function WhoWeAre() {
 
       {/* Values — bento grid */}
       <section className="bg-eggshell">
-        <div className="container mx-auto px-6 py-16 md:py-24 max-w-6xl">
+        <div className="container mx-auto px-4 sm:px-6 py-16 md:py-24 max-w-6xl">
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}

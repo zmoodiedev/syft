@@ -140,7 +140,7 @@ export default function EditProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-eggshell">
-        <div className="container mx-auto px-6 max-w-2xl pt-10">
+        <div className="container mx-auto px-4 sm:px-6 max-w-2xl pt-10">
           <div className="mb-8 flex items-center gap-4">
             <div className="h-28 w-28 rounded-2xl bg-stone-300 animate-pulse ring-4 ring-eggshell flex-shrink-0" />
           </div>
