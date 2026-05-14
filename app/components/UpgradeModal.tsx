@@ -8,7 +8,7 @@ import { useAuth } from '@/app/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { logEvent } from '@/app/lib/analytics';
-import { useDetectedCurrency } from '@/app/hooks/useDetectedCurrency';
+import { useDetectedCurrency, Currency } from '@/app/hooks/useDetectedCurrency';
 
 export type UpgradeReason = 'recipe_limit' | 'social_features' | 'recipe_sharing';
 
