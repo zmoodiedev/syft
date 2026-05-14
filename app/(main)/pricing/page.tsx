@@ -220,7 +220,7 @@ export default function PricingPage() {
                     {formatPrice(tier)}
                   </span>
                   <span className={`text-sm ${tier.popular ? 'text-white/50' : 'text-steel'}`}>
-                    /{tier.period}
+                    /{tier.period}{tier.priceUSD > 0 ? ` · ${currency}` : ''}
                   </span>
                 </div>
                 <p className={`text-sm leading-relaxed ${tier.popular ? 'text-white/55' : 'text-steel'}`}>

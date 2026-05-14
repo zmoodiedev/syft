@@ -146,7 +146,7 @@ export default function SignUpPage() {
 
     const planLabel = () => {
         if (selectedPlan === 'free') return 'Free';
-        return `Pro ${selectedPlan === 'monthly' ? 'Monthly' : 'Yearly'} · ${formatPrice(selectedPlan)}${selectedPlan === 'monthly' ? '/mo' : '/yr'}`;
+        return `Pro ${selectedPlan === 'monthly' ? 'Monthly' : 'Yearly'} · ${formatPrice(selectedPlan)}${selectedPlan === 'monthly' ? '/mo' : '/yr'} ${currency}`;
     };
 
     const handleCreateAccount = async (e: React.FormEvent) => {
@@ -349,7 +349,7 @@ export default function SignUpPage() {
                                                 </div>
                                                 <div className="flex items-baseline gap-1 mb-2.5">
                                                     <span className="text-2xl font-bold text-cast-iron">{formatPrice(plan.id)}</span>
-                                                    {plan.priceUSD > 0 && <span className="text-xs text-steel">{plan.period}</span>}
+                                                    {plan.priceUSD > 0 && <span className="text-xs text-steel">{plan.period} · {currency}</span>}
                                                 </div>
                                                 <div className="flex flex-wrap gap-x-4 gap-y-1">
                                                     {plan.features.map(f => (

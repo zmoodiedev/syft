@@ -11,6 +11,8 @@ import { logEvent } from '@/app/lib/analytics';
 
 export type UpgradeReason = 'recipe_limit' | 'social_features' | 'recipe_sharing';
 
+type Currency = 'USD' | 'CAD';
+
 interface UpgradeModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -35,10 +37,16 @@ const COPY: Record<UpgradeReason, { title: string; body: string; features: strin
   },
 };
 
+const PRICES = {
+  yearly:  { USD: '$24.99', CAD: 'C$34.49' },
+  monthly: { USD: '$3.49',  CAD: 'C$4.82'  },
+};
+
 export default function UpgradeModal({ isOpen, onClose, reason = 'recipe_limit' }: UpgradeModalProps) {
   const { user } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [currency, setCurrency] = useState<Currency>('USD');
   const copy = COPY[reason];
 
   useEffect(() => {
@@ -60,7 +68,7 @@ export default function UpgradeModal({ isOpen, onClose, reason = 'recipe_limit' 
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ planId, currency: 'USD' }),
+        body: JSON.stringify({ planId, currency }),
       });
       const data = await res.json();
       if (data.url) {
@@ -113,13 +121,31 @@ export default function UpgradeModal({ isOpen, onClose, reason = 'recipe_limit' 
               ))}
             </ul>
 
+            {/* Currency toggle */}
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-xs text-steel/60">Currency</span>
+              <div className="flex items-center bg-stone-100 rounded-lg p-0.5">
+                {(['USD', 'CAD'] as Currency[]).map(c => (
+                  <button
+                    key={c}
+                    onClick={() => setCurrency(c)}
+                    className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors ${
+                      currency === c ? 'bg-white text-cast-iron shadow-sm' : 'text-steel hover:text-cast-iron'
+                    }`}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="space-y-3">
               <button
                 onClick={() => handleUpgrade('yearly')}
                 disabled={loading}
                 className="w-full bg-light-green text-white py-3 rounded-xl text-sm font-semibold hover:bg-green transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
               >
-                Go Pro — $24.99/yr
+                Go Pro — {PRICES.yearly[currency]}/yr
                 <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">Best value</span>
               </button>
               <button
@@ -127,7 +153,7 @@ export default function UpgradeModal({ isOpen, onClose, reason = 'recipe_limit' 
                 disabled={loading}
                 className="w-full bg-white border border-gray-200 text-cast-iron py-3 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors disabled:opacity-60"
               >
-                Go Pro — $3.49/month
+                Go Pro — {PRICES.monthly[currency]}/month
               </button>
             </div>
 
