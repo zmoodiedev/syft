@@ -17,15 +17,6 @@ const columns = [
       { title: 'Friends network', note: 'Add friends and browse their public collections.' },
       { title: 'Google sign-in', note: 'One tap to get started.' },
       { title: 'Photo upload', note: 'Add your own photos to any recipe.' },
-    ],
-  },
-  {
-    status: 'Building',
-    emoji: '🔨',
-    color: 'text-tomato',
-    bg: 'bg-tomato/10',
-    border: 'border-tomato/20',
-    items: [
       { title: 'Payments & subscriptions', note: 'Stripe integration for Pro plans.' },
       { title: 'Public launch', note: 'Opening sign-ups to everyone.' },
     ],
@@ -66,12 +57,12 @@ export default function RoadmapPage() {
             What we&apos;re working on
           </h1>
           <p className="text-steel text-lg max-w-xl mx-auto">
-            Syft is early. Here&apos;s what&apos;s done, what&apos;s in progress, and where we&apos;re headed.
+            Syft is live. Here&apos;s what&apos;s shipped and where we&apos;re headed.
           </p>
         </motion.div>
 
         {/* Columns */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start max-w-3xl mx-auto">
           {columns.map((col, ci) => (
             <motion.div
               key={col.status}

@@ -5,6 +5,7 @@ import { AuthProvider } from '../context/AuthContext';
 import { FriendsProvider } from '../context/FriendsContext';
 import { useEffect } from 'react';
 import { useFriends } from '../context/FriendsContext';
+import CookieConsent from './CookieConsent';
 
 function TitleNotifications() {
   const { sharedRecipes } = useFriends();
@@ -29,6 +30,7 @@ function ClientLayoutContent({ children }: { children: React.ReactNode }) {
   return (
     <>
       <TitleNotifications />
+      <CookieConsent />
       <Toaster
         position="top-center"
         toastOptions={{

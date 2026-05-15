@@ -1,9 +1,14 @@
 'use client'
 
-import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePWAInstall } from '@/app/hooks/usePWAInstall';
+
 export default function Hero() {
+  const { canInstall, isIOS, triggerInstall } = usePWAInstall();
+  const [showIOSHint, setShowIOSHint] = useState(false);
 
   return (
     <section className="relative overflow-hidden bg-cream min-h-[88vh] flex flex-col">
@@ -104,6 +109,37 @@ export default function Hero() {
                   Start for free →
                 </span>
               </Link>
+
+              {/* PWA install — mobile/tablet only, hidden on desktop */}
+              {canInstall && (
+                <div className="relative lg:hidden">
+                  <button
+                    onClick={() => isIOS ? setShowIOSHint(h => !h) : triggerInstall()}
+                    className="flex sm:inline-flex w-full sm:w-auto items-center justify-center gap-2 px-7 py-4 rounded-2xl border-2 border-cast-iron/20 text-cast-iron font-semibold text-base hover:border-cast-iron/40 hover:bg-cast-iron/5 transition-colors"
+                  >
+                    <i className="fa-solid fa-download text-sm" />
+                    Add to home screen
+                  </button>
+
+                  <AnimatePresence>
+                    {showIOSHint && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 6 }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute left-0 right-0 sm:left-auto sm:right-auto sm:w-64 top-full mt-2 bg-cast-iron text-white text-sm rounded-2xl px-4 py-3 shadow-lg z-10"
+                      >
+                        <p className="font-semibold mb-1">Install on iPhone</p>
+                        <p className="text-white/70 leading-snug">
+                          Tap the <span className="font-semibold text-white">Share</span> button at the bottom of Safari, then <span className="font-semibold text-white">Add to Home Screen</span>.
+                        </p>
+                        <div className="absolute -top-1.5 left-8 w-3 h-3 bg-cast-iron rotate-45 rounded-sm" />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
 
             </motion.div>
 

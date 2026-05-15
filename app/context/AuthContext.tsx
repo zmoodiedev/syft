@@ -75,6 +75,17 @@ const createUserProfile = async (
         }
 
         await setDoc(userRef, profileData);
+
+        // Fire and forget — never block or break signup
+        fetch('/api/users/notify-signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                displayName: profileData.displayName,
+                email: profileData.email,
+                tier: profileData.pendingTier ?? 'Free',
+            }),
+        }).catch(() => {});
     }
 };
 
