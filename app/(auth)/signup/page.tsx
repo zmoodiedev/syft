@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import Logo from '@/app/components/Logo';
@@ -115,7 +115,6 @@ function LeftPanel() {
 export default function SignUpPage() {
     const { user, signUp, signInWithGoogle, resendVerificationEmail } = useAuth();
     const router = useRouter();
-    const searchParams = useSearchParams();
 
     const [step, setStep]                       = useState<Step>(1);
     const [selectedPlan, setSelectedPlan]       = useState<PlanId>('monthly');
@@ -137,24 +136,10 @@ export default function SignUpPage() {
     const [resendSent, setResendSent]           = useState(false);
 
     useEffect(() => {
-        if (!user) return;
-
-        // iOS Google redirect: getRedirectResult routes back here with ?pay= to restore the payment step
-        const pay = searchParams.get('pay');
-        if (pay === 'monthly' || pay === 'yearly') {
-            const cur = searchParams.get('currency');
-            setSelectedPlan(pay as PlanId);
-            if (cur === 'USD' || cur === 'CAD') setCurrency(cur);
-            setStep(3);
-            router.replace('/signup');
-            return;
-        }
-
-        // Email/password flow: redirect to profile once the user verifies their email from step 4
-        if (step === 4 && user.emailVerified) {
+        if (step === 4 && user?.emailVerified) {
             router.push(`/profile/${user.uid}`);
         }
-    }, [user, searchParams, router, step]);
+    }, [user, router, step]);
 
     const formatPrice = (planId: PlanId) => {
         const p = PLANS.find(pl => pl.id === planId)!;
@@ -193,10 +178,9 @@ export default function SignUpPage() {
         } catch (err) {
             if (err instanceof Error) {
                 const msg = err.message;
-                if (msg.includes('Access denied'))             setError(msg);
-                else if (msg.includes('email-already-in-use')) setError('An account with this email already exists.');
-                else if (msg.includes('weak-password'))        setError('Password must be at least 6 characters.');
-                else if (msg.includes('invalid-email'))        setError('Invalid email address.');
+                if (msg.includes('email-already-in-use')) setError('An account with this email already exists.');
+                else if (msg.includes('weak-password'))   setError('Password must be at least 6 characters.');
+                else if (msg.includes('invalid-email'))   setError('Invalid email address.');
                 else setError('Failed to create account. Please try again.');
             } else {
                 setError('Failed to create account. Please try again.');
@@ -208,29 +192,20 @@ export default function SignUpPage() {
 
     const handleGoogleSignUp = async () => {
         try {
-            // Persist plan selection so the iOS redirect flow can restore it after returning
-            sessionStorage.setItem('syft_signup_plan', selectedPlan);
-            sessionStorage.setItem('syft_signup_currency', currency);
-
             await signInWithGoogle();
-
-            // Only reached on non-iOS (popup flow — page never navigated away)
-            sessionStorage.removeItem('syft_signup_plan');
-            sessionStorage.removeItem('syft_signup_currency');
             if (selectedPlan !== 'free') {
                 setStep(3);
             } else {
                 router.push('/recipes');
             }
         } catch (err) {
-            sessionStorage.removeItem('syft_signup_plan');
-            sessionStorage.removeItem('syft_signup_currency');
-            if ((err as { code?: string }).code === 'auth/cancelled-popup-request') return;
-            if (err instanceof Error && err.message.includes('Access denied')) {
-                setError(err.message);
-            } else {
-                setError('Failed to sign up with Google. Please try again.');
+            const code = (err as { code?: string }).code;
+            if (code === 'auth/cancelled-popup-request') return;
+            if (code === 'auth/popup-blocked') {
+                setError('Pop-up blocked. Allow pop-ups for this site in your browser settings, then try again.');
+                return;
             }
+            setError('Failed to sign up with Google. Please try again.');
         }
     };
 

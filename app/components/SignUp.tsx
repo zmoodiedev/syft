@@ -52,11 +52,7 @@ export default function SignUp() {
             if ((error as { code?: string }).code === 'auth/cancelled-popup-request') return;
             console.error('Google sign-up error:', error);
 
-            if (error instanceof Error && error.message.includes('Access denied')) {
-                setError(error.message);
-            } else {
-                setError('Failed to sign up with Google. Please try again.');
-            }
+            setError('Failed to sign up with Google. Please try again.');
         }
     };
 

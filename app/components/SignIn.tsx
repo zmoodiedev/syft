@@ -24,8 +24,6 @@ export default function SignIn() {
             if (err instanceof Error) {
                 if (err.message === 'email-not-verified') {
                     setError('email-not-verified');
-                } else if (err.message.includes('Access denied')) {
-                    setError(err.message);
                 } else {
                     setError('Failed to sign in. Please check your credentials.');
                 }
@@ -45,11 +43,7 @@ export default function SignIn() {
         } catch (error) {
             if ((error as { code?: string }).code === 'auth/cancelled-popup-request') return;
             console.error('Google sign-in error:', error);
-            if (error instanceof Error && error.message.includes('Access denied')) {
-                setError(error.message);
-            } else {
-                setError('Failed to sign in with Google. Please try again.');
-            }
+            setError('Failed to sign in with Google. Please try again.');
         }
     };
 

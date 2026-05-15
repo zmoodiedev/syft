@@ -6,7 +6,6 @@ import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     signInWithPopup,
-    signInWithRedirect,
     getRedirectResult,
     GoogleAuthProvider,
     signOut,
@@ -35,17 +34,6 @@ const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 export function useAuth() {
     return useContext(AuthContext);
 }
-
-const isIOS = () =>
-    typeof navigator !== 'undefined' &&
-    (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
-        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
-
-const getAllowedEmails = (): string[] => {
-    const allowedEmailsStr = process.env.NEXT_PUBLIC_ALLOWED_EMAILS;
-    if (!allowedEmailsStr) return [];
-    return allowedEmailsStr.split(',').map(email => email.trim());
-};
 
 const createUserProfile = async (
     user: User,
@@ -122,28 +110,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         getRedirectResult(auth)
             .then(async (result) => {
                 if (!result) return;
-                const userEmail = result.user.email;
-                const allowedEmails = getAllowedEmails();
-                if (!userEmail || (allowedEmails.length > 0 && !allowedEmails.includes(userEmail))) {
-                    await signOut(auth);
-                    return;
-                }
                 await createUserProfile(result.user);
                 const profile = await fetchUserProfile(result.user.uid);
                 if (profile) setUserProfile(profile);
-
-                const plan = sessionStorage.getItem('syft_signup_plan');
-                const cur = sessionStorage.getItem('syft_signup_currency');
-                sessionStorage.removeItem('syft_signup_plan');
-                sessionStorage.removeItem('syft_signup_currency');
-
-                if (plan === 'monthly' || plan === 'yearly') {
-                    const params = new URLSearchParams({ pay: plan });
-                    if (cur) params.set('currency', cur);
-                    router.push(`/signup?${params.toString()}`);
-                } else {
-                    router.push('/recipes');
-                }
+                router.push('/recipes');
             })
             .catch((error) => {
                 if ((error as { code?: string }).code !== 'auth/cancelled-popup-request') {
@@ -202,22 +172,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const signInWithGoogle = async () => {
         const provider = new GoogleAuthProvider();
 
-        // iOS Safari blocks popups opened during async calls — use redirect instead
-        if (isIOS()) {
-            await signInWithRedirect(auth, provider);
-            return; // page navigates away; result is handled by getRedirectResult on return
-        }
-
         try {
             const result = await signInWithPopup(auth, provider);
-            const userEmail = result.user.email;
-            const allowedEmails = getAllowedEmails();
-
-            if (!userEmail || (allowedEmails.length > 0 && !allowedEmails.includes(userEmail))) {
-                await signOut(auth);
-                throw new Error('Access denied. Syft is currently in beta and only open to selected users.');
-            }
-
             await createUserProfile(result.user);
             const profile = await fetchUserProfile(result.user.uid);
             if (profile) setUserProfile(profile);
@@ -237,10 +193,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         userProfile,
         loading,
         signUp: async (email: string, password: string, displayName?: string, tier?: 'Free' | 'Pro', billingCycle?: 'monthly' | 'yearly') => {
-            const allowedEmails = getAllowedEmails();
-            if (allowedEmails.length > 0 && !allowedEmails.includes(email)) {
-                throw new Error('Access denied. Syft is currently in beta and only open to selected users.');
-            }
             const result = await createUserWithEmailAndPassword(auth, email, password);
             if (displayName) {
                 await updateProfile(result.user, { displayName });
@@ -253,10 +205,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
         },
         signIn: async (email: string, password: string) => {
-            const allowedEmails = getAllowedEmails();
-            if (allowedEmails.length > 0 && !allowedEmails.includes(email)) {
-                throw new Error('Access denied. Syft is currently in beta and only open to selected users.');
-            }
             const result = await signInWithEmailAndPassword(auth, email, password);
             if (!result.user.emailVerified) {
                 try { await sendEmailVerification(result.user); } catch {}
