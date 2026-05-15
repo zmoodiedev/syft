@@ -131,13 +131,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 await createUserProfile(result.user);
                 const profile = await fetchUserProfile(result.user.uid);
                 if (profile) setUserProfile(profile);
+
+                const plan = sessionStorage.getItem('syft_signup_plan');
+                const cur = sessionStorage.getItem('syft_signup_currency');
+                sessionStorage.removeItem('syft_signup_plan');
+                sessionStorage.removeItem('syft_signup_currency');
+
+                if (plan === 'monthly' || plan === 'yearly') {
+                    const params = new URLSearchParams({ pay: plan });
+                    if (cur) params.set('currency', cur);
+                    router.push(`/signup?${params.toString()}`);
+                } else {
+                    router.push('/recipes');
+                }
             })
             .catch((error) => {
                 if ((error as { code?: string }).code !== 'auth/cancelled-popup-request') {
                     console.error('Redirect sign-in error:', error);
                 }
             });
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [router]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         let mounted = true;
