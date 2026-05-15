@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import Logo from '@/app/components/Logo';
-import { FiCheck, FiArrowLeft, FiArrowRight, FiLock, FiCreditCard, FiX, FiMail, FiRefreshCw } from 'react-icons/fi';
+import { FiCheck, FiArrowLeft, FiArrowRight, FiLock, FiCreditCard, FiX, FiMail, FiRefreshCw, FiEye, FiEyeOff } from 'react-icons/fi';
 import { useAuth } from '@/app/context/AuthContext';
 import { auth } from '@/app/lib/firebase';
 import { toast } from 'react-hot-toast';
@@ -128,6 +128,8 @@ export default function SignUpPage() {
     const [error, setError]                     = useState('');
     const [submitting, setSubmitting]           = useState(false);
     const [checkoutLoading, setCheckoutLoading] = useState(false);
+    const [showPassword, setShowPassword]       = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [verifying, setVerifying]             = useState(false);
     const [verifyError, setVerifyError]         = useState('');
     const [resending, setResending]             = useState(false);
@@ -428,11 +430,21 @@ export default function SignUpPage() {
                                     </div>
                                     <div>
                                         <label htmlFor="password" className="block text-sm font-medium text-cast-iron mb-1.5">Password</label>
-                                        <input type="password" id="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Min. 6 characters" className="border border-stone-200 rounded-xl w-full py-3 px-4 text-sm text-cast-iron placeholder:text-steel/40 focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors" required />
+                                        <div className="relative">
+                                            <input type={showPassword ? 'text' : 'password'} id="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Min. 6 characters" className="border border-stone-200 rounded-xl w-full py-3 pl-4 pr-11 text-sm text-cast-iron placeholder:text-steel/40 focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors" required />
+                                            <button type="button" onClick={() => setShowPassword(p => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-steel hover:text-cast-iron transition-colors" aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                                                {showPassword ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
+                                            </button>
+                                        </div>
                                     </div>
                                     <div>
                                         <label htmlFor="confirmPassword" className="block text-sm font-medium text-cast-iron mb-1.5">Confirm password</label>
-                                        <input type="password" id="confirmPassword" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="border border-stone-200 rounded-xl w-full py-3 px-4 text-sm text-cast-iron focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors" required />
+                                        <div className="relative">
+                                            <input type={showConfirmPassword ? 'text' : 'password'} id="confirmPassword" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="border border-stone-200 rounded-xl w-full py-3 pl-4 pr-11 text-sm text-cast-iron focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors" required />
+                                            <button type="button" onClick={() => setShowConfirmPassword(p => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-steel hover:text-cast-iron transition-colors" aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}>
+                                                {showConfirmPassword ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
+                                            </button>
+                                        </div>
                                     </div>
                                     <button type="submit" disabled={submitting} className="w-full bg-light-green text-white py-3 px-4 rounded-xl font-semibold hover:bg-green transition-colors disabled:opacity-60 flex items-center justify-center gap-2 mt-2">
                                         {submitting ? (

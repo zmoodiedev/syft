@@ -4,9 +4,11 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'next/navigation';
 import Button from './Button';
+import { FiEye, FiEyeOff } from 'react-icons/fi';
 export default function SignIn() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const { signIn, signInWithGoogle } = useAuth();
 
@@ -83,14 +85,24 @@ export default function SignIn() {
                     <label htmlFor="password" className="block text-sm font-medium text-cast-iron mb-1.5">
                         Password
                     </label>
-                    <input
-                        type="password"
-                        id="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="border border-gray-200 rounded-xl w-full py-3 px-4 text-cast-iron leading-tight focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors"
-                        required
-                    />
+                    <div className="relative">
+                        <input
+                            type={showPassword ? 'text' : 'password'}
+                            id="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="border border-gray-200 rounded-xl w-full py-3 pl-4 pr-11 text-cast-iron leading-tight focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors"
+                            required
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(p => !p)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-steel hover:text-cast-iron transition-colors"
+                            aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        >
+                            {showPassword ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
+                        </button>
+                    </div>
                 </div>
                 <Button
                     type="submit"
