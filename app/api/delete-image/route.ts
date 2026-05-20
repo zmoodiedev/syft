@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
       );
     });
 
-    if (result.result !== 'ok') {
+    if (result.result !== 'ok' && result.result !== 'not found') {
       return NextResponse.json(
         { error: `Cloudinary deletion failed: ${result.result}` },
         { status: 500 }

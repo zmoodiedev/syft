@@ -6,9 +6,9 @@ export function useDetectedCurrency(): [Currency, (c: Currency) => void] {
   const [currency, setCurrency] = useState<Currency>('USD');
 
   useEffect(() => {
-    fetch('https://ipapi.co/country_code/')
-      .then(res => res.text())
-      .then(code => { if (code.trim() === 'CA') setCurrency('CAD'); })
+    fetch('/api/geo')
+      .then(res => res.json())
+      .then(({ country }) => { if (country === 'CA') setCurrency('CAD'); })
       .catch(() => {});
   }, []);
 
