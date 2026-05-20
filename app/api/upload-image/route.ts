@@ -137,8 +137,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ imageUrl: result.secure_url });
   } catch (error) {
     console.error('Error uploading image:', error);
+    const message = error instanceof Error
+      ? error.message
+      : (typeof error === 'object' && error !== null && 'message' in error)
+        ? String((error as { message: unknown }).message)
+        : JSON.stringify(error);
     return NextResponse.json(
-      { error: 'Failed to upload image: ' + (error instanceof Error ? error.message : String(error)) },
+      { error: 'Failed to upload image: ' + message },
       { status: 500 }
     );
   }

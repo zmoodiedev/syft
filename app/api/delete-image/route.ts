@@ -112,7 +112,11 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error deleting image:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage = error instanceof Error
+      ? error.message
+      : (typeof error === 'object' && error !== null && 'message' in error)
+        ? String((error as { message: unknown }).message)
+        : JSON.stringify(error);
     return NextResponse.json(
       { error: `Failed to delete image: ${errorMessage}` },
       { status: 500 }

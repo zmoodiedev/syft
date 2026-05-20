@@ -123,7 +123,8 @@ export async function deleteImage(imageUrl: string, token: string) {
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to delete image: ${response.statusText}`);
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(`Failed to delete image: ${errorData.error || response.statusText || response.status}`);
   }
 
   return await response.json();
