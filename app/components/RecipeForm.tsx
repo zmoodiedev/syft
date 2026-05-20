@@ -1012,23 +1012,11 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
               <p className="text-xs text-steel/50 mt-1 italic">Review the results before saving.</p>
             </div>
             <div className="flex-shrink-0">
-              {isMobile ? (
-                <>
-                  <input type="file" accept="image/*" capture="environment" ref={recipeImageInputRef} onChange={handleRecipeImageUpload} className="hidden" />
-                  <Button onClick={handleRecipeImageClick} variant={scanMode ? 'primary' : 'outline'} disabled={isProcessingRecipe} className="flex items-center gap-2">
-                    <i className="fa-solid fa-camera"></i>
-                    {isProcessingRecipe ? 'Processing...' : 'Take photo'}
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <input type="file" accept="image/*" ref={recipeImageInputRef} onChange={handleRecipeImageUpload} className="hidden" />
-                  <Button onClick={handleRecipeImageClick} variant={scanMode ? 'primary' : 'outline'} disabled={isProcessingRecipe} className="flex items-center gap-2">
-                    <i className="fa-solid fa-upload"></i>
-                    {isProcessingRecipe ? 'Processing...' : 'Upload image'}
-                  </Button>
-                </>
-              )}
+              <input type="file" accept="image/*" ref={recipeImageInputRef} onChange={handleRecipeImageUpload} className="hidden" />
+              <Button onClick={handleRecipeImageClick} variant={scanMode ? 'primary' : 'outline'} disabled={isProcessingRecipe} className="flex items-center gap-2">
+                <i className="fa-solid fa-upload"></i>
+                {isProcessingRecipe ? 'Processing...' : 'Upload image'}
+              </Button>
             </div>
           </div>
           {!scanMode && !isProcessingRecipe && (

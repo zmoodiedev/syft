@@ -5,9 +5,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePWAInstall } from '@/app/hooks/usePWAInstall';
+import { useAuth } from '@/app/context/AuthContext';
 
 export default function Hero() {
   const { canInstall, isIOS, triggerInstall } = usePWAInstall();
+  const { user } = useAuth();
   const [showIOSHint, setShowIOSHint] = useState(false);
 
   return (
@@ -86,8 +88,8 @@ export default function Hero() {
               transition={{ duration: 0.6, delay: 0.45 }}
               className="flex flex-col sm:flex-row gap-6 justify-center lg:justify-start"
             >
-              {/* Primary — Start for free */}
-              <Link href="/login" className="relative flex sm:inline-flex w-full sm:w-auto group">
+              {/* Primary — Start for free / Add a recipe */}
+              <Link href={user ? '/add-recipe' : '/login'} className="relative flex sm:inline-flex w-full sm:w-auto group">
                 {/* Backing layer — translateY in Tailwind so group-hover can animate it */}
                 <div
                   className="absolute inset-0 pointer-events-none skew-y-[-2deg] translate-x-[6px] translate-y-[5px] group-hover:translate-y-[-3px] transition-transform duration-200 ease-out"
@@ -106,7 +108,7 @@ export default function Hero() {
                 </div>
                 {/* Text — crisp, no filter, no skew */}
                 <span className="relative z-10 text-white px-9 py-4 text-lg font-bold group-hover:opacity-90 transition-opacity w-full text-center sm:text-left">
-                  Start for free →
+                  {user ? 'Add a recipe →' : 'Start for free →'}
                 </span>
               </Link>
 

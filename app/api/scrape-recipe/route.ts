@@ -195,10 +195,25 @@ function isTikTokUrl(url: string): boolean {
 }
 
 async function extractFromTikTok(url: string): Promise<Recipe> {
+    // Short URLs (vm.tiktok.com, tiktok.com/t/) don't work with oEmbed.
+    // Follow redirects first to get the canonical video URL.
+    let canonicalUrl = url;
+    try {
+        const headRes = await fetch(url, {
+            method: 'HEAD',
+            redirect: 'follow',
+            headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Syftbot/1.0)' },
+            signal: AbortSignal.timeout(8000),
+        });
+        if (headRes.url) canonicalUrl = headRes.url;
+    } catch {
+        // Fall back to the original URL
+    }
+
     let oembedRes: Response;
     try {
         oembedRes = await fetch(
-            `https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`,
+            `https://www.tiktok.com/oembed?url=${encodeURIComponent(canonicalUrl)}`,
             {
                 headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Syftbot/1.0)' },
                 signal: AbortSignal.timeout(10000),
@@ -216,7 +231,14 @@ async function extractFromTikTok(url: string): Promise<Recipe> {
         );
     }
 
-    const oembed = await oembedRes.json() as { title?: string; author_name?: string; thumbnail_url?: string };
+    let oembed: { title?: string; author_name?: string; thumbnail_url?: string };
+    try {
+        oembed = await oembedRes.json();
+    } catch {
+        throw new Error(
+            'TikTok returned an unexpected response. The video may be private or region-restricted.'
+        );
+    }
     const description = oembed.title?.trim() || '';
 
     if (!description) {

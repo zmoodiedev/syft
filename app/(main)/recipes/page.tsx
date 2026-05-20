@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/app/context/AuthContext';
 import { db } from '@/app/lib/firebase';
 import {
@@ -12,7 +13,7 @@ import RecipeCard from '@/app/components/RecipeCard';
 import RecipeListItem from '@/app/components/RecipeListItem';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import Button from '@/app/components/Button';
-import { FiGrid, FiList } from 'react-icons/fi';
+import { FiGrid, FiList, FiFilter } from 'react-icons/fi';
 import { getUserRecipeCount } from '@/app/lib/recipe';
 import { TIER_FEATURES } from '@/app/lib/tiers';
 import RecipeLimitBanner from '@/app/components/RecipeLimitBanner';
@@ -48,8 +49,35 @@ export default function RecipesPage() {
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const [availableCategories, setAvailableCategories] = useState<string[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
-    const [viewMode, setViewMode] = useState<'cards' | 'list'>('cards');
+    const [viewMode, setViewMode] = useState<'cards' | 'list'>(() =>
+        typeof window !== 'undefined' && window.innerWidth < 768 ? 'list' : 'cards'
+    );
+    const [drawerOpen, setDrawerOpen] = useState(false);
+    const [drawerSelected, setDrawerSelected] = useState<string[]>([]);
     const loaderRef = useRef<HTMLDivElement>(null);
+
+    // Lock body scroll while drawer is open
+    useEffect(() => {
+        if (drawerOpen) document.body.style.overflow = 'hidden';
+        else document.body.style.overflow = '';
+        return () => { document.body.style.overflow = ''; };
+    }, [drawerOpen]);
+
+    const openDrawer = () => {
+        setDrawerSelected([...selectedCategories]);
+        setDrawerOpen(true);
+    };
+
+    const applyDrawer = () => {
+        setSelectedCategories(drawerSelected);
+        setDrawerOpen(false);
+    };
+
+    const handleDrawerToggle = (category: string) => {
+        setDrawerSelected(prev =>
+            prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]
+        );
+    };
 
     useEffect(() => {
         const fetchRecipes = async () => {
@@ -232,7 +260,7 @@ export default function RecipesPage() {
                     ) : null}
 
                     {/* Search + view toggle */}
-                    <div className="flex items-center gap-3 mb-4">
+                    <div className="flex items-center gap-2 mb-4">
                         <div className="relative flex-1">
                             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                 <svg className="h-4 w-4 text-steel/50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -247,6 +275,22 @@ export default function RecipesPage() {
                                 className="w-full pl-11 pr-4 py-2.5 border border-stone-200 rounded-xl text-cast-iron text-sm placeholder:text-steel/40 focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors bg-white"
                             />
                         </div>
+                        {/* Filter button — mobile only */}
+                        {availableCategories.length > 0 && (
+                            <button
+                                onClick={openDrawer}
+                                className="md:hidden relative flex items-center gap-1.5 px-3 py-2.5 border border-stone-200 rounded-xl bg-white text-sm font-medium text-steel hover:text-cast-iron transition-colors flex-shrink-0"
+                                aria-label="Filter by category"
+                            >
+                                <FiFilter className="h-4 w-4" />
+                                {selectedCategories.length > 0 && (
+                                    <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-light-green rounded-full text-white text-[10px] font-bold flex items-center justify-center leading-none">
+                                        {selectedCategories.length}
+                                    </span>
+                                )}
+                            </button>
+                        )}
+
                         <div className="flex items-center bg-white border border-stone-200 rounded-xl p-1 flex-shrink-0">
                             <button
                                 onClick={() => setViewMode('cards')}
@@ -339,39 +383,20 @@ export default function RecipesPage() {
                         {/* Main content */}
                         <div className="flex-1 min-w-0">
 
-                            {/* Category pills — mobile only */}
-                            {(loading || availableCategories.length > 0) && (
-                                <div className="flex flex-wrap gap-2 mb-6 md:hidden">
-                                    {loading ? (
-                                        [52, 68, 44, 60, 56].map((w, i) => (
-                                            <div key={i} className="h-6 rounded-full bg-stone-200 animate-pulse" style={{ width: `${w}px` }} />
-                                        ))
-                                    ) : (
-                                        <>
-                                            {availableCategories.map((category: string) => (
-                                                <button
-                                                    key={category}
-                                                    onClick={() => handleCategoryToggle(category)}
-                                                    className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                                                        selectedCategories.includes(category)
-                                                            ? 'bg-light-green text-white'
-                                                            : 'bg-white text-steel border border-stone-200 hover:border-light-green hover:text-light-green'
-                                                    }`}
-                                                    aria-pressed={selectedCategories.includes(category)}
-                                                >
-                                                    {category}
-                                                </button>
-                                            ))}
-                                            {selectedCategories.length > 0 && (
-                                                <button
-                                                    onClick={() => setSelectedCategories([])}
-                                                    className="px-3 py-1 rounded-full text-xs font-medium text-steel/60 hover:text-cast-iron transition-colors"
-                                                >
-                                                    Clear
-                                                </button>
-                                            )}
-                                        </>
-                                    )}
+                            {/* Active filter chips — mobile only, shown when filters are applied */}
+                            {selectedCategories.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mb-4 md:hidden">
+                                    {selectedCategories.map(cat => (
+                                        <span key={cat} className="px-3 py-1 rounded-full text-xs font-medium bg-light-green/10 text-light-green border border-light-green/20">
+                                            {cat}
+                                        </span>
+                                    ))}
+                                    <button
+                                        onClick={() => setSelectedCategories([])}
+                                        className="px-3 py-1 rounded-full text-xs font-medium text-steel/60 hover:text-cast-iron transition-colors"
+                                    >
+                                        Clear
+                                    </button>
                                 </div>
                             )}
 
@@ -499,6 +524,86 @@ export default function RecipesPage() {
                     </div>
                 </div>
             </div>
+            {/* Mobile filter drawer */}
+            <AnimatePresence>
+                {drawerOpen && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="fixed inset-0 bg-black/40 z-40 md:hidden"
+                            onClick={() => setDrawerOpen(false)}
+                        />
+                        <motion.div
+                            initial={{ y: '100%' }}
+                            animate={{ y: 0 }}
+                            exit={{ y: '100%' }}
+                            transition={{ type: 'spring', damping: 32, stiffness: 320 }}
+                            className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl z-50 md:hidden flex flex-col"
+                            style={{ maxHeight: '80vh' }}
+                        >
+                            {/* Handle */}
+                            <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
+                                <div className="w-10 h-1 bg-stone-200 rounded-full" />
+                            </div>
+
+                            {/* Header */}
+                            <div className="flex items-center justify-between px-5 py-3 border-b border-stone-100 flex-shrink-0">
+                                <h3 className="text-base font-bold text-cast-iron">Filter by category</h3>
+                                {drawerSelected.length > 0 && (
+                                    <button
+                                        onClick={() => setDrawerSelected([])}
+                                        className="text-sm font-medium text-light-green hover:text-green transition-colors"
+                                    >
+                                        Clear all
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Category list */}
+                            <div className="overflow-y-auto flex-1 px-4 py-2">
+                                {availableCategories.map(category => {
+                                    const checked = drawerSelected.includes(category);
+                                    return (
+                                        <label
+                                            key={category}
+                                            className="flex items-center gap-3 px-2 py-3.5 rounded-xl cursor-pointer hover:bg-eggshell transition-colors group border-b border-stone-50 last:border-0"
+                                        >
+                                            <div className={`w-5 h-5 rounded flex-shrink-0 border-2 transition-colors flex items-center justify-center ${
+                                                checked ? 'bg-light-green border-light-green' : 'border-stone-300 group-hover:border-light-green/50'
+                                            }`}>
+                                                {checked && (
+                                                    <svg className="w-3 h-3 text-white" viewBox="0 0 10 10" fill="none">
+                                                        <path d="M1.5 5L4 7.5L8.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                                    </svg>
+                                                )}
+                                            </div>
+                                            <input
+                                                type="checkbox"
+                                                className="sr-only"
+                                                checked={checked}
+                                                onChange={() => handleDrawerToggle(category)}
+                                            />
+                                            <span className={`text-sm transition-colors ${checked ? 'text-cast-iron font-medium' : 'text-steel'}`}>
+                                                {category}
+                                            </span>
+                                        </label>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Done button */}
+                            <div className="px-5 py-4 border-t border-stone-100 flex-shrink-0">
+                                <Button onClick={applyDrawer} className="w-full justify-center">
+                                    Done
+                                </Button>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
         </ProtectedRoute>
     );
 }

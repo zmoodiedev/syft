@@ -60,7 +60,7 @@ export default function RecipeListItem({ recipe, index }: RecipeListItemProps) {
         <div className="flex items-center bg-white border border-stone-100 rounded-2xl shadow-sm overflow-hidden cursor-default">
           <Thumbnail dimmed />
           <div className="flex-1 min-w-0 px-5 py-4 opacity-40 select-none">
-            <h3 className="text-base font-bold text-cast-iron truncate">{recipe.name}</h3>
+            <h3 className="text-base font-bold text-cast-iron">{recipe.name}</h3>
             {totalTime && (
               <span className="flex items-center gap-1 text-xs text-steel/50 mt-1">
                 <FiClock className="w-3 h-3" />
@@ -86,7 +86,7 @@ export default function RecipeListItem({ recipe, index }: RecipeListItemProps) {
                 {totalTime}
               </span>
             )}
-            <h3 className="text-base font-bold text-cast-iron group-hover:text-light-green transition-colors duration-200 truncate">
+            <h3 className="text-base font-bold text-cast-iron group-hover:text-light-green transition-colors duration-200">
               {recipe.name}
             </h3>
             {displayCategories.length > 1 && (
