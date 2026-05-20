@@ -27,7 +27,7 @@ export default function RecipeListItem({ recipe, index }: RecipeListItemProps) {
   const displayCategories = [...new Set(recipe.categories ?? [])].slice(0, 3);
 
   const Thumbnail = ({ dimmed = false }: { dimmed?: boolean }) => (
-    <div className={`relative w-28 h-28 flex-shrink-0 ${dimmed ? 'opacity-40' : ''}`}>
+    <div className={`relative w-28 min-h-28 self-stretch flex-shrink-0 ${dimmed ? 'opacity-40' : ''}`}>
       {recipe.imageUrl ? (
         <Image
           src={recipe.imageUrl}
@@ -57,7 +57,7 @@ export default function RecipeListItem({ recipe, index }: RecipeListItemProps) {
       transition={{ duration: 0.2, delay: Math.min(index, 12) * 0.03 }}
     >
       {recipe.locked ? (
-        <div className="flex items-center bg-white border border-stone-100 rounded-2xl shadow-sm overflow-hidden cursor-default">
+        <div className="flex items-stretch bg-white border border-stone-100 rounded-2xl shadow-sm overflow-hidden cursor-default">
           <Thumbnail dimmed />
           <div className="flex-1 min-w-0 px-5 py-4 opacity-40 select-none">
             <h3 className="text-base font-bold text-cast-iron">{recipe.name}</h3>
@@ -76,7 +76,7 @@ export default function RecipeListItem({ recipe, index }: RecipeListItemProps) {
       ) : (
         <Link
           href={`/recipes/${recipe.id}`}
-          className="flex items-center bg-white border border-stone-100 rounded-2xl shadow-sm hover:shadow-md hover:border-stone-200 transition-all duration-200 group overflow-hidden"
+          className="flex items-stretch bg-white border border-stone-100 rounded-2xl shadow-sm hover:shadow-md hover:border-stone-200 transition-all duration-200 group overflow-hidden"
         >
           <Thumbnail />
           <div className="flex-1 min-w-0 px-5 py-4">

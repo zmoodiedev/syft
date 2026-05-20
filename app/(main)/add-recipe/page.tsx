@@ -98,11 +98,24 @@ function AddRecipeContent() {
 
         const cleanTitle = rawTitle && !rawTitle.toLowerCase().includes('tiktok') ? rawTitle : '';
 
-        // TikTok (and many other apps) put the video URL in `text` with no caption.
-        // Detect this: if rawText is a bare URL (no whitespace, no newlines), treat the
-        // whole share as a URL import rather than trying to parse it as recipe text.
+        const isTikTokUrl = (u: string) => /tiktok\.com/i.test(u);
+
+        // rawText is sometimes just a bare URL (some apps), sometimes "Check out ... https://..."
         const isJustUrl = /^https?:\/\/\S+$/.test(rawText.trim());
-        const urlToImport = isJustUrl ? rawText.trim() : (rawUrl && !rawText ? rawUrl : undefined);
+        // Pull out any URL embedded in rawText (strips trailing punctuation)
+        const urlInText = rawText.match(/https?:\/\/\S+/)?.[0]?.replace(/[.,;!?]+$/, '') ?? '';
+
+        // Pick the best URL to import. Priority:
+        // 1. rawText is a bare URL
+        // 2. rawUrl is a TikTok URL (most reliable when present)
+        // 3. A TikTok URL embedded inside rawText (e.g. "Check out this video! https://...")
+        // 4. rawUrl when there is no text at all
+        const urlToImport =
+            isJustUrl              ? rawText.trim() :
+            isTikTokUrl(rawUrl)    ? rawUrl :
+            isTikTokUrl(urlInText) ? urlInText :
+            (rawUrl && !rawText)   ? rawUrl :
+            undefined;
 
         if (urlToImport) {
             setShareData({

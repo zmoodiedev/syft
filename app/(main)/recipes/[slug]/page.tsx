@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { db } from '@/app/lib/firebase';
-import { doc, getDoc, deleteDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, deleteDoc, collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import { useAuth } from '@/app/context/AuthContext';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -96,6 +96,7 @@ export default function RecipeDetail() {
   } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredFriends, setFilteredFriends] = useState<FriendItem[]>([]);
+  const [shareFrequency, setShareFrequency] = useState<Record<string, number>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [needsAuthentication, setNeedsAuthentication] = useState(false);
 
@@ -193,10 +194,28 @@ export default function RecipeDetail() {
     fetchRecipe();
   }, [slug, user, authLoading]);
 
+  // Build a frequency map of how often the current user has shared with each friend
+  useEffect(() => {
+    if (!user) return;
+    getDocs(query(collection(db, 'sharedRecipes'), where('senderId', '==', user.uid)))
+      .then(snap => {
+        const counts: Record<string, number> = {};
+        snap.docs.forEach(d => {
+          const id = d.data().receiverId as string;
+          if (id) counts[id] = (counts[id] ?? 0) + 1;
+        });
+        setShareFrequency(counts);
+      })
+      .catch(() => {});
+  }, [user]);
+
   useEffect(() => {
     if (!friends.length) return;
     if (!searchQuery.trim()) {
-      setFilteredFriends((friends as FriendItem[]).slice(0, 3));
+      const sorted = [...(friends as FriendItem[])].sort(
+        (a, b) => (shareFrequency[b.id] ?? 0) - (shareFrequency[a.id] ?? 0)
+      );
+      setFilteredFriends(sorted.slice(0, 3));
       return;
     }
     const q = searchQuery.toLowerCase().trim();
@@ -205,7 +224,7 @@ export default function RecipeDetail() {
       (friend.email?.toLowerCase() || '').includes(q)
     ).slice(0, 3);
     setFilteredFriends(filtered);
-  }, [searchQuery, friends]);
+  }, [searchQuery, friends, shareFrequency]);
 
   const handleDelete = async () => {
     if (!user || !recipe || !slug) return;
@@ -233,6 +252,7 @@ export default function RecipeDetail() {
     if (!recipe) return;
     try {
       await shareRecipeWithFriend(recipe.id, recipe.name, recipe.imageUrl, friendId);
+      setShareFrequency(prev => ({ ...prev, [friendId]: (prev[friendId] ?? 0) + 1 }));
       toast.success('Recipe shared successfully!');
       setIsShareModalOpen(false);
       setSearchQuery('');
