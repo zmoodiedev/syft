@@ -71,9 +71,9 @@ export default function ImageUploader({
         return;
       }
       
-      // Validate file size (5MB max)
-      if (file.size > 5 * 1024 * 1024) {
-        alert('File size should be less than 5MB');
+      // Validate file size (7MB max)
+      if (file.size > 7 * 1024 * 1024) {
+        alert('File size should be less than 7MB');
         return;
       }
       

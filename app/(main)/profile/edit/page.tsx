@@ -228,7 +228,7 @@ export default function EditProfilePage() {
               <input id="cameraUpload" type="file" accept="image/*" capture="environment" onChange={handleImageChange} className="sr-only" />
             </>
           )}
-          <p className="mt-1.5 text-xs text-steel/50">JPG or PNG. Max 2MB.</p>
+          <p className="mt-1.5 text-xs text-steel/50">JPG or PNG. Max 7MB.</p>
         </div>
 
         {/* Back link + title */}
