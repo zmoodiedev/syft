@@ -69,8 +69,8 @@ export default function Hero() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="text-5xl md:text-6xl lg:text-6xl font-bold leading-[1.05] tracking-tight text-cast-iron mb-6"
             >
-              Find it. Save it.<br />
-              <span className="text-tomato">Cook it.</span> Share it.
+              Find&nbsp;it. Save&nbsp;it.<br />
+              <span className="text-tomato">Cook&nbsp;it.</span> Share&nbsp;it.
             </motion.h1>
 
             <motion.p
