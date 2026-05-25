@@ -223,7 +223,7 @@ function AddRecipeContent() {
                     </div>
 
                     {/* Form panel */}
-                    <div className={`flex-1 min-w-0 ${mobileView === 'options' ? 'hidden lg:block' : 'block'}`}>
+                    <div className={`flex-1 min-w-0 w-full ${mobileView === 'options' ? 'hidden lg:block' : 'block'}`}>
 
                         {/* Mobile back button */}
                         <button

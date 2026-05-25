@@ -11,7 +11,7 @@ interface ScrapedRecipe {
     servings: string;
     prepTime: string;
     cookTime: string;
-    ingredients: { id: string; item: string; amount: string; unit: string }[];
+    ingredients: { type: 'item'; id: string; item: string; amount: string; unit: string }[];
     instructions: string[];
     imageUrl?: string;
     categories?: string[];

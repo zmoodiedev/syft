@@ -27,6 +27,7 @@ interface FriendItem {
 }
 
 interface Ingredient {
+  type?: 'item';
   amount: string;
   unit: string;
   item: string;
@@ -34,11 +35,21 @@ interface Ingredient {
   groupName?: string;
 }
 
+interface SectionBlock {
+  type: 'section';
+  id: string;
+  label: string;
+}
+
 interface Instruction {
+  type?: 'item';
   text: string;
   id: string;
   groupName?: string;
 }
+
+type IngredientEntry = Ingredient | SectionBlock;
+type InstructionEntry = Instruction | SectionBlock;
 
 interface Recipe {
   id: string;
@@ -46,8 +57,8 @@ interface Recipe {
   servings?: string;
   prepTime: string;
   cookTime: string;
-  ingredients: Ingredient[];
-  instructions: Instruction[] | string[];
+  ingredients: IngredientEntry[];
+  instructions: InstructionEntry[] | string[];
   categories?: string[];
   imageUrl?: string;
   userId: string;
@@ -323,91 +334,114 @@ export default function RecipeDetail() {
     );
   }
 
-  // Ingredients renderer
-  const renderIngredients = (ingredients: Ingredient[]) => {
-    const grouped: { [key: string]: Ingredient[] } = {};
-    ingredients.forEach(ing => {
-      const group = ing.groupName || '';
-      if (!grouped[group]) grouped[group] = [];
-      grouped[group].push(ing);
-    });
-    const groups = Object.keys(grouped).sort((a, b) => {
-      if (a === '') return -1;
-      if (b === '') return 1;
-      return a.localeCompare(b);
-    });
+  // Normalise ingredients: handle both old groupName format and new section-block format
+  const normaliseIngredients = (raw: IngredientEntry[]): IngredientEntry[] => {
+    if (!raw || raw.length === 0) return [];
+    // New format: has any entry with type === 'section'
+    if (raw.some(e => e.type === 'section')) return raw;
+    // Also already typed as items
+    if (raw.some(e => (e as Ingredient).type === 'item')) return raw;
+    // Old format: Ingredient[] with optional groupName — reconstruct section blocks
+    const result: IngredientEntry[] = [];
+    let lastGroup = '';
+    for (const entry of raw as Ingredient[]) {
+      const group = entry.groupName?.trim() || '';
+      if (group && group !== lastGroup) {
+        result.push({ type: 'section', id: `s-${group}`, label: group });
+      }
+      lastGroup = group;
+      result.push(entry);
+    }
+    return result;
+  };
+
+  const renderIngredients = (rawIngredients: IngredientEntry[]) => {
+    const entries = normaliseIngredients(rawIngredients);
+    let stepCount = 0;
     return (
-      <div className="space-y-6">
-        {groups.map(groupName => (
-          <div key={groupName || 'ungrouped'}>
-            {groupName && (
-              <p className="text-xs font-semibold text-steel/50 uppercase tracking-widest mb-3 mt-2">
-                {groupName}
-              </p>
-            )}
-            <ul className="space-y-3">
-              {grouped[groupName].map((ing, i) => (
-                <li key={ing.id || i} className="flex items-start gap-3">
-                  <span className="w-1.5 h-1.5 rounded-full bg-light-green mt-2 flex-shrink-0" />
-                  <span className="text-steel leading-snug">
-                    {(ing.amount || ing.unit) && (
-                      <span className="font-medium text-cast-iron">
-                        {formatFraction([ing.amount, ing.unit].filter(Boolean).join(' '))}{' '}
-                      </span>
-                    )}
-                    {ing.item}
+      <div className="space-y-1">
+        {entries.map((entry, i) => {
+          if (entry.type === 'section') {
+            return (
+              <div key={entry.id || `section-${i}`} className="flex items-center gap-3 py-3">
+                <div className="flex-1 h-px bg-stone-200" />
+                <span className="italic text-steel/50 text-sm flex-shrink-0" style={{ fontFamily: 'var(--font-baloo_2)' }}>
+                  {entry.label}
+                </span>
+                <div className="flex-1 h-px bg-stone-200" />
+              </div>
+            );
+          }
+          const ing = entry as Ingredient;
+          return (
+            <li key={ing.id || i} className="flex items-start gap-3 list-none py-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-light-green mt-2 flex-shrink-0" />
+              <span className="text-steel leading-snug">
+                {(ing.amount || ing.unit) && (
+                  <span className="font-medium text-cast-iron">
+                    {formatFraction([ing.amount, ing.unit].filter(Boolean).join(' '))}{' '}
                   </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+                )}
+                {ing.item}
+              </span>
+            </li>
+          );
+        })}
       </div>
     );
   };
 
-  // Instructions renderer
-  const renderInstructions = (raw: Instruction[] | string[]) => {
-    let instructions: Instruction[] = [];
-    if (raw.length > 0) {
-      if (typeof raw[0] === 'string') {
-        instructions = (raw as string[]).map((text, i) => ({ text, id: `step-${i}`, groupName: '' }));
-      } else {
-        instructions = raw as Instruction[];
-      }
+  // Normalise instructions: handle old groupName format, new block format, and legacy string[]
+  const normaliseInstructions = (raw: InstructionEntry[] | string[]): InstructionEntry[] => {
+    if (!raw || raw.length === 0) return [];
+    if (typeof raw[0] === 'string') {
+      return (raw as string[]).map((text, i) => ({ type: 'item' as const, text, id: `step-${i}`, groupName: '' }));
     }
-    const grouped: { [key: string]: Instruction[] } = {};
-    instructions.forEach(ins => {
-      const group = ins.groupName || '';
-      if (!grouped[group]) grouped[group] = [];
-      grouped[group].push(ins);
-    });
-    const groups = Object.keys(grouped).sort((a, b) => {
-      if (a === '') return -1;
-      if (b === '') return 1;
-      return a.localeCompare(b);
-    });
+    const entries = raw as InstructionEntry[];
+    if (entries.some(e => e.type === 'section')) return entries;
+    if (entries.some(e => (e as Instruction).type === 'item')) return entries;
+    // Old Instruction[] with groupName
+    const result: InstructionEntry[] = [];
+    let lastGroup = '';
+    for (const entry of entries as Instruction[]) {
+      const group = entry.groupName?.trim() || '';
+      if (group && group !== lastGroup) {
+        result.push({ type: 'section', id: `s-${group}`, label: group });
+      }
+      lastGroup = group;
+      result.push(entry);
+    }
+    return result;
+  };
+
+  const renderInstructions = (raw: InstructionEntry[] | string[]) => {
+    const entries = normaliseInstructions(raw);
+    let stepNum = 0;
     return (
-      <div className="space-y-8">
-        {groups.map(groupName => (
-          <div key={groupName || 'ungrouped'}>
-            {groupName && (
-              <p className="text-xs font-semibold text-steel/50 uppercase tracking-widest mb-4 mt-2">
-                {groupName}
-              </p>
-            )}
-            <ol className="space-y-5">
-              {grouped[groupName].map((ins, i) => (
-                <li key={ins.id} className="flex gap-4">
-                  <div className="w-7 h-7 rounded-full bg-light-green/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-xs font-bold text-light-green">{i + 1}</span>
-                  </div>
-                  <p className="text-steel leading-relaxed pt-0.5">{ins.text}</p>
-                </li>
-              ))}
-            </ol>
-          </div>
-        ))}
+      <div className="space-y-1">
+        {entries.map((entry, i) => {
+          if (entry.type === 'section') {
+            return (
+              <div key={(entry as SectionBlock).id || `section-${i}`} className="flex items-center gap-3 py-4">
+                <div className="flex-1 h-px bg-stone-200" />
+                <span className="italic text-steel/50 text-sm flex-shrink-0" style={{ fontFamily: 'var(--font-baloo_2)' }}>
+                  {(entry as SectionBlock).label}
+                </span>
+                <div className="flex-1 h-px bg-stone-200" />
+              </div>
+            );
+          }
+          const ins = entry as Instruction;
+          stepNum++;
+          return (
+            <li key={ins.id || i} className="flex gap-4 list-none py-1">
+              <div className="w-7 h-7 rounded-full bg-light-green/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-xs font-bold text-light-green">{stepNum}</span>
+              </div>
+              <p className="text-steel leading-relaxed pt-0.5">{ins.text}</p>
+            </li>
+          );
+        })}
       </div>
     );
   };
