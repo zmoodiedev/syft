@@ -152,7 +152,6 @@ export default function PricingPage() {
     <div className="min-h-screen bg-eggshell">
       <div className="container mx-auto px-4 sm:px-6 py-16 md:py-24 max-w-6xl">
 
-        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -169,7 +168,6 @@ export default function PricingPage() {
             Free to start. Upgrade when you&apos;re ready for more.
           </p>
 
-          {/* Currency toggle */}
           <div className="inline-flex bg-white border border-gray-200 rounded-xl p-1 shadow-sm">
             {(['USD', 'CAD'] as Currency[]).map((c) => (
               <button
@@ -187,7 +185,6 @@ export default function PricingPage() {
           </div>
         </motion.div>
 
-        {/* Pricing cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
           {pricingTiers.map((tier, i) => (
             <motion.div
@@ -201,7 +198,6 @@ export default function PricingPage() {
                   : 'bg-white shadow-sm border border-gray-100'
               }`}
             >
-              {/* Popular badge */}
               {tier.popular && (
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
                   <span className="bg-light-green text-white text-xs font-semibold px-4 py-1.5 rounded-full">
@@ -210,7 +206,6 @@ export default function PricingPage() {
                 </div>
               )}
 
-              {/* Header */}
               <div className="mb-8">
                 <h3 className={`text-lg font-bold mb-4 ${tier.popular ? 'text-white' : 'text-cast-iron'}`}>
                   {tier.name}
@@ -228,7 +223,6 @@ export default function PricingPage() {
                 </p>
               </div>
 
-              {/* Features */}
               <ul className="space-y-3.5 mb-8 flex-1">
                 {tier.features.map((feature, j) => (
                   <li key={j} className="flex items-start gap-3">
@@ -249,7 +243,6 @@ export default function PricingPage() {
                 ))}
               </ul>
 
-              {/* CTA */}
               <button
                 onClick={() => handleUpgrade(tier.id)}
                 disabled={isButtonDisabled(tier.id)}
@@ -267,7 +260,6 @@ export default function PricingPage() {
           ))}
         </div>
 
-        {/* FAQ */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -288,7 +280,6 @@ export default function PricingPage() {
           </div>
         </motion.div>
 
-        {/* Bottom CTA */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}

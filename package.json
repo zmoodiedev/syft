@@ -39,7 +39,8 @@
     "resend": "^6.12.3",
     "sharp": "^0.34.5",
     "stripe": "^22.0.1",
-    "tailwind-merge": "^1.14.0"
+    "tailwind-merge": "^1.14.0",
+    "web-push": "^3.6.7"
   },
   "overrides": {
     "glob": "^11.0.0"
@@ -52,6 +53,7 @@
     "@testing-library/user-event": "^14.6.1",
     "@types/jest": "^30.0.0",
     "@types/node": "^20",
+    "@types/web-push": "^3.6.4",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.4.21",

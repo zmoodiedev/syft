@@ -141,13 +141,11 @@ export default function BillingPage() {
       <div className="min-h-screen bg-eggshell">
         <div className="container mx-auto px-4 sm:px-6 py-10 md:py-14 max-w-2xl">
 
-          {/* Page header */}
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-cast-iron">Billing</h1>
             <p className="text-sm text-steel mt-1">Manage your plan and subscription.</p>
           </div>
 
-          {/* Past-due warning — payment failed, Stripe is retrying */}
           {isPastDue && (
             <div className="mb-5 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4">
               <FiAlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
@@ -167,7 +165,6 @@ export default function BillingPage() {
             </div>
           )}
 
-          {/* Lapsed banner — subscription was canceled, content is locked */}
           {isLapsed && (
             <div className="mb-5 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4">
               <FiAlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
@@ -186,7 +183,6 @@ export default function BillingPage() {
             </div>
           )}
 
-          {/* Success banner */}
           {showSuccess && (
             <div className="mb-5 flex items-start gap-3 bg-light-green/10 border border-light-green/20 rounded-2xl px-5 py-4">
               <FiCheck className="w-5 h-5 text-light-green flex-shrink-0 mt-0.5" />
@@ -197,7 +193,6 @@ export default function BillingPage() {
             </div>
           )}
 
-          {/* Processing banner — webhook hasn't updated tier yet */}
           {pollingTimedOut && (
             <div className="mb-5 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4">
               <FiAlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
@@ -218,7 +213,6 @@ export default function BillingPage() {
           ) : (
             <div className="space-y-4">
 
-              {/* Current plan */}
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 <div className="bg-cast-iron px-5 py-4">
                   <p className="text-sm font-semibold text-white">Current plan</p>
@@ -265,7 +259,6 @@ export default function BillingPage() {
                       )}
                     </div>
 
-                    {/* Subscription status badge */}
                     {isPro && profile?.subscriptionStatus && (
                       <span className={`flex-shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full ${
                         profile.subscriptionStatus === 'active'
@@ -277,7 +270,6 @@ export default function BillingPage() {
                     )}
                   </div>
 
-                  {/* Actions */}
                   <div className="mt-5 flex flex-wrap gap-2">
                     {isPro && profile?.stripeCustomerId ? (
                       <Button
@@ -299,7 +291,6 @@ export default function BillingPage() {
                 </div>
               </div>
 
-              {/* Pending upgrade notice */}
               {hasPending && !isPro && (
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                   <div className="bg-amber-500 px-5 py-4">
@@ -323,7 +314,6 @@ export default function BillingPage() {
                 </div>
               )}
 
-              {/* Upgrade / reactivate card — shown to Free users with no pending */}
               {!isPro && !hasPending && (
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                   <div className="bg-cast-iron px-5 py-4">
@@ -353,7 +343,6 @@ export default function BillingPage() {
                 </div>
               )}
 
-              {/* Info */}
               <p className="text-xs text-steel/50 text-center pt-2">
                 Questions about billing?{' '}
                 <Link href="/contact" className="hover:text-cast-iron transition-colors underline">

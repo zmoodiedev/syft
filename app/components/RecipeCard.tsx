@@ -80,14 +80,12 @@ export default function RecipeCard({ recipe, priority = false }: RecipeCardProps
           <div className="relative h-52">
             <RecipeImage recipe={recipe} priority={priority} />
 
-            {/* Private badge */}
             {isOwner && isPrivate && (
               <div className="absolute top-2.5 right-2.5 bg-white/90 backdrop-blur-sm p-1.5 rounded-full shadow-sm z-20" title="Private">
                 <FiLock className="h-3.5 w-3.5 text-steel" />
               </div>
             )}
 
-            {/* Categories overlaid on image */}
             {displayCategories.length > 0 && (
               <div className="absolute bottom-2.5 left-2.5 flex flex-wrap gap-1 z-10">
                 {displayCategories.map(cat => (

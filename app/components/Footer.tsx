@@ -4,7 +4,6 @@ import Logo from "./Logo";
 export default function Footer() {
   return (
     <>
-      {/* Wave divider: white → cast-iron */}
       <div className="bg-eggshell w-full">
         <svg
           viewBox="0 0 1440 80"
@@ -22,7 +21,6 @@ export default function Footer() {
         <div className="container mx-auto px-6 pt-4 pb-12 md:pb-16">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 md:gap-12">
 
-            {/* Brand */}
             <div className="sm:col-span-2 lg:col-span-1">
               <div className="mb-4">
                 <Logo className="h-[36px] w-auto text-white" />
@@ -32,7 +30,6 @@ export default function Footer() {
               </p>
             </div>
 
-            {/* Product */}
             <div>
               <p className="text-xs font-semibold text-white/35 uppercase tracking-widest mb-5">Product</p>
               <ul className="space-y-3 text-sm">
@@ -43,7 +40,6 @@ export default function Footer() {
               </ul>
             </div>
 
-            {/* Legal */}
             <div>
               <p className="text-xs font-semibold text-white/35 uppercase tracking-widest mb-5">Legal</p>
               <ul className="space-y-3 text-sm">
@@ -53,7 +49,6 @@ export default function Footer() {
               </ul>
             </div>
 
-            {/* CTA */}
             <div>
               <p className="text-xs font-semibold text-white/35 uppercase tracking-widest mb-5">Get Started</p>
               <p className="text-white/45 text-sm mb-5 leading-relaxed">
@@ -70,7 +65,6 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Copyright bar */}
         <div className="border-t border-white/8 py-5 px-6">
           <div className="container mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-white/30">
             <span>© {new Date().getFullYear()} Syft. All rights reserved.</span>

@@ -49,11 +49,9 @@ export default function BulkEntryForm({ initialTitle = '', initialIngredients = 
   const [imageUrl, setImageUrl] = useState('');
   const [isPreviewingImage, setIsPreviewingImage] = useState(false);
 
-  // Bulk import state
   const [bulkIngredients, setBulkIngredients] = useState<string>(initialIngredients);
   const [bulkInstructions, setBulkInstructions] = useState<string>(initialInstructions);
 
-  // Parsed recipe state
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [instructions, setInstructions] = useState<Instruction[]>([]);
 
@@ -67,7 +65,6 @@ export default function BulkEntryForm({ initialTitle = '', initialIngredients = 
     }
   });
 
-  // Parse ingredient text into structured format
   const parseIngredient = (text: string): { amount: string; unit: string; item: string } => {
     const commonUnits = [
       'cup', 'cups', 'c.',
@@ -129,7 +126,6 @@ export default function BulkEntryForm({ initialTitle = '', initialIngredients = 
     return { amount, unit, item };
   };
 
-  // Parse bulk ingredients
   const parseBulkIngredients = (text: string): Ingredient[] => {
     if (!text.trim()) return [];
     
@@ -147,7 +143,6 @@ export default function BulkEntryForm({ initialTitle = '', initialIngredients = 
     });
   };
 
-  // Parse bulk instructions
   const parseBulkInstructions = (text: string): Instruction[] => {
     if (!text.trim()) return [];
     
@@ -166,7 +161,6 @@ export default function BulkEntryForm({ initialTitle = '', initialIngredients = 
     });
   };
 
-  // Auto-parse when initial data is provided (e.g. from TikTok share)
   useEffect(() => {
     if (initialIngredients) setIngredients(parseBulkIngredients(initialIngredients));
     if (initialInstructions) setInstructions(parseBulkInstructions(initialInstructions));
@@ -174,7 +168,6 @@ export default function BulkEntryForm({ initialTitle = '', initialIngredients = 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialIngredients, initialInstructions]);
 
-  // Handle bulk import
   const handleBulkImport = () => {
     let hasChanges = false;
     
@@ -203,7 +196,6 @@ export default function BulkEntryForm({ initialTitle = '', initialIngredients = 
     }
   };
 
-  // Handle image URL validation
   const handleImageUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setImageUrl(e.target.value);
     setIsPreviewingImage(false);
@@ -223,7 +215,6 @@ export default function BulkEntryForm({ initialTitle = '', initialIngredients = 
     setIsPreviewingImage(true);
   };
 
-  // Handle form submission
   const handleFormSubmit: SubmitHandler<Recipe> = async (data) => {
     if (!user) {
       toast.error('You must be logged in to save recipes');
@@ -286,7 +277,6 @@ export default function BulkEntryForm({ initialTitle = '', initialIngredients = 
       reason="recipe_limit"
     />
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8">
-      {/* Bulk Text Import Section */}
       <div className="bg-white p-6 rounded-2xl border border-stone-100 shadow-sm">
         <h2 className="text-lg font-bold text-cast-iron mb-4">Bulk Text Import</h2>
         <p className="text-sm text-steel mb-4">
@@ -350,7 +340,6 @@ export default function BulkEntryForm({ initialTitle = '', initialIngredients = 
         </div>
       </div>
 
-      {/* Recipe Details */}
       <div className="bg-white p-6 rounded-2xl border border-stone-100 shadow-sm">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-lg font-bold text-cast-iron">Recipe Details</h2>
@@ -442,7 +431,6 @@ export default function BulkEntryForm({ initialTitle = '', initialIngredients = 
             />
           </div>
 
-          {/* Image URL */}
           <div>
             <label htmlFor="imageUrl" className="block text-sm font-medium text-cast-iron mb-1.5">Recipe Image URL (Optional)</label>
             <div className="flex flex-col md:flex-row gap-4">
@@ -476,7 +464,6 @@ export default function BulkEntryForm({ initialTitle = '', initialIngredients = 
         </div>
       </div>
 
-      {/* Imported Items Preview */}
       {(ingredients.length > 0 || instructions.length > 0) && (
         <div className="bg-white p-6 rounded-2xl border border-stone-100 shadow-sm">
           <h2 className="text-lg font-bold text-cast-iron mb-4">Imported Recipe Content</h2>
@@ -513,7 +500,6 @@ export default function BulkEntryForm({ initialTitle = '', initialIngredients = 
         </div>
       )}
 
-      {/* Submit Button */}
       <div className="flex justify-center">
         <button 
           type="submit"

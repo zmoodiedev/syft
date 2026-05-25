@@ -9,7 +9,6 @@ export default function Features() {
 
       <div className="container mx-auto px-6 pt-16 pb-24 lg:pt-20 lg:pb-32 max-w-6xl">
 
-        {/* Section header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -31,7 +30,6 @@ export default function Features() {
         {/* Bento grid — pt-16 gives the dogs room to float above the top row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5 md:pt-16">
 
-          {/* Row 1, col 1 — Save Recipes */}
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -48,9 +46,7 @@ export default function Features() {
             </div>
           </motion.div>
 
-          {/* Row 1, cols 2–3 — Share with Friends */}
           <div className="md:col-span-2 relative">
-            {/* Ollie & Arthur — desktop only, float above and to the right */}
             <div className="hidden md:block absolute -top-16 -right-12 z-20 pointer-events-none">
               <Image
                 src="/images/branding/ollie_arthur.png"
@@ -77,7 +73,6 @@ export default function Features() {
             </motion.div>
           </div>
 
-          {/* Row 2, cols 1–2 — Cook Distraction-Free */}
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -104,7 +99,6 @@ export default function Features() {
             </div>
           </motion.div>
 
-          {/* Row 2, col 3 — Organize */}
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}

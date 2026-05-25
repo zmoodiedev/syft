@@ -15,7 +15,6 @@ export default function CategoryTags({
 }: CategoryTagsProps) {
   if (!categories || categories.length === 0) return null;
   
-  // Size-specific classes
   const sizeClasses = {
     sm: 'px-1.5 py-0.5 text-xs',
     md: 'px-2 py-1 text-xs',

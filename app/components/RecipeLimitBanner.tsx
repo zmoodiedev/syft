@@ -27,7 +27,6 @@ export default function RecipeLimitBanner({ count, limit, onUpgradeClick }: Reci
             Go Pro →
           </button>
         </div>
-        {/* Progress bar */}
         <div className="h-1.5 bg-orange-100 rounded-full overflow-hidden">
           <div
             className="h-full bg-tomato rounded-full transition-all duration-500"
@@ -50,7 +49,6 @@ export default function RecipeLimitBanner({ count, limit, onUpgradeClick }: Reci
           Upgrade →
         </button>
       </div>
-      {/* Progress bar */}
       <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
         <div
           className="h-full bg-light-green rounded-full transition-all duration-500"

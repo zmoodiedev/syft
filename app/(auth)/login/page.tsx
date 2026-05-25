@@ -40,10 +40,8 @@ export default function LoginPage() {
     return (
         <div className="min-h-screen flex">
 
-            {/* Left panel — branding (desktop only) */}
             <div className="hidden lg:flex lg:w-[44%] bg-cream flex-col justify-between p-12 relative z-10">
 
-                {/* Kitchen — ghost layer */}
                 <div className="absolute inset-0 pointer-events-none overflow-hidden">
                     <Image
                         src="/images/branding/kitchen.png"
@@ -54,7 +52,6 @@ export default function LoginPage() {
                     <div className="absolute inset-0 bg-gradient-to-t from-cream/70 to-transparent" />
                 </div>
 
-                {/* Ollie — bottom-right corner, leaning off edge */}
                 <div className="absolute bottom-0 -right-14 pointer-events-none z-10">
                     <Image
                         src="/images/branding/chef_ollie.png"
@@ -65,12 +62,10 @@ export default function LoginPage() {
                     />
                 </div>
 
-                {/* Logo */}
                 <Link href="/" className="relative z-10">
                     <Logo className="h-[36px] w-auto text-cast-iron" />
                 </Link>
 
-                {/* Tagline + features */}
                 <div className="relative z-10">
                     <h2 className="text-4xl font-bold text-cast-iron leading-tight mb-8">
                         A little kitchen,<br />a lot of good eating.
@@ -90,10 +85,8 @@ export default function LoginPage() {
                 <p className="text-xs text-steel/40 relative z-10">© {new Date().getFullYear()} Syft. All rights reserved.</p>
             </div>
 
-            {/* Right panel — form */}
             <div className="flex-1 bg-eggshell flex flex-col items-center justify-center p-4 sm:p-8">
 
-                {/* Mobile logo */}
                 <Link href="/" className="lg:hidden mb-8">
                     <Logo className="h-[36px] w-auto text-cast-iron" />
                 </Link>

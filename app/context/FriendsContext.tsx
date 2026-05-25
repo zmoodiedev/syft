@@ -424,12 +424,21 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
                         user.photoURL || null,
                         requestRef.id
                     );
+
+                    // Fire-and-forget push to receiver
+                    user.getIdToken().then(token => {
+                        fetch('/api/push/send', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                            body: JSON.stringify({ toUserId: receiverId, type: 'friend_request', senderName: user.displayName }),
+                        }).catch(() => {});
+                    }).catch(() => {});
                 }
             } catch (notificationError) {
                 console.error('Error creating friend request notification:', notificationError);
                 // Continue even if notification creation fails
             }
-            
+
             console.log('Friend request sent successfully');
         } catch (error) {
             console.error('Error in sendFriendRequest:', error);
@@ -581,7 +590,16 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
                 console.error('Error creating recipe share notification:', notificationError);
                 // Continue even if notification creation fails
             }
-            
+
+            // Fire-and-forget push to recipient
+            user.getIdToken().then(token => {
+                fetch('/api/push/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                    body: JSON.stringify({ toUserId: friendId, type: 'recipe_share', senderName: user.displayName || 'A friend', recipeName }),
+                }).catch(() => {});
+            }).catch(() => {});
+
             return;
         } catch (error) {
             console.error('Error sharing recipe:', error);

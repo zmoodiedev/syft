@@ -58,10 +58,8 @@ export default function ProfilePage() {
   const tabsContainerRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
   
-  // Check if this is the current user's profile
   const isOwnProfile = user?.uid === id;
   
-  // Show success toast after Stripe checkout redirect
   useEffect(() => {
     if (searchParams.get('upgraded') === 'true') {
       toast.success("You're on Pro! All features are now unlocked.");
@@ -69,7 +67,6 @@ export default function ProfilePage() {
     }
   }, [id, searchParams]);
 
-  // Set active tab from URL parameter and handle auto-scrolling
   useEffect(() => {
     if (tabParam && ['recipes', 'friends', 'categories', 'notifications'].includes(tabParam)) {
       if (tabParam === 'notifications' || tabParam === 'categories') {
@@ -98,7 +95,6 @@ export default function ProfilePage() {
       if (!id) return;
       
       setLoading(true);
-      // Reset pagination state when profile changes
       setRecipes([]);
       setLastVisible(null);
       setHasMoreRecipes(true);
@@ -107,7 +103,6 @@ export default function ProfilePage() {
       setProfileAccessDenied(false);
 
       try {
-        // Always load the basic profile so we can show name/avatar on the access-denied screen
         let profileData: UserProfile | null = null;
         try {
           const raw = await getUserProfile(id as string);
@@ -149,7 +144,6 @@ export default function ProfilePage() {
           }
         }
 
-        // Access granted — load full profile data
         const currentUserId = user?.uid;
 
         try {
@@ -193,7 +187,6 @@ export default function ProfilePage() {
     loadProfileData();
   }, [id, user, isOwnProfile]);
   
-  // Function to load more recipes
   const loadMoreRecipes = async () => {
     if (!id || !lastVisible || loadingMoreRecipes || !hasMoreRecipes) return;
     
@@ -201,11 +194,8 @@ export default function ProfilePage() {
     try {
       const result = await getUserRecipes(id as string, 6, lastVisible, user?.uid);
       
-      // Append new recipes to existing ones
       setRecipes(prevRecipes => [...prevRecipes, ...result.recipes]);
       setLastVisible(result.lastVisible);
-      
-      // Check if we've reached the end
       setHasMoreRecipes(result.recipes.length === 6 && result.lastVisible !== null);
     } catch (error) {
       console.error('Error loading more recipes:', error);
@@ -224,29 +214,23 @@ export default function ProfilePage() {
     try {
       try {
         await sendFriendRequest(id as string);
-        // Show success message
         toast.success('Friend request sent');
-        
-        // Update UI optimistically to show request as pending
         if (relationship) {
           setRelationship({ ...relationship, isPendingFriend: true });
         }
       } catch (requestError) {
         console.error('Error sending friend request:', requestError);
         
-        // Show specific error message based on error type
         if (requestError instanceof Error) {
           const errorMessage = requestError.message;
           
           if (errorMessage === 'Friend request already sent') {
             toast.success('Friend request already sent');
-            // Update UI to show as pending
             if (relationship) {
               setRelationship({ ...relationship, isPendingFriend: true });
             }
           } else if (errorMessage === 'Already friends with this user') {
             toast.success('You are already friends with this user');
-            // Update relationship to reflect they're already friends
             if (relationship) {
               setRelationship({ ...relationship, isFriend: true });
             }
@@ -267,23 +251,19 @@ export default function ProfilePage() {
     }
   };
   
-  // Add scroll handler to update indicator visibility
   const handleTabsScroll = () => {
     if (tabsContainerRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = tabsContainerRef.current;
       setShowLeftScroll(scrollLeft > 0);
-      setShowRightScroll(scrollLeft < scrollWidth - clientWidth - 5); // 5px buffer
+      setShowRightScroll(scrollLeft < scrollWidth - clientWidth - 5);
     }
   };
   
-  // Initialize scroll indicators on component mount
   useEffect(() => {
     const tabsContainer = tabsContainerRef.current;
     if (tabsContainer) {
       handleTabsScroll();
       tabsContainer.addEventListener('scroll', handleTabsScroll);
-      
-      // Handle window resize
       const handleResize = () => handleTabsScroll();
       window.addEventListener('resize', handleResize);
       
@@ -294,7 +274,6 @@ export default function ProfilePage() {
     }
   }, []);
   
-  // Update scroll indicators when tabs change
   useEffect(() => {
     handleTabsScroll();
   }, [activeTab]);
@@ -335,7 +314,6 @@ export default function ProfilePage() {
       setCategoryToRemove(null);
     } catch {
       toast.error('Failed to remove category');
-      // Revert optimistic update
       setProfile(prev => prev ? { ...prev, customCategories: [...(prev.customCategories || []), categoryToRemove] } : prev);
     } finally {
       setIsRemovingCategory(false);
@@ -456,16 +434,13 @@ export default function ProfilePage() {
 
       <div className="min-h-screen bg-eggshell">
 
-        {/* Profile Header */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4 }}
         >
           <div className="container mx-auto px-4 sm:px-6 max-w-6xl pt-10">
-            {/* Avatar + actions row */}
             <div className="flex flex-col items-center sm:flex-row sm:items-center gap-4 mb-4">
-              {/* Avatar */}
               <div className="h-28 w-28 rounded-2xl overflow-hidden bg-light-green flex-shrink-0 shadow-sm">
                 {profile.photoURL ? (
                   <Image
@@ -482,7 +457,6 @@ export default function ProfilePage() {
                 )}
               </div>
 
-              {/* Name + tier + actions */}
               <div className="flex-1 sm:pb-1 flex flex-col items-center sm:items-start sm:flex-row sm:justify-between gap-3 w-full">
                 <div className="text-center sm:text-left">
                   <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
@@ -521,7 +495,6 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Bio + Stats */}
             <div className="flex flex-col items-center sm:flex-row sm:items-start gap-4 sm:gap-6 pb-6">
               <div className="flex-1 text-center sm:text-left">
                 {profile.bio && (
@@ -544,7 +517,6 @@ export default function ProfilePage() {
           </div>
         </motion.div>
 
-        {/* Tab bar */}
         <div className="border-b border-stone-200">
           <motion.div
             initial={{ opacity: 0 }}
@@ -594,7 +566,6 @@ export default function ProfilePage() {
           </motion.div>
         </div>
 
-        {/* Tab content */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -602,7 +573,6 @@ export default function ProfilePage() {
           className="container mx-auto px-4 sm:px-6 py-6 max-w-6xl"
         >
 
-          {/* Recipes */}
           {activeTab === 'recipes' && (
             recipes.length > 0 ? (
               <>
@@ -636,7 +606,6 @@ export default function ProfilePage() {
             )
           )}
 
-          {/* Friends */}
           {activeTab === 'friends' && (
             <>
               {isOwnProfile && userProfile?.tier === 'Free' ? (
@@ -776,7 +745,6 @@ export default function ProfilePage() {
             </>
           )}
 
-          {/* Categories */}
           {activeTab === 'categories' && isOwnProfile && (
             <div>
               <p className="text-xs text-steel/50 mb-5">
@@ -819,7 +787,6 @@ export default function ProfilePage() {
             </div>
           )}
 
-          {/* Notifications */}
           {activeTab === 'notifications' && (
             <div ref={notificationsRef}>
               <div className="flex items-center justify-between mb-4">

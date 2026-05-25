@@ -6,7 +6,6 @@ export default function WhoWeAre() {
   return (
     <div className="min-h-screen bg-eggshell">
 
-      {/* Hero */}
       <div className="container mx-auto px-4 sm:px-6 pt-20 pb-16 md:pt-28 md:pb-24 max-w-6xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -26,7 +25,6 @@ export default function WhoWeAre() {
         </motion.div>
       </div>
 
-      {/* Story */}
       <div className="bg-white border-y border-gray-100">
         <div className="container mx-auto px-4 sm:px-6 py-16 md:py-20 max-w-4xl">
           <motion.div
@@ -60,7 +58,6 @@ export default function WhoWeAre() {
         </div>
       </div>
 
-      {/* Values — bento grid */}
       <section className="bg-eggshell">
         <div className="container mx-auto px-4 sm:px-6 py-16 md:py-24 max-w-6xl">
 
@@ -84,7 +81,6 @@ export default function WhoWeAre() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
 
-            {/* Ruthlessly Clean — col-span-1 */}
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -101,7 +97,6 @@ export default function WhoWeAre() {
               </div>
             </motion.div>
 
-            {/* Private by Default — col-span-2, dark */}
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -118,7 +113,6 @@ export default function WhoWeAre() {
               </p>
             </motion.div>
 
-            {/* Built with Care — col-span-3, horizontal */}
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}

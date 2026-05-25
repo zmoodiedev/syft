@@ -5,7 +5,6 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { logEvent } from '@/lib/analytics-server';
 
 export async function POST(request: Request) {
-  // Verify auth token
   const token = request.headers.get('Authorization')?.split('Bearer ')[1];
   if (!token) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -20,7 +19,6 @@ export async function POST(request: Request) {
   }
 
   try {
-    // Fetch user tier from Firestore
     const userDoc = await db.collection('users').doc(userId).get();
     const tier = (userDoc.data()?.tier as keyof typeof TIER_FEATURES) ?? 'Free';
     const limit = TIER_FEATURES[tier]?.maxRecipes ?? 15;

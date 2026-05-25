@@ -24,13 +24,11 @@ export default function Navbar() {
     const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
     
-    // Handle mounting
     useEffect(() => {
         setMounted(true);
         return () => setMounted(false);
     }, []);
     
-    // Fetch unread notification count
     useEffect(() => {
         if (!user) return;
 
@@ -58,7 +56,6 @@ export default function Navbar() {
         };
     }, [user]);
     
-    // Close mobile menu when window is resized to desktop size
     useEffect(() => {
         if (!mounted) return;
         
@@ -72,7 +69,6 @@ export default function Navbar() {
         return () => window.removeEventListener('resize', handleResize);
     }, [mobileMenuOpen, mounted]);
     
-    // Prevent scrolling when mobile menu is open
     useEffect(() => {
         if (!mounted) return;
         
@@ -117,7 +113,6 @@ export default function Navbar() {
             reason="recipe_limit"
         />
         <nav className="flex flex-row items-center flex-1">
-            {/* Desktop nav links — near logo */}
             <ul className="hidden md:flex items-center gap-1 text-sm font-medium">
                 {user ? (
                     <>
@@ -158,12 +153,10 @@ export default function Navbar() {
                 )}
             </ul>
 
-            {/* Auth / profile — pushed to far right */}
             <div className="ml-auto flex items-center gap-3">
             {user ? (
                 <>
-                    {/* Mobile Burger Menu Button */}
-                    <button 
+                    <button
                         className="block md:hidden text-[28px] z-[110] relative"
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                         aria-label="Toggle menu"
@@ -177,7 +170,6 @@ export default function Navbar() {
                         )}
                     </button>
                     
-                    {/* Full Screen Mobile Menu */}
                     <AnimatePresence mode="wait">
                         {mobileMenuOpen && (
                             <motion.div 
@@ -280,15 +272,13 @@ export default function Navbar() {
                         )}
                     </AnimatePresence>
                     
-                    {/* User Profile Dropdown - Desktop */}
-                    <div 
+                    <div
                         className="relative hidden md:block"
                         onMouseEnter={() => setShowDropdown(true)}
                         onMouseLeave={() => setShowDropdown(false)}
                     >
                         <div className="relative">
-                            {/* User button with notification indicator */}
-                            <button 
+                            <button
                                 className="flex items-center gap-2 relative"
                                 aria-label="User menu"
                                 data-extension-ignore="true"

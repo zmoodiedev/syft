@@ -16,8 +16,6 @@ export const DEFAULT_CATEGORIES = [
 
 export const RECIPE_CATEGORIES = DEFAULT_CATEGORIES;
 
-// Block types for the unified block-list pattern
-
 export interface SectionBlock {
   type: 'section';
   id: string;
@@ -70,8 +68,6 @@ export interface RecipeFormProps {
   submitButtonText?: string;
 }
 
-// ─── Utilities ───────────────────────────────────────────────────────────────
-
 const genId = () => `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 function migrateIngredients(
@@ -80,14 +76,12 @@ function migrateIngredients(
   if (!raw || raw.length === 0) {
     return [{ type: 'item', id: genId(), amount: '', unit: '', item: '' }];
   }
-  // Already in new block format
   if (raw.some(e => (e as IngredientBlock).type === 'section')) {
     return raw as IngredientBlock[];
   }
   if (raw.some(e => (e as IngredientBlock).type === 'item')) {
     return raw as IngredientBlock[];
   }
-  // Old Ingredient[] with optional groupName
   const blocks: IngredientBlock[] = [];
   let lastGroup = '';
   for (const ing of raw as Ingredient[]) {
@@ -147,8 +141,6 @@ function getStepNumber(blocks: InstructionBlock[], upToIndex: number): number {
   return n;
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
-
 export default function RecipeForm({ initialData, onSubmit, scanMode = false, submitButtonText }: RecipeFormProps) {
   const { user } = useAuth();
   const router = useRouter();
@@ -168,7 +160,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
   const recipeImageInputRef = useRef<HTMLInputElement>(null);
   const cameraCaptureRef = useRef<HTMLInputElement>(null);
 
-  // Block list state
   const [ingredientBlocks, setIngredientBlocks] = useState<IngredientBlock[]>(() =>
     migrateIngredients(initialData?.ingredients || [])
   );
@@ -177,7 +168,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
   );
   const [activeTab, setActiveTab] = useState<'ingredients' | 'instructions'>('ingredients');
 
-  // Drag state
   const dragInfo = useRef<{
     listType: 'ingredients' | 'instructions';
     sourceIdx: number;
@@ -190,7 +180,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
     targetIdx: number;
   } | null>(null);
 
-  // Insert affordance popover state
   const [insertMenu, setInsertMenu] = useState<{
     listType: 'ingredients' | 'instructions';
     afterIndex: number;
@@ -214,7 +203,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
     }
   });
 
-  // Mobile detection
   useEffect(() => {
     const check = () => {
       const ua = typeof window.navigator === 'undefined' ? '' : navigator.userAgent;
@@ -225,7 +213,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
     return () => window.removeEventListener('resize', check);
   }, []);
 
-  // Scan mode auto-trigger
   useEffect(() => {
     let timeout: NodeJS.Timeout;
     if (scanMode && !isProcessingRecipe && !fileDialogRequested) {
@@ -235,7 +222,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
     return () => clearTimeout(timeout);
   }, [scanMode, isProcessingRecipe, fileDialogRequested]);
 
-  // Fetch user categories
   useEffect(() => {
     const fetchUserCategories = async () => {
       if (!user) return;
@@ -261,7 +247,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
     fetchUserCategories();
   }, [user]);
 
-  // Sync form values when initialData changes (async edit page load)
   useEffect(() => {
     if (!initialData) return;
     setValue('name', initialData.name);
@@ -289,7 +274,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
     }, 100);
   }, [initialData, setValue, userCategories]);
 
-  // Resize textareas when instruction blocks change
   useEffect(() => {
     setTimeout(() => {
       document.querySelectorAll('textarea').forEach(el => adjustTextareaHeight(el));
@@ -306,8 +290,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
     window.addEventListener('pointerdown', handler);
     return () => window.removeEventListener('pointerdown', handler);
   }, [insertMenu]);
-
-  // ─── Block management ─────────────────────────────────────────────────────
 
   const addBlockAt = (
     listType: 'ingredients' | 'instructions',
@@ -406,8 +388,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
     }
   };
 
-  // ─── Drag handlers ────────────────────────────────────────────────────────
-
   const handleDragPointerDown = (
     e: React.PointerEvent<HTMLButtonElement>,
     listType: 'ingredients' | 'instructions',
@@ -450,8 +430,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
     moveBlock(listType, sourceIdx, currentTargetIdx);
   };
 
-  // ─── Swipe-to-delete (mobile/touch only) ─────────────────────────────────
-
   const swipeState = useRef<Map<string, { startX: number; startY: number; committed: boolean }>>(new Map());
 
   const handleSwipePointerDown = (e: React.PointerEvent<HTMLDivElement>, id: string) => {
@@ -470,9 +448,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
     const dx = e.clientX - s.startX;
     const dy = Math.abs(e.clientY - s.startY);
     if (!s.committed) {
-      // Abort if mostly vertical
       if (dy > Math.abs(dx)) { swipeState.current.delete(id); return; }
-      // Confirm horizontal intent before capturing
       if (Math.abs(dx) > 8 && Math.abs(dx) > dy) {
         s.committed = true;
         e.currentTarget.setPointerCapture(e.pointerId);
@@ -515,8 +491,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
     innerRef.current.style.transform = 'translateX(0)';
     setTimeout(() => { if (innerRef.current) innerRef.current.style.transition = ''; }, 220);
   };
-
-  // ─── Image handling ───────────────────────────────────────────────────────
 
   const handleImageUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setImageUrl(e.target.value);
@@ -682,8 +656,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
     recipeImageInputRef.current?.click();
   };
 
-  // ─── Category handling ────────────────────────────────────────────────────
-
   const handleCategoryChange = (category: string) => {
     setSelectedCategories(prev =>
       prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]
@@ -713,8 +685,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
       toast.error('Failed to add category');
     }
   };
-
-  // ─── Form submission ──────────────────────────────────────────────────────
 
   const handleFormSubmit: SubmitHandler<Recipe> = async (data) => {
     if (!user) { toast.error('You must be logged in to save recipes'); return; }
@@ -780,8 +750,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
     el.style.height = 'auto';
     el.style.height = `${el.scrollHeight}px`;
   };
-
-  // ─── Block list renderer ──────────────────────────────────────────────────
 
   const renderIngredientRow = (block: IngredientBlock, idx: number, isMobileList: boolean) => {
     const listType = 'ingredients';
@@ -936,7 +904,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
       </div>
     );
 
-    // Indicator before the first row (both layouts)
     if (dragging?.listType === listType && dragging.targetIdx === 0 && isEffectiveDrop(0)) {
       if (isMobileList) {
         rows.push(mobileDropLine('drop-0'));
@@ -951,10 +918,8 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
 
     blocks.forEach((block, idx) => {
       if (!isMobileList && idx > 0) {
-        // Desktop: gap with + button and optional drop indicator
         rows.push(renderGap(listType, idx - 1, isEffectiveDrop(idx) && dragging?.targetIdx === idx));
       } else if (isMobileList && idx > 0 && dragging?.listType === listType && dragging.targetIdx === idx && isEffectiveDrop(idx)) {
-        // Mobile: drop indicator between rows
         rows.push(mobileDropLine(`drop-${idx}`));
       }
 
@@ -965,7 +930,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
       rows.push(rowNode);
     });
 
-    // Indicator after the last row (both layouts)
     if (dragging?.listType === listType && dragging.targetIdx === blocks.length && isEffectiveDrop(blocks.length)) {
       if (isMobileList) {
         rows.push(mobileDropLine('drop-last'));
@@ -981,11 +945,8 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
     return <div data-block-list className="py-1">{rows}</div>;
   };
 
-  // Counts for mobile tab labels
   const ingredientCount = ingredientBlocks.filter(b => b.type === 'item').length;
   const instructionCount = instructionBlocks.filter(b => b.type === 'item').length;
-
-  // ─── JSX ─────────────────────────────────────────────────────────────────
 
   return (
     <>
@@ -1022,7 +983,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
 
       <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5 overflow-x-hidden w-full">
 
-        {/* Scan banner */}
         {showScanFeature && (
           <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-4 sm:p-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -1051,7 +1011,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
           </div>
         )}
 
-        {/* Basics */}
         <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-4 sm:p-6 space-y-5">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-cast-iron">Basics</h2>
@@ -1105,9 +1064,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
           </div>
         </div>
 
-        {/* ── Mobile: single tabbed card (lg:hidden) ── */}
         <div className="lg:hidden w-full bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
-          {/* Segmented tab control */}
           <div className="p-4 pb-3">
             <div className="flex bg-stone-100 p-1 rounded-xl">
               <button
@@ -1136,7 +1093,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
             </p>
           </div>
 
-          {/* Active list */}
           <div className="px-3">
             {activeTab === 'ingredients'
               ? renderBlockList('ingredients', ingredientBlocks, true)
@@ -1144,7 +1100,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
             }
           </div>
 
-          {/* Bottom action bar */}
           <div className="px-4 pt-3 pb-4 border-t border-stone-100 flex gap-3 mt-1">
             <button
               type="button"
@@ -1166,10 +1121,8 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
           </div>
         </div>
 
-        {/* ── Desktop: two-column grid (hidden lg:grid) ── */}
         <div className="hidden lg:grid grid-cols-2 gap-5 items-start">
 
-          {/* Ingredients */}
           <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-4 sm:p-6">
             <h2 className="text-lg font-bold text-cast-iron mb-3">Ingredients</h2>
             <div className="px-1">
@@ -1193,7 +1146,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
             </div>
           </div>
 
-          {/* Instructions */}
           <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-4 sm:p-6">
             <h2 className="text-lg font-bold text-cast-iron mb-3">Instructions</h2>
             <div className="px-1">
@@ -1218,7 +1170,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
           </div>
         </div>
 
-        {/* More options */}
         <div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
           <button
             type="button"
@@ -1231,7 +1182,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
           {showMoreOptions && (
             <div className="px-4 sm:px-6 pb-6 pt-5 border-t border-stone-100 space-y-6">
 
-              {/* Image */}
               <div>
                 <label className="block text-sm font-medium text-cast-iron mb-3">Recipe image</label>
                 <input accept="image/*" className="hidden" type="file" ref={fileInputRef} onChange={handleFileChange} />
@@ -1270,7 +1220,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
                 <p className="text-xs text-steel/50 mt-2">Max file size: 5MB.</p>
               </div>
 
-              {/* Source URL */}
               <div>
                 <label htmlFor="sourceUrl" className="block text-sm font-medium text-cast-iron mb-1.5">Original source</label>
                 <input
@@ -1283,7 +1232,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
                 />
               </div>
 
-              {/* Categories */}
               <div>
                 <label className="block text-sm font-medium text-cast-iron mb-3">Categories</label>
                 {isLoadingCategories ? (
@@ -1323,7 +1271,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
           )}
         </div>
 
-        {/* Submit */}
         <button
           type="submit"
           className="w-full bg-light-green text-white hover:bg-green rounded-xl py-3.5 text-base font-semibold transition-colors disabled:opacity-50"
@@ -1335,8 +1282,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
     </>
   );
 }
-
-// ─── Row sub-components ───────────────────────────────────────────────────────
 
 interface DragProps {
   onDragPointerDown: (e: React.PointerEvent<HTMLButtonElement>) => void;
@@ -1351,11 +1296,9 @@ interface SwipeProps {
   onSwipePointerCancel: (id: string, innerRef: React.RefObject<HTMLDivElement>) => void;
 }
 
-// Ghost input class shared by ingredient fields
 const ghostInput = (extra = '') =>
   `bg-transparent border border-transparent hover:border-stone-200 focus:border-light-green focus:ring-2 focus:ring-light-green/20 rounded-[10px] outline-none transition-colors py-1.5 text-sm ${extra}`;
 
-// Drag handle button (shared)
 function DragHandle({ onPointerDown, onPointerMove, onPointerUp, alwaysVisible }: {
   onPointerDown: (e: React.PointerEvent<HTMLButtonElement>) => void;
   onPointerMove: (e: React.PointerEvent<HTMLButtonElement>) => void;
@@ -1384,7 +1327,6 @@ function DragHandle({ onPointerDown, onPointerMove, onPointerUp, alwaysVisible }
   );
 }
 
-// Mobile swipe wrapper
 function SwipeToDelete({ id, onDelete, children, swipeProps }: {
   id: string;
   onDelete: () => void;
@@ -1411,7 +1353,6 @@ function SwipeToDelete({ id, onDelete, children, swipeProps }: {
   );
 }
 
-// Section row (used for both ingredients and instructions, both mobile and desktop)
 function SectionRow({ block, idx, listType, isMobile, dragging, onUpdateLabel, onRemove, onDragPointerDown, onDragPointerMove, onDragPointerUp, onSwipePointerDown, onSwipePointerMove, onSwipePointerUp, onSwipePointerCancel }: {
   block: SectionBlock;
   idx: number;
@@ -1478,7 +1419,6 @@ function SectionRow({ block, idx, listType, isMobile, dragging, onUpdateLabel, o
         )}
         <div className="flex-1 h-px bg-stone-200" />
       </div>
-      {/* Delete (desktop only; mobile uses swipe) */}
       <button
         type="button"
         onClick={onRemove}
@@ -1499,7 +1439,7 @@ function SectionRow({ block, idx, listType, isMobile, dragging, onUpdateLabel, o
   return <div className="relative">{content}</div>;
 }
 
-// Ingredient item row
+function IngredientItemRowWrapper
 function IngredientItemRowWrapper({ block, isDragSource, isMobile, canRemove, onUpdate, onRemove, onDragPointerDown, onDragPointerMove, onDragPointerUp, onSwipePointerDown, onSwipePointerMove, onSwipePointerUp, onSwipePointerCancel }: {
   block: { type: 'item'; id: string; amount: string; unit: string; item: string };
   idx?: number;
@@ -1538,7 +1478,6 @@ function IngredientItemRowWrapper({ block, isDragSource, isMobile, canRemove, on
         value={block.item}
         onChange={(e) => onUpdate('item', e.target.value)}
       />
-      {/* Delete (desktop only) */}
       {canRemove && (
         <button
           type="button"
@@ -1561,7 +1500,7 @@ function IngredientItemRowWrapper({ block, isDragSource, isMobile, canRemove, on
   return <div className="relative">{content}</div>;
 }
 
-// Instruction item row
+function InstructionItemRowWrapper
 function InstructionItemRowWrapper({ block, stepNum, isDragSource, isMobile, canRemove, onUpdate, onRemove, onDragPointerDown, onDragPointerMove, onDragPointerUp, onSwipePointerDown, onSwipePointerMove, onSwipePointerUp, onSwipePointerCancel, adjustHeight }: {
   block: { type: 'item'; id: string; text: string };
   idx?: number;
@@ -1598,7 +1537,6 @@ function InstructionItemRowWrapper({ block, stepNum, isDragSource, isMobile, can
         }}
         onFocus={(e) => adjustHeight(e.target as HTMLTextAreaElement)}
       />
-      {/* Delete (desktop only) */}
       {canRemove && (
         <button
           type="button"

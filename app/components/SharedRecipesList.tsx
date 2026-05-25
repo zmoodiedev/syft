@@ -57,7 +57,6 @@ export default function SharedRecipesList() {
                             className="p-4 bg-gray-50 rounded-lg"
                         >
                             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                                {/* Recipe Image */}
                                 <div className="relative w-full sm:w-20 h-20 flex-shrink-0">
                                     {sharedRecipe.recipeImageUrl ? (
                                         <Image
@@ -80,7 +79,6 @@ export default function SharedRecipesList() {
                                     )}
                                 </div>
                                 
-                                {/* Recipe Info */}
                                 <div className="flex-grow">
                                     <h3 className="font-medium text-lg">{sharedRecipe.recipeName}</h3>
                                     <p className="text-sm text-gray-600 mb-2">

@@ -205,7 +205,6 @@ export default function RecipeDetail() {
     fetchRecipe();
   }, [slug, user, authLoading]);
 
-  // Build a frequency map of how often the current user has shared with each friend
   useEffect(() => {
     if (!user) return;
     getDocs(query(collection(db, 'sharedRecipes'), where('senderId', '==', user.uid)))
@@ -308,7 +307,6 @@ export default function RecipeDetail() {
     }
   };
 
-  // Auth required state
   if (needsAuthentication && !user && !loading) {
     return (
       <div className="min-h-screen bg-eggshell flex items-center justify-center">
@@ -334,12 +332,9 @@ export default function RecipeDetail() {
     );
   }
 
-  // Normalise ingredients: handle both old groupName format and new section-block format
   const normaliseIngredients = (raw: IngredientEntry[]): IngredientEntry[] => {
     if (!raw || raw.length === 0) return [];
-    // New format: has any entry with type === 'section'
     if (raw.some(e => e.type === 'section')) return raw;
-    // Also already typed as items
     if (raw.some(e => (e as Ingredient).type === 'item')) return raw;
     // Old format: Ingredient[] with optional groupName — reconstruct section blocks
     const result: IngredientEntry[] = [];
@@ -390,7 +385,6 @@ export default function RecipeDetail() {
     );
   };
 
-  // Normalise instructions: handle old groupName format, new block format, and legacy string[]
   const normaliseInstructions = (raw: InstructionEntry[] | string[]): InstructionEntry[] => {
     if (!raw || raw.length === 0) return [];
     if (typeof raw[0] === 'string') {
@@ -478,9 +472,7 @@ export default function RecipeDetail() {
         </div>
       ) : recipe ? (
         <>
-          {/* Hero */}
           <div className="relative w-full h-[50vh] min-h-[300px]">
-            {/* Private badge */}
             {isOwner && String(recipe.visibility ?? '').toLowerCase() === 'private' && (
               <div className="absolute top-4 right-4 z-20 text-white text-xs font-medium px-2.5 py-1.5 rounded-full flex items-center gap-1.5 bg-tomato">
                 <FiLock className="w-3 h-3" />
@@ -512,7 +504,6 @@ export default function RecipeDetail() {
 
             <div className="absolute bottom-0 left-0 right-0">
               <div className="container max-w-6xl mx-auto px-4 sm:px-6 pb-8">
-                {/* Categories */}
                 {recipe.categories && recipe.categories.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-3">
                     {[...new Set(recipe.categories)].map(cat => (
@@ -527,7 +518,6 @@ export default function RecipeDetail() {
                   {recipe.name}
                 </h1>
 
-                {/* Meta row */}
                 <div className={`flex flex-wrap gap-4 text-sm ${recipe.imageUrl ? 'text-white/80' : 'text-steel'}`}>
                   {recipe.prepTime && (
                     <div className="flex items-center gap-1.5">
@@ -549,7 +539,6 @@ export default function RecipeDetail() {
                   )}
                 </div>
 
-                {/* Attribution */}
                 {recipe.originalCreatorName && (
                   <p className="mt-2 text-white/60 text-xs">Saved from {recipe.originalCreatorName}</p>
                 )}
@@ -560,10 +549,8 @@ export default function RecipeDetail() {
             </div>
           </div>
 
-          {/* Content */}
           <div className="container max-w-6xl mx-auto px-4 sm:px-6 py-8 pb-20">
 
-            {/* Action bar */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-8">
               <Link
                 href="/recipes"
@@ -632,7 +619,6 @@ export default function RecipeDetail() {
                 </div>
             </div>
 
-            {/* Locked banner */}
             {isOwner && recipe.locked && (
               <div className="mb-6 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3.5">
                 <FiLock className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
@@ -651,7 +637,6 @@ export default function RecipeDetail() {
               </div>
             )}
 
-            {/* Source URL */}
             {recipe.sourceUrl && (
               <div className="mb-6">
                 <a
@@ -666,7 +651,6 @@ export default function RecipeDetail() {
               </div>
             )}
 
-            {/* Keep-screen-on toggle — mobile only */}
             {wakeLockSupported && (
               <div className="md:hidden flex justify-center mb-6">
                 <button
@@ -683,9 +667,7 @@ export default function RecipeDetail() {
               </div>
             )}
 
-            {/* Ingredients + Instructions */}
             <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-6">
-              {/* Ingredients */}
               <div className="bg-white rounded-3xl border border-stone-100 shadow-sm p-6">
                 <h2 className="text-lg font-bold text-cast-iron mb-5 pb-3 border-b border-stone-100">
                   Ingredients
@@ -693,7 +675,6 @@ export default function RecipeDetail() {
                 {renderIngredients(recipe.ingredients)}
               </div>
 
-              {/* Instructions */}
               <div className="bg-white rounded-3xl border border-stone-100 shadow-sm p-6">
                 <h2 className="text-lg font-bold text-cast-iron mb-5 pb-3 border-b border-stone-100">
                   Instructions
@@ -715,7 +696,6 @@ export default function RecipeDetail() {
         </div>
       )}
 
-      {/* Share Modal */}
       {isShareModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl p-5 sm:p-8 max-w-md w-full shadow-xl">

@@ -19,6 +19,10 @@ export interface UserProfile {
   subscriptionStatus?: string;       // Stripe subscription.status: 'active' | 'past_due' | 'canceled' | …
   subscriptionLapsedAt?: Date;       // Set when subscription.deleted fires; cleared on resubscribe
 
+  // Push notifications (optional — only set for users who have opted in)
+  pushNotificationsEnabled?: boolean;
+  pushSubscription?: string;         // JSON-serialized PushSubscription
+
   // Timestamps
   createdAt: Date;
   updatedAt: Date;

@@ -40,7 +40,6 @@ export default function ContactPage() {
     <div className="min-h-screen bg-eggshell">
       <div className="container mx-auto px-4 sm:px-6 pt-20 pb-24 md:pt-28 max-w-6xl">
 
-        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -60,7 +59,6 @@ export default function ContactPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-5 gap-6 items-start">
 
-          {/* Left — dark card with reasons */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -88,7 +86,6 @@ export default function ContactPage() {
             </p>
           </motion.div>
 
-          {/* Right — form */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}

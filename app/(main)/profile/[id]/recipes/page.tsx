@@ -122,7 +122,6 @@ export default function ProfileRecipesPage() {
         <div className="min-h-screen bg-eggshell">
             <div className="container mx-auto px-4 sm:px-6 py-10">
 
-                {/* Back link */}
                 <Link
                     href={`/profile/${id}`}
                     className="inline-flex items-center gap-1.5 text-sm font-medium text-steel hover:text-cast-iron transition-colors mb-6"
@@ -131,7 +130,6 @@ export default function ProfileRecipesPage() {
                     Back to profile
                 </Link>
 
-                {/* Who you're browsing — visual indicator */}
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4 mb-6 flex items-center gap-4">
                     <div className="h-10 w-10 rounded-full overflow-hidden flex-shrink-0 bg-light-green/10 flex items-center justify-center">
                         {profile?.photoURL ? (
@@ -156,7 +154,6 @@ export default function ProfileRecipesPage() {
                     </div>
                 </div>
 
-                {/* Search + view toggle */}
                 <div className="flex items-center gap-3 mb-4">
                     <div className="relative flex-1">
                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -192,7 +189,6 @@ export default function ProfileRecipesPage() {
                     </div>
                 </div>
 
-                {/* Category filters */}
                 {availableCategories.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-6">
                         {availableCategories.map(cat => (
@@ -222,7 +218,6 @@ export default function ProfileRecipesPage() {
                     </div>
                 )}
 
-                {/* Content */}
                 {loading ? (
                     <div className="flex justify-center py-24">
                         <div className="animate-spin rounded-full h-10 w-10 border-2 border-gray-200 border-t-light-green" />

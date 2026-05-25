@@ -23,7 +23,6 @@ export default function GlobalError({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        {/* Icon */}
         <div className="w-16 h-16 rounded-2xl bg-cast-iron flex items-center justify-center mx-auto mb-6">
           <span className="text-2xl select-none">🍳</span>
         </div>

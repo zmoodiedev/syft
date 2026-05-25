@@ -10,10 +10,6 @@ export const runtime = 'nodejs';
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-// ---------------------------------------------------------------------------
-// Claude fallback — called when cheerio parsing produces insufficient data
-// ---------------------------------------------------------------------------
-
 const RECIPE_TOOL: Anthropic.Tool = {
     name: 'extract_recipe',
     description: 'Extract structured recipe data from webpage text.',
@@ -52,11 +48,9 @@ function extractPageText($: ReturnType<typeof cheerio.load>): string {
         || $('meta[name="description"]').attr('content') || '';
     const metaImage = $('meta[property="og:image"]').attr('content') || '';
 
-    // Remove navigation, ads, comments, and other noise
     $('script, style, noscript, iframe, nav, footer, header, aside').remove();
     $('[class*="ad-"],[id*="ad-"],[class*="cookie"],[class*="popup"],[class*="modal"],[class*="newsletter"],[class*="sidebar"],[class*="comment"],[class*="social"],[class*="share-"]').remove();
 
-    // Prefer a focused recipe/article element over the full body
     let mainText = '';
     for (const sel of ['[itemtype*="Recipe"]', '[class*="recipe"]', 'article', 'main', '#content', '.content']) {
         const el = $(sel).first();
@@ -75,7 +69,7 @@ function extractPageText($: ReturnType<typeof cheerio.load>): string {
         .replace(/[ \t]{2,}/g, ' ')
         .replace(/\n{3,}/g, '\n\n')
         .trim()
-        .slice(0, 15000);          // well within Haiku's context window
+        .slice(0, 15000);
 }
 
 async function extractWithClaude($: ReturnType<typeof cheerio.load>, sourceUrl: string): Promise<Recipe> {
@@ -126,10 +120,6 @@ async function extractWithClaude($: ReturnType<typeof cheerio.load>, sourceUrl: 
         sourceUrl,
     };
 }
-
-// ---------------------------------------------------------------------------
-// SSRF guard
-// ---------------------------------------------------------------------------
 
 const MAX_RESPONSE_BYTES = 5 * 1024 * 1024; // 5 MB
 

@@ -122,7 +122,6 @@ export default function SignUpPage() {
     const [selectedPlan, setSelectedPlan]       = useState<PlanId>('monthly');
     const [currency, setCurrency]               = useDetectedCurrency();
 
-    // Step 2 form
     const [displayName, setDisplayName]         = useState('');
     const [email, setEmail]                     = useState('');
     const [password, setPassword]               = useState('');
@@ -286,17 +285,14 @@ export default function SignUpPage() {
         <div className="min-h-screen flex">
             <LeftPanel />
 
-            {/* Right panel — steps */}
             <div className="flex-1 bg-eggshell flex flex-col items-center justify-center p-6 md:p-10 overflow-y-auto">
 
-                {/* Mobile logo */}
                 <Link href="/" className="lg:hidden mb-8">
                     <Logo className="h-[36px] w-auto text-cast-iron" />
                 </Link>
 
                 <AnimatePresence mode="wait">
 
-                    {/* ── Step 1: Plan selection ── */}
                     {step === 1 && (
                         <motion.div
                             key="step1"
@@ -391,7 +387,6 @@ export default function SignUpPage() {
                         </motion.div>
                     )}
 
-                    {/* ── Step 2: Account creation ── */}
                     {step === 2 && (
                         <motion.div
                             key="step2"
@@ -482,7 +477,6 @@ export default function SignUpPage() {
                         </motion.div>
                     )}
 
-                    {/* ── Step 3: Payment ── */}
                     {step === 3 && (
                         <motion.div
                             key="step3"
@@ -552,7 +546,6 @@ export default function SignUpPage() {
                         </motion.div>
                     )}
 
-                    {/* ── Step 4: Verify email ── */}
                     {step === 4 && (
                         <motion.div
                             key="step4"

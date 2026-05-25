@@ -7,7 +7,6 @@ export default function DevIndicator() {
   const [isVisible, setIsVisible] = useState(false);
   
   useEffect(() => {
-    // Only show in client-side rendering and in development mode
     setIsVisible(isDev);
   }, []);
   

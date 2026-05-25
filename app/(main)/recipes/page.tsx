@@ -56,7 +56,6 @@ export default function RecipesPage() {
     const [drawerSelected, setDrawerSelected] = useState<string[]>([]);
     const loaderRef = useRef<HTMLDivElement>(null);
 
-    // Lock body scroll while drawer is open
     useEffect(() => {
         if (drawerOpen) document.body.style.overflow = 'hidden';
         else document.body.style.overflow = '';
@@ -117,7 +116,6 @@ export default function RecipesPage() {
 
         fetchRecipes();
 
-        // Load total count for limit banner (free users only)
         if (user) {
             getUserRecipeCount(user.uid).then(setTotalRecipeCount);
         }
@@ -162,7 +160,6 @@ export default function RecipesPage() {
         }
     }, [user, lastDoc, loadingMore, hasMore]);
 
-    // Infinite scroll
     useEffect(() => {
         const el = loaderRef.current;
         if (!el) return;
@@ -219,7 +216,6 @@ export default function RecipesPage() {
             <div className="min-h-screen bg-eggshell">
                 <div className="container mx-auto px-4 sm:px-6 py-10 md:py-14">
 
-                    {/* Header */}
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
                         <div className="flex items-center gap-3">
                             <h1 className="text-3xl font-bold text-cast-iron">
@@ -244,7 +240,6 @@ export default function RecipesPage() {
                             </Button>
                     </div>
 
-                    {/* Lapsed-subscriber banner — takes precedence over the limit nudge */}
                     {userProfile?.tier === 'Free' && userProfile?.subscriptionLapsedAt ? (
                         <LapsedBanner
                             lockedCount={recipes.filter(r => r.locked).length}
@@ -259,7 +254,6 @@ export default function RecipesPage() {
                         />
                     ) : null}
 
-                    {/* Search + view toggle */}
                     <div className="flex items-center gap-2 mb-4">
                         <div className="relative flex-1">
                             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -275,7 +269,6 @@ export default function RecipesPage() {
                                 className="w-full pl-11 pr-4 py-2.5 border border-stone-200 rounded-xl text-cast-iron text-sm placeholder:text-steel/40 focus:outline-none focus:ring-2 focus:ring-light-green/25 focus:border-light-green transition-colors bg-white"
                             />
                         </div>
-                        {/* Filter button — mobile only */}
                         {availableCategories.length > 0 && (
                             <button
                                 onClick={openDrawer}
@@ -315,10 +308,8 @@ export default function RecipesPage() {
                         </div>
                     </div>
 
-                    {/* Sidebar + content layout */}
                     <div className="flex gap-6 items-start">
 
-                        {/* Category sidebar — desktop */}
                         {(loading || availableCategories.length > 0) && (
                             <div className="hidden md:block w-64 flex-shrink-0">
                                 {loading ? (
@@ -380,10 +371,8 @@ export default function RecipesPage() {
                             </div>
                         )}
 
-                        {/* Main content */}
                         <div className="flex-1 min-w-0">
 
-                            {/* Active filter chips — mobile only, shown when filters are applied */}
                             {selectedCategories.length > 0 && (
                                 <div className="flex flex-wrap gap-2 mb-4 md:hidden">
                                     {selectedCategories.map(cat => (
@@ -485,7 +474,6 @@ export default function RecipesPage() {
                                         </div>
                                     )}
 
-                                    {/* Infinite scroll sentinel */}
                                     {hasMore && (
                                         <div ref={loaderRef} className="pt-2">
                                             {loadingMore && (
@@ -524,7 +512,6 @@ export default function RecipesPage() {
                     </div>
                 </div>
             </div>
-            {/* Mobile filter drawer */}
             <AnimatePresence>
                 {drawerOpen && (
                     <>
@@ -544,12 +531,10 @@ export default function RecipesPage() {
                             className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl z-50 md:hidden flex flex-col"
                             style={{ maxHeight: '80vh' }}
                         >
-                            {/* Handle */}
                             <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
                                 <div className="w-10 h-1 bg-stone-200 rounded-full" />
                             </div>
 
-                            {/* Header */}
                             <div className="flex items-center justify-between px-5 py-3 border-b border-stone-100 flex-shrink-0">
                                 <h3 className="text-base font-bold text-cast-iron">Filter by category</h3>
                                 {drawerSelected.length > 0 && (
@@ -562,7 +547,6 @@ export default function RecipesPage() {
                                 )}
                             </div>
 
-                            {/* Category list */}
                             <div className="overflow-y-auto flex-1 px-4 py-2">
                                 {availableCategories.map(category => {
                                     const checked = drawerSelected.includes(category);
@@ -594,7 +578,6 @@ export default function RecipesPage() {
                                 })}
                             </div>
 
-                            {/* Done button */}
                             <div className="px-5 py-4 border-t border-stone-100 flex-shrink-0">
                                 <Button onClick={applyDrawer} className="w-full justify-center">
                                     Done

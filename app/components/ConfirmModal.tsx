@@ -34,7 +34,6 @@ export default function ConfirmModal({
             transition={{ duration: 0.18 }}
             className="w-full bg-white rounded-3xl shadow-xl overflow-hidden"
           >
-          {/* Header */}
           <div className="px-6 pt-6 pb-5">
             <div className="flex items-start justify-between gap-3 mb-4">
               <div className="w-12 h-12 rounded-2xl bg-tomato/10 flex items-center justify-center flex-shrink-0">
@@ -54,7 +53,6 @@ export default function ConfirmModal({
             <p className="text-sm text-steel leading-relaxed">{message}</p>
           </div>
 
-          {/* Actions */}
           <div className="px-6 pb-6 flex gap-3">
             <button
               onClick={onClose}

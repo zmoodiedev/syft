@@ -77,7 +77,6 @@ export default function FriendsList() {
 
     return (
         <div className="bg-white rounded-lg shadow-md p-6">
-            {/* Tabs */}
             <div className="flex space-x-4 mb-6 border-b">
                 <button
                     className={`pb-2 px-1 ${
@@ -101,7 +100,6 @@ export default function FriendsList() {
                 </button>
             </div>
 
-            {/* Friends List */}
             {activeTab === 'friends' && (
                 <div className="space-y-4">
                     {friends.length === 0 ? (
@@ -149,10 +147,8 @@ export default function FriendsList() {
                 </div>
             )}
 
-            {/* Requests List */}
             {activeTab === 'requests' && (
                 <div className="space-y-6">
-                    {/* Incoming Requests */}
                     <div>
                         <h3 className="font-medium text-gray-700 mb-3">
                             Incoming Requests
@@ -199,7 +195,6 @@ export default function FriendsList() {
                         )}
                     </div>
 
-                    {/* Outgoing Requests */}
                     <div>
                         <h3 className="font-medium text-gray-700 mb-3">
                             Sent Requests
@@ -262,7 +257,6 @@ export default function FriendsList() {
                 </div>
             )}
 
-            {/* Confirmation Dialog */}
             <Dialog
                 open={isConfirming}
                 onClose={() => {

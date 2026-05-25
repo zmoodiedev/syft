@@ -33,7 +33,6 @@ export default function EditRecipe() {
             ...recipeSnap.data()
           } as Recipe;
 
-          // Check if the recipe belongs to the current user
           if (recipeData.userId !== user.uid) {
             setError('You do not have permission to edit this recipe');
             setLoading(false);
@@ -70,7 +69,6 @@ export default function EditRecipe() {
     try {
       const recipeRef = doc(db, 'recipes', recipeId);
       
-      // Create a copy of the recipe without the ID field for Firestore
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { id, ...recipeDataWithoutId } = {
         ...updatedRecipe,

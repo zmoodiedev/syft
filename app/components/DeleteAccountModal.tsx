@@ -60,7 +60,6 @@ export default function DeleteAccountModal({
             transition={{ duration: 0.18 }}
             className="w-full bg-white rounded-3xl shadow-xl overflow-hidden"
           >
-            {/* Header */}
             <div className="px-6 pt-6 pb-5">
               <div className="flex items-start justify-between gap-3 mb-4">
                 <div className="w-12 h-12 rounded-2xl bg-red-50 flex items-center justify-center flex-shrink-0">
@@ -92,7 +91,6 @@ export default function DeleteAccountModal({
                 ))}
               </ul>
 
-              {/* Active subscription warning */}
               {hasActiveSub && (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 mb-4">
                   <p className="text-sm font-semibold text-amber-800 mb-0.5">Active Pro subscription</p>
@@ -102,7 +100,6 @@ export default function DeleteAccountModal({
                 </div>
               )}
 
-              {/* Confirmation input */}
               <div>
                 <label className="block text-sm font-medium text-cast-iron mb-1.5">
                   Type <span className="font-mono font-bold">DELETE</span> to confirm
@@ -118,7 +115,6 @@ export default function DeleteAccountModal({
               </div>
             </div>
 
-            {/* Actions */}
             <div className="px-6 pb-6 flex gap-3">
               <button
                 onClick={handleClose}

@@ -19,13 +19,11 @@ const baloo_2 = Fraunces({
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_ID || '';
 
-// Viewport configuration
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
 };
 
-// Metadata for the entire site
 export const metadata: Metadata = {
   metadataBase: new URL('https://syft.cooking'),
   title: 'Syft - Recipe Manager',

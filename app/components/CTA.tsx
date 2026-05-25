@@ -47,7 +47,6 @@ export default function CTA() {
           </motion.div>
         </div>
 
-        {/* Wave: tomato → eggshell */}
         <svg
           viewBox="0 0 1440 80"
           fill="#FAF6EE"

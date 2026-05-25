@@ -37,7 +37,6 @@ export default function FAQ() {
       <div className="container mx-auto max-w-6xl">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start">
 
-          {/* Left column — sticky heading */}
           <motion.div
             className="lg:sticky lg:top-28"
             initial={{ opacity: 0, x: -20 }}
@@ -62,7 +61,6 @@ export default function FAQ() {
             </Link>
           </motion.div>
 
-          {/* Right column — question cards */}
           <motion.div
             className="space-y-3"
             initial={{ opacity: 0, x: 20 }}

@@ -93,7 +93,6 @@ export default function SharedRecipePage() {
 
     const load = async () => {
       try {
-        // Load shared recipe document
         const sharedSnap = await getDoc(doc(db, 'sharedRecipes', id));
         if (!sharedSnap.exists()) {
           setError('This shared recipe link is invalid or has expired.');
@@ -103,7 +102,6 @@ export default function SharedRecipePage() {
         const sharedData = sharedSnap.data() as SharedRecipeDoc;
         setShared(sharedData);
 
-        // Load the actual recipe
         const recipeSnap = await getDoc(doc(db, 'recipes', sharedData.recipeId));
         if (!recipeSnap.exists()) {
           setError('The recipe could not be found.');
@@ -157,7 +155,6 @@ export default function SharedRecipePage() {
   };
 
   const renderIngredients = (raw: IngredientEntry[]) => {
-    // Normalise: handle both old groupName format and new section-block format
     const entries: IngredientEntry[] = (() => {
       if (!raw || raw.length === 0) return [];
       if (raw.some(e => e.type === 'section')) return raw;
@@ -286,7 +283,6 @@ export default function SharedRecipePage() {
       />
       <div className="min-h-screen bg-eggshell">
 
-        {/* Hero image */}
         <div className="relative w-full h-[45vh] min-h-[260px]">
           {recipe.imageUrl ? (
             <>
@@ -309,7 +305,6 @@ export default function SharedRecipePage() {
             </div>
           )}
 
-          {/* Back link */}
           <div className="absolute top-4 left-4 z-10">
             <button
               onClick={() => router.back()}
@@ -319,7 +314,6 @@ export default function SharedRecipePage() {
             </button>
           </div>
 
-          {/* Shared by banner */}
           <div className="absolute bottom-0 left-0 right-0 px-6 pb-6">
             <div className="inline-flex items-center gap-2 bg-black/40 backdrop-blur-sm text-white text-xs font-medium px-3 py-1.5 rounded-full mb-3">
               <FiUser className="w-3.5 h-3.5" />
@@ -331,7 +325,6 @@ export default function SharedRecipePage() {
 
         <div className="container mx-auto px-4 sm:px-6 py-8 max-w-3xl">
 
-          {/* Meta row */}
           <div className="flex flex-wrap items-center gap-4 mb-8 text-sm text-steel">
             {recipe.prepTime && (
               <span className="flex items-center gap-1.5">
@@ -353,7 +346,6 @@ export default function SharedRecipePage() {
             )}
           </div>
 
-          {/* CTA banner */}
           <div className="bg-cast-iron rounded-2xl p-5 mb-8 flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <div className="flex-1">
               <p className="text-white font-semibold text-sm">
@@ -373,7 +365,6 @@ export default function SharedRecipePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Ingredients */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
               <h2 className="text-base font-bold text-cast-iron mb-5">Ingredients</h2>
               {recipe.ingredients?.length > 0
@@ -382,7 +373,6 @@ export default function SharedRecipePage() {
               }
             </div>
 
-            {/* Instructions */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
               <h2 className="text-base font-bold text-cast-iron mb-5">Instructions</h2>
               {recipe.instructions?.length > 0
@@ -392,7 +382,6 @@ export default function SharedRecipePage() {
             </div>
           </div>
 
-          {/* Bottom CTA for non-users */}
           {!user && (
             <div className="mt-10 text-center">
               <p className="text-sm text-steel mb-4">

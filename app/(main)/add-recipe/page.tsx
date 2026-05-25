@@ -22,8 +22,6 @@ const OPTIONS: { id: OptionId; icon: React.ElementType; title: string; subtitle:
     { id: 'manual', icon: FiFileText, title: 'Manual entry',      subtitle: 'Start from scratch'       },
 ];
 
-// Parse a TikTok caption into separate ingredients and instructions blocks.
-// Many recipe creators use headings like "Ingredients:" and "Steps:" in their captions.
 function parseTikTokCaption(text: string): { ingredients: string; instructions: string } {
     const normalized = text.replace(/\r\n/g, '\n').trim();
 
@@ -158,7 +156,6 @@ function AddRecipeContent() {
         <div className="min-h-screen bg-eggshell">
             <div className="container mx-auto px-4 sm:px-6 py-10 md:py-14">
 
-                {/* TikTok share banner */}
                 {shareData?.hasContent && (
                     <motion.div
                         initial={{ opacity: 0, y: -8 }}
@@ -180,7 +177,6 @@ function AddRecipeContent() {
                     </motion.div>
                 )}
 
-                {/* Page header */}
                 <div className="mb-6">
                     <h1 className="text-3xl font-bold text-cast-iron">Add a recipe</h1>
                     <p className="text-sm text-steel mt-1">Choose how you want to add it.</p>
@@ -188,7 +184,6 @@ function AddRecipeContent() {
 
                 <div className="flex flex-col lg:flex-row gap-6 items-start">
 
-                    {/* Sidebar */}
                     <div className={`w-full lg:w-64 xl:w-72 flex-shrink-0 lg:sticky lg:top-8 ${mobileView === 'form' ? 'hidden lg:block' : 'block'}`}>
                         <p className="text-xs font-semibold text-steel/50 uppercase tracking-wider mb-3 px-1">Method</p>
                         <div className="flex flex-col gap-1">
@@ -222,10 +217,8 @@ function AddRecipeContent() {
                         </div>
                     </div>
 
-                    {/* Form panel */}
                     <div className={`flex-1 min-w-0 w-full ${mobileView === 'options' ? 'hidden lg:block' : 'block'}`}>
 
-                        {/* Mobile back button */}
                         <button
                             onClick={() => setMobileView('options')}
                             className="lg:hidden mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-steel hover:text-cast-iron transition-colors"

@@ -24,7 +24,6 @@ export default function ImageUploader({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
-  // Check if the device is mobile
   useEffect(() => {
     const checkIfMobile = () => {
       const userAgent = typeof window.navigator === 'undefined' ? '' : navigator.userAgent;
@@ -48,7 +47,6 @@ export default function ImageUploader({
     if (!urlInput) return;
     
     try {
-      // Simple URL validation
       new URL(urlInput);
       setImageUrl(urlInput);
       setIsPreviewingImage(true);
@@ -65,19 +63,16 @@ export default function ImageUploader({
     try {
       setIsUploading(true);
       
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         alert('Please upload an image file');
         return;
       }
       
-      // Validate file size (7MB max)
       if (file.size > 7 * 1024 * 1024) {
         alert('File size should be less than 7MB');
         return;
       }
       
-      // Upload image to Cloudinary
       const token = user ? await user.getIdToken() : '';
       const uploadedImageUrl = await uploadImage(file, token, {
         width: 1200,

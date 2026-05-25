@@ -15,7 +15,6 @@ export default function RecipeStats({
   className = '',
   size = 'md'
 }: RecipeStatsProps) {
-  // Calculate total time (prep + cook)
   const totalTime = () => {
     if (!prepTime && !cookTime) return null;
     
@@ -24,7 +23,6 @@ export default function RecipeStats({
       prepTime || cookTime || '??'}`;
   };
   
-  // Size-specific classes
   const sizeClasses = {
     sm: 'h-4 w-4 mr-1 text-xs',
     md: 'h-5 w-5 mr-1 text-sm',
@@ -36,7 +34,6 @@ export default function RecipeStats({
   
   return (
     <div className={`flex flex-row space-x-4 ${className}`}>
-      {/* Servings Stat */}
       {servings && (
         <div className="flex items-center mb-2 md:mb-0">
           <svg xmlns="http://www.w3.org/2000/svg" className={iconClass} viewBox="0 0 20 20" fill="currentColor">
@@ -46,7 +43,6 @@ export default function RecipeStats({
         </div>
       )}
       
-      {/* Time Stat */}
       {totalTime() && (
         <div className="flex items-center mb-2 md:mb-0">
           <svg xmlns="http://www.w3.org/2000/svg" className={iconClass} viewBox="0 0 20 20" fill="currentColor">

@@ -75,7 +75,6 @@ export default function NotFound() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        {/* Hero */}
         <div className="relative h-36 bg-cast-iron flex items-center justify-center overflow-hidden">
           <span className="absolute text-[11rem] font-bold text-light-green/8 select-none leading-none pointer-events-none">
             404
@@ -88,10 +87,8 @@ export default function NotFound() {
           </div>
         </div>
 
-        {/* Recipe content */}
         <div className="p-7">
 
-          {/* Ingredients */}
           <div className="mb-7">
             <h2 className="text-xs font-semibold text-steel/50 uppercase tracking-widest mb-3 pb-2 border-b border-gray-100">
               Ingredients
@@ -112,7 +109,6 @@ export default function NotFound() {
             </ul>
           </div>
 
-          {/* Instructions */}
           <div className="mb-8">
             <h2 className="text-xs font-semibold text-steel/50 uppercase tracking-widest mb-3 pb-2 border-b border-gray-100">
               Instructions
@@ -135,7 +131,6 @@ export default function NotFound() {
             </ol>
           </div>
 
-          {/* CTA */}
           <motion.div
             className="text-center"
             initial={{ opacity: 0 }}

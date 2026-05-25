@@ -56,7 +56,6 @@ export default function AddFriend() {
             setSearchResults(prev => prev.filter(user => user.id !== userId));
         } catch (err) {
             console.error('Error sending friend request:', err);
-            // Show error message to user
             if (err instanceof Error) {
                 if (err.message === 'Friend request already sent') {
                     toast.error('Friend request already sent');
@@ -71,14 +70,12 @@ export default function AddFriend() {
         }
     };
 
-    // Don't render the component if user is not logged in
     if (!user) {
         return null;
     }
 
-    // Gate for Free tier
     if (userProfile?.tier === 'Free') {
-        return null; // Parent profile page already shows the upsell wall
+        return null;
     }
 
     return (

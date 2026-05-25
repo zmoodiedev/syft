@@ -317,7 +317,7 @@ export async function sendFriendRequest(targetUserId: string) {
       // Import notification functionality
       // We're doing this import here to avoid circular dependencies
       const { createFriendRequestNotification } = await import('@/app/lib/notification');
-      
+
       // Create the notification
       await createFriendRequestNotification(
         targetUserId,
@@ -330,7 +330,16 @@ export async function sendFriendRequest(targetUserId: string) {
       console.error('Error creating friend request notification:', notificationError);
       // Continue even if notification creation fails
     }
-    
+
+    // Fire-and-forget push notification
+    auth.currentUser?.getIdToken().then(token => {
+      fetch('/api/push/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ toUserId: targetUserId, type: 'friend_request', senderName: userName }),
+      }).catch(() => {});
+    }).catch(() => {});
+
     return true;
   } catch (error) {
     console.error('Error sending friend request:', error);

@@ -6,12 +6,12 @@ import { FriendsProvider } from '../context/FriendsContext';
 import { useEffect } from 'react';
 import { useFriends } from '../context/FriendsContext';
 import CookieConsent from './CookieConsent';
+import PushNotificationPrompt from './PushNotificationPrompt';
 
 function TitleNotifications() {
   const { sharedRecipes } = useFriends();
   
   useEffect(() => {
-    // Update the title when shared recipes change
     if (sharedRecipes.length > 0) {
       document.title = `(${sharedRecipes.length}) Syft - Recipe Manager`;
     } else {
@@ -31,6 +31,7 @@ function ClientLayoutContent({ children }: { children: React.ReactNode }) {
     <>
       <TitleNotifications />
       <CookieConsent />
+      <PushNotificationPrompt />
       <Toaster
         position="top-center"
         toastOptions={{

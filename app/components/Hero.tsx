@@ -15,15 +15,12 @@ export default function Hero() {
   return (
     <section className="relative overflow-hidden bg-cream min-h-[88vh] flex flex-col">
 
-      {/* SVG filter definitions — torn paper edge effect for buttons */}
       <svg className="absolute" style={{ width: 0, height: 0, overflow: 'hidden' }} aria-hidden="true">
         <defs>
-          {/* Primary button tear — seed 5 */}
           <filter id="torn-a" x="-12%" y="-20%" width="124%" height="140%">
             <feTurbulence type="fractalNoise" baseFrequency="0.038" numOctaves="4" seed="5" result="noise" />
             <feDisplacementMap in="SourceGraphic" in2="noise" scale="9" xChannelSelector="R" yChannelSelector="G" />
           </filter>
-          {/* Secondary button tear — seed 14, slightly different character */}
           <filter id="torn-b" x="-12%" y="-20%" width="124%" height="140%">
             <feTurbulence type="fractalNoise" baseFrequency="0.038" numOctaves="4" seed="14" result="noise" />
             <feDisplacementMap in="SourceGraphic" in2="noise" scale="9" xChannelSelector="R" yChannelSelector="G" />
@@ -43,11 +40,9 @@ export default function Hero() {
         <div className="absolute inset-0 bg-gradient-to-b from-cream/60 to-transparent" style={{ bottom: '70%' }} />
       </div>
 
-      {/* Main content */}
       <div className="flex-1 flex items-center px-6 pt-28 pb-16 relative z-10">
         <div className="container mx-auto max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
 
-          {/* Left — text */}
           <div className="text-center lg:text-left">
 
             <motion.div
@@ -85,7 +80,6 @@ export default function Hero() {
               transition={{ duration: 0.6, delay: 0.45 }}
               className="flex flex-col sm:flex-row gap-6 justify-center lg:justify-start"
             >
-              {/* Primary — Start for free / Add a recipe */}
               <Link href={user ? '/add-recipe' : '/login'} className="relative flex sm:inline-flex w-full sm:w-auto group">
                 <div
                   className="absolute inset-0 pointer-events-none skew-y-[-2deg] translate-x-[6px] translate-y-[5px] group-hover:translate-y-[-3px] transition-transform duration-200 ease-out"
@@ -94,7 +88,6 @@ export default function Hero() {
                 >
                   <div className="bg-tomato w-full h-full rounded-2xl" />
                 </div>
-                {/* Main background */}
                 <div
                   className="absolute inset-0 pointer-events-none skew-y-[-2deg]"
                   style={{ filter: 'url(#torn-a) drop-shadow(0 6px 18px rgba(212,136,58,0.4))' }}
@@ -107,7 +100,6 @@ export default function Hero() {
                 </span>
               </Link>
 
-              {/* PWA install — mobile/tablet only, hidden on desktop */}
               {canInstall && (
                 <div className="relative lg:hidden">
                   <button

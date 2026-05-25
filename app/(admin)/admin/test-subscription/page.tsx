@@ -177,7 +177,6 @@ function TestSubscriptionPanel() {
           ))}
         </div>
 
-        {/* Pages to check after each state */}
         <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-5 mb-6">
           <p className="text-sm font-semibold text-cast-iron mb-3">Pages to check</p>
           <div className="space-y-2">
@@ -200,7 +199,6 @@ function TestSubscriptionPanel() {
           </div>
         </div>
 
-        {/* Log */}
         {log.length > 0 && (
           <div className="bg-cast-iron rounded-2xl p-4">
             <p className="text-xs font-semibold text-white/50 mb-2 uppercase tracking-wider">Log</p>

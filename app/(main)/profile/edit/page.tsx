@@ -8,6 +8,7 @@ import { FiUser, FiSave, FiCamera, FiChevronLeft, FiCreditCard, FiExternalLink }
 import { useAuth } from '@/app/context/AuthContext';
 import { getUserProfile, updateUserProfile } from '@/app/lib/user';
 import { UserProfile } from '@/app/models/User';
+import { usePushNotification } from '@/app/hooks/usePushNotification';
 import Button from '@/app/components/Button';
 import DeleteAccountModal from '@/app/components/DeleteAccountModal';
 import { uploadImage, deleteImage } from '@/lib/cloudinary';
@@ -17,6 +18,8 @@ import Link from 'next/link';
 export default function EditProfilePage() {
   const { user } = useAuth();
   const router = useRouter();
+  const { isSupported, isSubscribed, subscribe, unsubscribe } = usePushNotification();
+  const [pushLoading, setPushLoading] = useState(false);
   const [profile, setProfile] = useState<Partial<UserProfile>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -26,7 +29,6 @@ export default function EditProfilePage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   
-  // Check if the device is mobile
   useEffect(() => {
     const checkIfMobile = () => {
       const userAgent = typeof window.navigator === 'undefined' ? '' : navigator.userAgent;
@@ -42,14 +44,12 @@ export default function EditProfilePage() {
     };
   }, []);
   
-  // Redirect if not logged in
   useEffect(() => {
     if (!user && !loading) {
       router.push('/login');
     }
   }, [user, loading, router]);
   
-  // Load user profile data
   useEffect(() => {
     const loadProfile = async () => {
       if (!user) return;
@@ -79,7 +79,6 @@ export default function EditProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
     
-    // Preview the image
     const reader = new FileReader();
     reader.onloadend = () => {
       setImagePreview(reader.result as string);
@@ -98,10 +97,8 @@ export default function EditProfilePage() {
     try {
       const updates = { ...profile };
       
-      // If there's a new image, upload it first
       if (imageFile) {
         const token = await user.getIdToken();
-        // Delete old image if exists
         if (profile.photoURL) {
           try {
             await deleteImage(profile.photoURL, token);
@@ -110,12 +107,10 @@ export default function EditProfilePage() {
           }
         }
 
-        // Upload new image
         const imageUrl = await uploadImage(imageFile, token);
         updates.photoURL = imageUrl;
       }
       
-      // Update the profile in Firestore
       await updateUserProfile(user.uid, updates);
       
       toast.success('Profile updated successfully');
@@ -158,7 +153,6 @@ export default function EditProfilePage() {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) throw new Error('Failed to delete account');
-    // Auth state clears automatically once the Firebase user is deleted
     router.push('/');
   };
 
@@ -189,7 +183,6 @@ export default function EditProfilePage() {
 
       <div className="container mx-auto px-6 max-w-2xl pt-10">
 
-        {/* Avatar preview */}
         <div className="mb-6">
           <div className="relative inline-block">
             <div className="h-28 w-28 rounded-2xl overflow-hidden bg-light-green shadow-sm">
@@ -231,7 +224,6 @@ export default function EditProfilePage() {
           <p className="mt-1.5 text-xs text-steel/50">JPG or PNG. Max 7MB.</p>
         </div>
 
-        {/* Back link + title */}
         <div className="mb-6">
           <button
             type="button"
@@ -247,7 +239,6 @@ export default function EditProfilePage() {
 
         <form onSubmit={handleSubmit} className="space-y-4 pb-10">
 
-          {/* Basic Information */}
           <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-5 space-y-4">
             <p className="text-xs font-semibold text-steel/50 uppercase tracking-wider">Basic Information</p>
             <div>
@@ -279,7 +270,6 @@ export default function EditProfilePage() {
             </div>
           </div>
 
-          {/* Privacy */}
           <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-5 space-y-4">
             <div>
               <p className="text-xs font-semibold text-steel/50 uppercase tracking-wider">Privacy</p>
@@ -317,7 +307,6 @@ export default function EditProfilePage() {
             </div>
           </div>
 
-          {/* Actions */}
           <div className="flex items-center justify-end gap-3 pt-2">
             <Button
               type="button"
@@ -348,7 +337,6 @@ export default function EditProfilePage() {
 
         </form>
 
-        {/* Subscription */}
         <div className="mt-4 mb-4 bg-white rounded-2xl border border-stone-100 shadow-sm p-5">
           <p className="text-xs font-semibold text-steel/50 uppercase tracking-wider mb-3">Subscription</p>
           <div className="flex items-center justify-between gap-4">
@@ -384,7 +372,49 @@ export default function EditProfilePage() {
           </div>
         </div>
 
-        {/* Danger Zone */}
+        {isSupported && (
+          <div className="mt-4 mb-4 bg-white rounded-2xl border border-stone-100 shadow-sm p-5">
+            <p className="text-xs font-semibold text-steel/50 uppercase tracking-wider mb-3">Notifications</p>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-cast-iron">Push notifications</p>
+                <p className="text-xs text-steel mt-0.5">
+                  {Notification.permission === 'denied'
+                    ? 'Blocked in browser settings. Enable from your browser to use this.'
+                    : isSubscribed
+                    ? 'You\'ll be notified for friend requests and shared recipes.'
+                    : 'Get notified for friend requests and shared recipes.'}
+                </p>
+              </div>
+              {Notification.permission !== 'denied' && (
+                <button
+                  type="button"
+                  disabled={pushLoading}
+                  onClick={async () => {
+                    setPushLoading(true);
+                    try {
+                      if (isSubscribed) {
+                        await unsubscribe();
+                      } else {
+                        await subscribe();
+                      }
+                    } finally {
+                      setPushLoading(false);
+                    }
+                  }}
+                  className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 ${
+                    isSubscribed
+                      ? 'text-steel border border-stone-200 hover:bg-stone-50'
+                      : 'text-white bg-light-green hover:bg-green'
+                  }`}
+                >
+                  {pushLoading ? '...' : isSubscribed ? 'Turn off' : 'Turn on'}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
         <div className="mt-8 mb-10 border border-red-100 rounded-2xl p-5">
           <p className="text-xs font-semibold text-red-400 uppercase tracking-wider mb-1">Danger Zone</p>
           <div className="flex items-center justify-between gap-4">
