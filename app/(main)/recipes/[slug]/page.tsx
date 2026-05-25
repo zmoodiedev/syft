@@ -357,7 +357,6 @@ export default function RecipeDetail() {
 
   const renderIngredients = (rawIngredients: IngredientEntry[]) => {
     const entries = normaliseIngredients(rawIngredients);
-    let stepCount = 0;
     return (
       <div className="space-y-1">
         {entries.map((entry, i) => {

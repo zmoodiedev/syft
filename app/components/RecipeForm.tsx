@@ -147,21 +147,6 @@ function getStepNumber(blocks: InstructionBlock[], upToIndex: number): number {
   return n;
 }
 
-// ─── DragHandleIcon ───────────────────────────────────────────────────────────
-
-function DragHandleIcon() {
-  return (
-    <svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor" className="block">
-      <circle cx="2.5" cy="2.5" r="1.5" />
-      <circle cx="7.5" cy="2.5" r="1.5" />
-      <circle cx="2.5" cy="8" r="1.5" />
-      <circle cx="7.5" cy="8" r="1.5" />
-      <circle cx="2.5" cy="13.5" r="1.5" />
-      <circle cx="7.5" cy="13.5" r="1.5" />
-    </svg>
-  );
-}
-
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function RecipeForm({ initialData, onSubmit, scanMode = false, submitButtonText }: RecipeFormProps) {
@@ -456,7 +441,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
     setDragging(prev => prev ? { ...prev, targetIdx } : null);
   };
 
-  const handleDragPointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+  const handleDragPointerUp = () => {
     const info = dragInfo.current;
     if (!info) return;
     const { listType, sourceIdx, currentTargetIdx } = info;
@@ -521,7 +506,6 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
   };
 
   const handleSwipePointerCancel = (
-    _e: React.PointerEvent<HTMLDivElement>,
     id: string,
     innerRef: React.RefObject<HTMLDivElement>
   ) => {
@@ -577,7 +561,7 @@ export default function RecipeForm({ initialData, onSubmit, scanMode = false, su
         const img = document.createElement('img');
         const imgLoaded = new Promise<void>((resolve, reject) => {
           img.onload = () => resolve();
-          img.onerror = (err) => reject(new Error('Failed to load image'));
+          img.onerror = () => reject(new Error('Failed to load image'));
         });
         img.src = URL.createObjectURL(file);
         await imgLoaded;
@@ -1364,7 +1348,7 @@ interface SwipeProps {
   onSwipePointerDown: (e: React.PointerEvent<HTMLDivElement>, id: string) => void;
   onSwipePointerMove: (e: React.PointerEvent<HTMLDivElement>, id: string, innerRef: React.RefObject<HTMLDivElement>) => void;
   onSwipePointerUp: (e: React.PointerEvent<HTMLDivElement>, id: string, innerRef: React.RefObject<HTMLDivElement>, onDelete: () => void) => void;
-  onSwipePointerCancel: (e: React.PointerEvent<HTMLDivElement>, id: string, innerRef: React.RefObject<HTMLDivElement>) => void;
+  onSwipePointerCancel: (id: string, innerRef: React.RefObject<HTMLDivElement>) => void;
 }
 
 // Ghost input class shared by ingredient fields
@@ -1419,7 +1403,7 @@ function SwipeToDelete({ id, onDelete, children, swipeProps }: {
         onPointerDown={(e) => swipeProps.onSwipePointerDown(e, id)}
         onPointerMove={(e) => swipeProps.onSwipePointerMove(e, id, innerRef as React.RefObject<HTMLDivElement>)}
         onPointerUp={(e) => swipeProps.onSwipePointerUp(e, id, innerRef as React.RefObject<HTMLDivElement>, onDelete)}
-        onPointerCancel={(e) => swipeProps.onSwipePointerCancel(e, id, innerRef as React.RefObject<HTMLDivElement>)}
+        onPointerCancel={() => swipeProps.onSwipePointerCancel(id, innerRef as React.RefObject<HTMLDivElement>)}
       >
         {children}
       </div>
@@ -1516,9 +1500,9 @@ function SectionRow({ block, idx, listType, isMobile, dragging, onUpdateLabel, o
 }
 
 // Ingredient item row
-function IngredientItemRowWrapper({ block, idx, isDragSource, isMobile, canRemove, onUpdate, onRemove, onDragPointerDown, onDragPointerMove, onDragPointerUp, onSwipePointerDown, onSwipePointerMove, onSwipePointerUp, onSwipePointerCancel }: {
+function IngredientItemRowWrapper({ block, isDragSource, isMobile, canRemove, onUpdate, onRemove, onDragPointerDown, onDragPointerMove, onDragPointerUp, onSwipePointerDown, onSwipePointerMove, onSwipePointerUp, onSwipePointerCancel }: {
   block: { type: 'item'; id: string; amount: string; unit: string; item: string };
-  idx: number;
+  idx?: number;
   isDragSource: boolean;
   isMobile: boolean;
   canRemove: boolean;
@@ -1578,9 +1562,9 @@ function IngredientItemRowWrapper({ block, idx, isDragSource, isMobile, canRemov
 }
 
 // Instruction item row
-function InstructionItemRowWrapper({ block, idx, stepNum, isDragSource, isMobile, canRemove, onUpdate, onRemove, onDragPointerDown, onDragPointerMove, onDragPointerUp, onSwipePointerDown, onSwipePointerMove, onSwipePointerUp, onSwipePointerCancel, adjustHeight }: {
+function InstructionItemRowWrapper({ block, stepNum, isDragSource, isMobile, canRemove, onUpdate, onRemove, onDragPointerDown, onDragPointerMove, onDragPointerUp, onSwipePointerDown, onSwipePointerMove, onSwipePointerUp, onSwipePointerCancel, adjustHeight }: {
   block: { type: 'item'; id: string; text: string };
-  idx: number;
+  idx?: number;
   stepNum: number;
   isDragSource: boolean;
   isMobile: boolean;

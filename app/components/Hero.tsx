@@ -31,7 +31,6 @@ export default function Hero() {
         </defs>
       </svg>
 
-      {/* Kitchen background image */}
       <div className="absolute inset-0 z-0">
         <Image
           src="/images/branding/kitchen.png"
@@ -40,9 +39,7 @@ export default function Hero() {
           className="object-cover object-right-bottom opacity-40"
           priority
         />
-        {/* Left-to-right fade: protects text column, lets Ollie breathe on the right */}
         <div className="absolute inset-0 bg-gradient-to-r from-cream via-cream/90 to-cream/10" />
-        {/* Subtle top fade so the nav blends in */}
         <div className="absolute inset-0 bg-gradient-to-b from-cream/60 to-transparent" style={{ bottom: '70%' }} />
       </div>
 
@@ -90,7 +87,6 @@ export default function Hero() {
             >
               {/* Primary — Start for free / Add a recipe */}
               <Link href={user ? '/add-recipe' : '/login'} className="relative flex sm:inline-flex w-full sm:w-auto group">
-                {/* Backing layer — translateY in Tailwind so group-hover can animate it */}
                 <div
                   className="absolute inset-0 pointer-events-none skew-y-[-2deg] translate-x-[6px] translate-y-[5px] group-hover:translate-y-[-3px] transition-transform duration-200 ease-out"
                   style={{ filter: 'url(#torn-b)', opacity: 0.38 }}
@@ -106,7 +102,6 @@ export default function Hero() {
                 >
                   <div className="bg-tomato w-full h-full rounded-2xl" />
                 </div>
-                {/* Text — crisp, no filter, no skew */}
                 <span className="relative z-10 text-white px-9 py-4 text-lg font-bold group-hover:opacity-90 transition-opacity w-full text-center sm:text-left">
                   {user ? 'Add a recipe →' : 'Start for free →'}
                 </span>
@@ -147,7 +142,6 @@ export default function Hero() {
 
           </div>
 
-          {/* Right — Ollie the chef mascot */}
           <motion.div
             className="flex justify-center items-end"
             initial={{ opacity: 0, scale: 0.92 }}
