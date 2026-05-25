@@ -1439,7 +1439,6 @@ function SectionRow({ block, idx, listType, isMobile, dragging, onUpdateLabel, o
   return <div className="relative">{content}</div>;
 }
 
-function IngredientItemRowWrapper
 function IngredientItemRowWrapper({ block, isDragSource, isMobile, canRemove, onUpdate, onRemove, onDragPointerDown, onDragPointerMove, onDragPointerUp, onSwipePointerDown, onSwipePointerMove, onSwipePointerUp, onSwipePointerCancel }: {
   block: { type: 'item'; id: string; amount: string; unit: string; item: string };
   idx?: number;
@@ -1500,7 +1499,6 @@ function IngredientItemRowWrapper({ block, isDragSource, isMobile, canRemove, on
   return <div className="relative">{content}</div>;
 }
 
-function InstructionItemRowWrapper
 function InstructionItemRowWrapper({ block, stepNum, isDragSource, isMobile, canRemove, onUpdate, onRemove, onDragPointerDown, onDragPointerMove, onDragPointerUp, onSwipePointerDown, onSwipePointerMove, onSwipePointerUp, onSwipePointerCancel, adjustHeight }: {
   block: { type: 'item'; id: string; text: string };
   idx?: number;
