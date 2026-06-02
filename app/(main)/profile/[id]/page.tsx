@@ -105,7 +105,7 @@ export default function ProfilePage() {
       try {
         let profileData: UserProfile | null = null;
         try {
-          if (isOwnProfile) {
+          if (user?.uid === id) {
             const raw = await getUserProfile(id as string);
             if (raw) profileData = raw as UserProfile;
           } else {
