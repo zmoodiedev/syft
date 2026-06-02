@@ -36,7 +36,7 @@ service cloud.firestore {
 
     // Friendships — only the two participants may read or delete; no updates
     match /friendships/{friendshipId} {
-      allow read: if isAuthenticated() && request.auth.uid in resource.data.userIds;
+      allow read: if isAuthenticated() && (resource == null || request.auth.uid in resource.data.userIds);
       allow create: if isAuthenticated() && request.auth.uid in request.resource.data.userIds;
       allow delete: if isAuthenticated() && request.auth.uid in resource.data.userIds;
     }
@@ -62,8 +62,7 @@ service cloud.firestore {
 
     // Recipes
     match /recipes/{recipeId} {
-      // Owner can always read; others can only read recipes explicitly marked public
-      allow read: if (isAuthenticated() && resource.data.userId == request.auth.uid) ||
+      allow read: if isAuthenticated() ||
         resource.data.get('visibility', 'public').lower() == 'public';
       allow create: if isAuthenticated() &&
         request.resource.data.userId == request.auth.uid;
