@@ -25,13 +25,16 @@ service cloud.firestore {
       );
       allow create: if isAuthenticated() &&
         request.resource.data.senderId == request.auth.uid;
-      allow update, delete: if isAuthenticated() && (
+      // Only receiver can update (accept/decline); either party can delete (cancel/dismiss)
+      allow update: if isAuthenticated() &&
+        resource.data.receiverId == request.auth.uid;
+      allow delete: if isAuthenticated() && (
         resource.data.senderId == request.auth.uid ||
         resource.data.receiverId == request.auth.uid
       );
     }
 
-    // Friendships — only the two participants may read/write
+    // Friendships — only the two participants may read or delete; no updates
     match /friendships/{friendshipId} {
       allow read: if isAuthenticated() && (
         resource.data.user1Id == request.auth.uid ||
@@ -41,7 +44,7 @@ service cloud.firestore {
         request.resource.data.user1Id == request.auth.uid ||
         request.resource.data.user2Id == request.auth.uid
       );
-      allow update, delete: if isAuthenticated() && (
+      allow delete: if isAuthenticated() && (
         resource.data.user1Id == request.auth.uid ||
         resource.data.user2Id == request.auth.uid
       );
@@ -49,7 +52,7 @@ service cloud.firestore {
 
     // Following
     match /userFollowing/{userId} {
-      allow read: if true;
+      allow read: if isAuthenticated();
       allow write: if isAuthenticated() && isOwner(userId);
     }
 
@@ -68,16 +71,17 @@ service cloud.firestore {
 
     // Recipes
     match /recipes/{recipeId} {
-      allow read: if isAuthenticated() ||
+      // Owner can always read; others can only read recipes explicitly marked public
+      allow read: if (isAuthenticated() && resource.data.userId == request.auth.uid) ||
         resource.data.get('visibility', 'public').lower() == 'public';
       allow create: if isAuthenticated() &&
         request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isAuthenticated() &&
-        resource.data.userId == request.auth.uid;
-      // Allow owners to update only the visibility field (ownership enforced)
+      // Owner can update, but userId field is immutable to prevent ownership transfer
       allow update: if isAuthenticated() &&
         resource.data.userId == request.auth.uid &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['visibility', 'updatedAt']);
+        request.resource.data.userId == resource.data.userId;
+      allow delete: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid;
     }
 
     // Shared recipes — only sender and receiver may read or modify
@@ -88,7 +92,13 @@ service cloud.firestore {
       );
       allow create: if isAuthenticated() &&
         request.resource.data.senderId == request.auth.uid;
-      allow update, delete: if isAuthenticated() && (
+      // Sender can update freely; receiver can only update the status field (accept/reject)
+      allow update: if isAuthenticated() && (
+        resource.data.senderId == request.auth.uid ||
+        (resource.data.receiverId == request.auth.uid &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']))
+      );
+      allow delete: if isAuthenticated() && (
         resource.data.senderId == request.auth.uid ||
         resource.data.receiverId == request.auth.uid
       );
