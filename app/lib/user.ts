@@ -107,14 +107,17 @@ export async function getUserRelationship(currentUserId: string, targetUserId: s
       // Continue with default value
     }
       
-    // Check for pending friend requests - wrapped in try/catch for permission errors
+    // Check for pending friend requests using a query (requests have auto-generated IDs)
     try {
-      const requestId = `${currentUserId}_${targetUserId}`;
-      const requestDoc = await getDoc(doc(db, 'friendRequests', requestId));
-      isPendingFriend = requestDoc.exists() && requestDoc.data().status === 'pending';
+      const snap = await getDocs(query(
+        collection(db, 'friendRequests'),
+        where('senderId', '==', currentUserId),
+        where('receiverId', '==', targetUserId),
+        where('status', '==', 'pending')
+      ));
+      isPendingFriend = !snap.empty;
     } catch (error) {
       console.error('Error checking friend request status:', error);
-      // Continue with default value
     }
     
     return {

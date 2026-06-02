@@ -202,15 +202,14 @@ export async function getUserStats(userId: string) {
       // Continue with zeroed count
     }
     
-    // Get friends count - Only attempt if user is authenticated
+    // Get friends count — only query when viewing own profile; rules deny querying another user's friendships
     let friendCount = 0;
     try {
       const currentUser = auth.currentUser;
-      if (currentUser) {
-        // We have permission to read friendships data when authenticated
+      if (currentUser && currentUser.uid === userId) {
         const friendshipsRef = collection(db, 'friendships');
         const friendshipsQuery = query(
-          friendshipsRef, 
+          friendshipsRef,
           where('userIds', 'array-contains', userId)
         );
         const friendshipsSnapshot = await getDocs(friendshipsQuery);

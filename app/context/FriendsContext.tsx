@@ -193,17 +193,17 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
         // Separate try-catch only for shared recipes to handle permissions issues gracefully
         try {
             console.log('Setting up shared recipes listener for user:', user.uid);
-            const sharedRecipesRef = collection(db, 'sharedRecipes');
-            
+            const sharedRecipesQuery = firestoreQuery(
+                collection(db, 'sharedRecipes'),
+                where('receiverId', '==', user.uid)
+            );
+
             const listener = onSnapshot(
-                sharedRecipesRef,
+                sharedRecipesQuery,
                 (snapshot) => {
                     console.log('Shared recipes snapshot received:', snapshot.size, 'total documents');
                     const recipes = snapshot.docs
-                        .filter(doc => {
-                            const data = doc.data();
-                            return data.receiverId === user.uid && data.status === 'pending';
-                        })
+                        .filter(doc => doc.data().status === 'pending')
                         .map(doc => {
                             const data = doc.data();
                             // Handle createdAt safely
@@ -257,14 +257,15 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
         
         const fetchSharedRecipes = async () => {
             try {
-                const recipesRef = collection(db, 'sharedRecipes');
-                const recipesSnapshot = await getDocs(recipesRef);
-                
+                const recipesSnapshot = await getDocs(
+                    firestoreQuery(
+                        collection(db, 'sharedRecipes'),
+                        where('receiverId', '==', user.uid)
+                    )
+                );
+
                 const recipes = recipesSnapshot.docs
-                    .filter(doc => {
-                        const data = doc.data();
-                        return data.receiverId === user.uid && data.status === 'pending';
-                    })
+                    .filter(doc => doc.data().status === 'pending')
                     .map(doc => {
                         const data = doc.data();
                         // Handle createdAt safely
