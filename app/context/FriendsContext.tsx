@@ -449,37 +449,17 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
     const acceptFriendRequest = async (requestId: string) => {
         if (!user) throw new Error('Must be logged in to accept friend requests');
 
-        const requestDoc = await getDoc(doc(db, 'friendRequests', requestId));
-        if (!requestDoc.exists()) throw new Error('Friend request not found');
-
-        const requestData = requestDoc.data() as DocumentData;
-        if (requestData.receiverId !== user.uid) throw new Error('Not authorized to accept this request');
-
-        // Create friendship document
-        const friendshipId = `${requestData.senderId}_${user.uid}`;
-        await setDoc(doc(db, 'friendships', friendshipId), {
-            userIds: [requestData.senderId, user.uid],
-            createdAt: serverTimestamp()
+        const token = await user.getIdToken();
+        const res = await fetch('/api/friends/accept', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ requestId }),
         });
 
-        // Create a notification for the request sender
-        try {
-            // Import dynamically to avoid circular dependencies
-            const { createFriendAcceptNotification } = await import('@/app/lib/notification');
-            
-            await createFriendAcceptNotification(
-                requestData.senderId,
-                user.uid,
-                user.displayName || null,
-                user.photoURL || null
-            );
-        } catch (notificationError) {
-            console.error('Error creating friend accept notification:', notificationError);
-            // Continue even if notification creation fails
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error || 'Failed to accept friend request');
         }
-
-        // Update request status
-        await deleteDoc(doc(db, 'friendRequests', requestId));
     };
 
     const rejectFriendRequest = async (requestId: string) => {

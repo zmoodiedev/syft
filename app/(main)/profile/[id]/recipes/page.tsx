@@ -5,7 +5,6 @@ import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '@/app/context/AuthContext';
-import { getUserProfile } from '@/app/lib/user';
 import { getUserRecipes } from '@/app/lib/recipe';
 import { UserProfile } from '@/app/models/User';
 import { Recipe } from '@/app/models/Recipe';
@@ -39,12 +38,12 @@ export default function ProfileRecipesPage() {
             if (!id) return;
             setLoading(true);
             try {
-                const [profileData, recipesResult] = await Promise.all([
-                    getUserProfile(id as string),
+                const [profileRes, recipesResult] = await Promise.all([
+                    fetch(`/api/users/${id}`),
                     getUserRecipes(id as string, PAGE_SIZE, undefined, user?.uid),
                 ]);
 
-                if (profileData) setProfile(profileData as UserProfile);
+                if (profileRes.ok) setProfile(await profileRes.json() as UserProfile);
 
                 setRecipes(recipesResult.recipes);
                 setLastDoc(recipesResult.lastVisible);

@@ -1,16 +1,14 @@
-import { db } from '@/lib/firebase';
-import { 
-  collection, 
-  doc, 
-  getDocs, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  query, 
-  where, 
-  orderBy, 
-  limit, 
-  serverTimestamp,
+import { db, auth } from '@/lib/firebase';
+import {
+  collection,
+  doc,
+  getDocs,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  orderBy,
+  limit,
   getDoc
 } from 'firebase/firestore';
 import { Notification } from '@/app/models/User';
@@ -22,9 +20,9 @@ export const subscribeToNotificationCount = (userId: string, listener: Notificat
   if (!notificationCountListeners.has(userId)) {
     notificationCountListeners.set(userId, new Set());
   }
-  
+
   notificationCountListeners.get(userId)?.add(listener);
-  
+
   return () => {
     const listeners = notificationCountListeners.get(userId);
     if (listeners) {
@@ -39,7 +37,7 @@ export const subscribeToNotificationCount = (userId: string, listener: Notificat
 const notifyCountChange = async (userId: string) => {
   const listeners = notificationCountListeners.get(userId);
   if (!listeners || listeners.size === 0) return;
-  
+
   try {
     const count = await getUnreadNotificationCount(userId);
     listeners.forEach(listener => listener(count));
@@ -48,9 +46,35 @@ const notifyCountChange = async (userId: string) => {
   }
 };
 
-/**
- * Get notifications for a user
- */
+async function createNotificationViaAPI(payload: {
+  userId: string;
+  type: string;
+  fromUserId: string;
+  fromUserName: string | null;
+  fromUserPhoto: string | null;
+  relatedItemId?: string;
+  relatedItemName?: string;
+  recipeId?: string;
+}): Promise<string | null> {
+  try {
+    const token = await auth.currentUser?.getIdToken();
+    if (!token) return null;
+
+    const res = await fetch('/api/notifications/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.id ?? null;
+  } catch (error) {
+    console.error('Error creating notification via API:', error);
+    return null;
+  }
+}
+
 export async function getUserNotifications(
   userId: string,
   limitCount: number = 20,
@@ -58,16 +82,14 @@ export async function getUserNotifications(
 ): Promise<Notification[]> {
   try {
     const notificationsRef = collection(db, 'notifications');
-    
-    // Create query with proper filters
+
     let notificationsQuery = query(
       notificationsRef,
       where('userId', '==', userId),
       orderBy('createdAt', 'desc'),
       limit(limitCount)
     );
-    
-    // Add unread filter if required
+
     if (onlyUnread) {
       notificationsQuery = query(
         notificationsRef,
@@ -77,11 +99,10 @@ export async function getUserNotifications(
         limit(limitCount)
       );
     }
-    
-    // Execute query
+
     const querySnapshot = await getDocs(notificationsQuery);
     const notifications: Notification[] = [];
-    
+
     querySnapshot.forEach((doc) => {
       const data = doc.data();
       notifications.push({
@@ -90,7 +111,7 @@ export async function getUserNotifications(
         createdAt: data.createdAt?.toDate() || new Date(),
       } as Notification);
     });
-    
+
     return notifications;
   } catch (error) {
     console.error('Error fetching notifications:', error);
@@ -98,9 +119,6 @@ export async function getUserNotifications(
   }
 }
 
-/**
- * Get unread notification count for a user
- */
 export async function getUnreadNotificationCount(userId: string): Promise<number> {
   try {
     const notificationsRef = collection(db, 'notifications');
@@ -109,7 +127,7 @@ export async function getUnreadNotificationCount(userId: string): Promise<number
       where('userId', '==', userId),
       where('isRead', '==', false)
     );
-    
+
     const querySnapshot = await getDocs(unreadQuery);
     return querySnapshot.size;
   } catch (error) {
@@ -118,31 +136,23 @@ export async function getUnreadNotificationCount(userId: string): Promise<number
   }
 }
 
-/**
- * Mark a notification as read
- */
 export const markNotificationAsRead = async (notificationId: string): Promise<boolean> => {
   try {
     const notificationRef = doc(db, 'notifications', notificationId);
-    
-    // Get the notification first to extract the user ID
+
     const notificationDoc = await getDoc(notificationRef);
     if (!notificationDoc.exists()) {
       return false;
     }
-    
+
     const userId = notificationDoc.data().toUserId;
-    
-    // Update the notification
-    await updateDoc(notificationRef, {
-      isRead: true
-    });
-    
-    // Notify listeners about the count change
+
+    await updateDoc(notificationRef, { isRead: true });
+
     if (userId) {
       await notifyCountChange(userId);
     }
-    
+
     return true;
   } catch (error) {
     console.error('Error marking notification as read:', error);
@@ -150,9 +160,6 @@ export const markNotificationAsRead = async (notificationId: string): Promise<bo
   }
 };
 
-/**
- * Mark all notifications for a user as read
- */
 export async function markAllNotificationsAsRead(userId: string): Promise<boolean> {
   try {
     const notificationsRef = collection(db, 'notifications');
@@ -161,14 +168,13 @@ export async function markAllNotificationsAsRead(userId: string): Promise<boolea
       where('userId', '==', userId),
       where('isRead', '==', false)
     );
-    
+
     const querySnapshot = await getDocs(unreadQuery);
-    
-    // Use Promise.all to batch update all notifications
-    const updatePromises = querySnapshot.docs.map(doc => 
+
+    const updatePromises = querySnapshot.docs.map(doc =>
       updateDoc(doc.ref, { isRead: true })
     );
-    
+
     await Promise.all(updatePromises);
     await notifyCountChange(userId);
     return true;
@@ -178,29 +184,23 @@ export async function markAllNotificationsAsRead(userId: string): Promise<boolea
   }
 }
 
-/**
- * Delete a notification
- */
 export const deleteNotification = async (notificationId: string): Promise<boolean> => {
   try {
     const notificationRef = doc(db, 'notifications', notificationId);
-    
-    // Get the notification first to extract the user ID
+
     const notificationDoc = await getDoc(notificationRef);
     let userId = null;
-    
+
     if (notificationDoc.exists()) {
       userId = notificationDoc.data().toUserId;
     }
-    
-    // Delete the notification
+
     await deleteDoc(notificationRef);
-    
-    // Notify listeners about the count change
+
     if (userId) {
       await notifyCountChange(userId);
     }
-    
+
     return true;
   } catch (error) {
     console.error('Error deleting notification:', error);
@@ -208,38 +208,15 @@ export const deleteNotification = async (notificationId: string): Promise<boolea
   }
 };
 
-/**
- * Create a follow notification
- */
 export async function createFollowNotification(
   toUserId: string,
   fromUserId: string,
   fromUserName: string | null,
   fromUserPhoto: string | null
 ): Promise<string | null> {
-  try {
-    const notificationsRef = collection(db, 'notifications');
-    const notification = {
-      userId: toUserId,
-      type: 'follow',
-      fromUserId,
-      fromUserName,
-      fromUserPhoto,
-      isRead: false,
-      createdAt: serverTimestamp()
-    };
-    
-    const docRef = await addDoc(notificationsRef, notification);
-    return docRef.id;
-  } catch (error) {
-    console.error('Error creating follow notification:', error);
-    return null;
-  }
+  return createNotificationViaAPI({ userId: toUserId, type: 'follow', fromUserId, fromUserName, fromUserPhoto });
 }
 
-/**
- * Create a friend request notification
- */
 export async function createFriendRequestNotification(
   toUserId: string,
   fromUserId: string,
@@ -247,60 +224,18 @@ export async function createFriendRequestNotification(
   fromUserPhoto: string | null,
   requestId: string
 ): Promise<string | null> {
-  try {
-    const notificationsRef = collection(db, 'notifications');
-    const notification = {
-      userId: toUserId,
-      type: 'friend_request',
-      fromUserId,
-      fromUserName,
-      fromUserPhoto,
-      relatedItemId: requestId,
-      isRead: false,
-      createdAt: serverTimestamp()
-    };
-    
-    const docRef = await addDoc(notificationsRef, notification);
-    return docRef.id;
-  } catch (error) {
-    console.error('Error creating friend request notification:', error);
-    return null;
-  }
+  return createNotificationViaAPI({ userId: toUserId, type: 'friend_request', fromUserId, fromUserName, fromUserPhoto, relatedItemId: requestId });
 }
 
-/**
- * Create a friend accept notification
- */
 export async function createFriendAcceptNotification(
   toUserId: string,
   fromUserId: string,
   fromUserName: string | null,
   fromUserPhoto: string | null
 ): Promise<string | null> {
-  try {
-    const notificationsRef = collection(db, 'notifications');
-    const notification = {
-      userId: toUserId,
-      type: 'friend_accept',
-      fromUserId,
-      fromUserName,
-      fromUserPhoto,
-      isRead: false,
-      createdAt: serverTimestamp()
-    };
-    
-    const docRef = await addDoc(notificationsRef, notification);
-    return docRef.id;
-  } catch (error) {
-    console.error('Error creating friend accept notification:', error);
-    return null;
-  }
+  return createNotificationViaAPI({ userId: toUserId, type: 'friend_accept', fromUserId, fromUserName, fromUserPhoto });
 }
 
-/**
- * Create a gated friend request notification (sent to the Free-tier receiver).
- * The accept action is locked behind Pro; this persists as a nudge to upgrade.
- */
 export async function createGatedFriendRequestNotification(
   toUserId: string,
   fromUserId: string,
@@ -308,58 +243,18 @@ export async function createGatedFriendRequestNotification(
   fromUserPhoto: string | null,
   requestId: string
 ): Promise<string | null> {
-  try {
-    const notificationsRef = collection(db, 'notifications');
-    const notification = {
-      userId: toUserId,
-      type: 'friend_request_gated',
-      fromUserId,
-      fromUserName,
-      fromUserPhoto,
-      relatedItemId: requestId,
-      isRead: false,
-      createdAt: serverTimestamp()
-    };
-    const docRef = await addDoc(notificationsRef, notification);
-    return docRef.id;
-  } catch (error) {
-    console.error('Error creating gated friend request notification:', error);
-    return null;
-  }
+  return createNotificationViaAPI({ userId: toUserId, type: 'friend_request_gated', fromUserId, fromUserName, fromUserPhoto, relatedItemId: requestId });
 }
 
-/**
- * Create a pending notification for the Pro-tier sender, explaining that the
- * receiver needs to upgrade before the request can be accepted.
- */
 export async function createFriendRequestPendingNotification(
   toUserId: string,
   receiverUserId: string,
   receiverName: string | null,
   receiverPhoto: string | null
 ): Promise<string | null> {
-  try {
-    const notificationsRef = collection(db, 'notifications');
-    const notification = {
-      userId: toUserId,
-      type: 'friend_request_pending',
-      fromUserId: receiverUserId,
-      fromUserName: receiverName,
-      fromUserPhoto: receiverPhoto,
-      isRead: false,
-      createdAt: serverTimestamp()
-    };
-    const docRef = await addDoc(notificationsRef, notification);
-    return docRef.id;
-  } catch (error) {
-    console.error('Error creating friend request pending notification:', error);
-    return null;
-  }
+  return createNotificationViaAPI({ userId: toUserId, type: 'friend_request_pending', fromUserId: receiverUserId, fromUserName: receiverName, fromUserPhoto: receiverPhoto });
 }
 
-/**
- * Create a recipe share notification
- */
 export async function createRecipeShareNotification(
   toUserId: string,
   fromUserId: string,
@@ -369,25 +264,5 @@ export async function createRecipeShareNotification(
   recipeName: string,
   sharedId: string
 ): Promise<string | null> {
-  try {
-    const notificationsRef = collection(db, 'notifications');
-    const notification = {
-      userId: toUserId,
-      type: 'recipe_share',
-      fromUserId,
-      fromUserName,
-      fromUserPhoto,
-      relatedItemId: sharedId,
-      relatedItemName: recipeName,
-      recipeId: recipeId,
-      isRead: false,
-      createdAt: serverTimestamp()
-    };
-    
-    const docRef = await addDoc(notificationsRef, notification);
-    return docRef.id;
-  } catch (error) {
-    console.error('Error creating recipe share notification:', error);
-    return null;
-  }
-} 
+  return createNotificationViaAPI({ userId: toUserId, type: 'recipe_share', fromUserId, fromUserName, fromUserPhoto, relatedItemId: sharedId, relatedItemName: recipeName, recipeId });
+}

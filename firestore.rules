@@ -11,9 +11,10 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
 
-    // Users
+    // Users — authenticated read prevents unauthenticated scraping of email/subscription fields.
+    // Public profile pages use /api/users/[id] (Admin SDK, safe fields only) instead of reading here.
     match /users/{userId} {
-      allow read: if true;
+      allow read: if isAuthenticated();
       allow write: if isAuthenticated() && isOwner(userId);
     }
 
@@ -34,10 +35,10 @@ service cloud.firestore {
       );
     }
 
-    // Friendships — only the two participants may read or delete; no updates
+    // Friendships — participants may read or delete; creation is server-only via /api/friends/accept
     match /friendships/{friendshipId} {
       allow read: if isAuthenticated() && request.auth.uid in resource.data.userIds;
-      allow create: if isAuthenticated() && request.auth.uid in request.resource.data.userIds;
+      allow create: if false;
       allow delete: if isAuthenticated() && request.auth.uid in resource.data.userIds;
     }
 
@@ -47,12 +48,12 @@ service cloud.firestore {
       allow write: if isAuthenticated() && isOwner(userId);
     }
 
-    // Notifications — users see and manage only their own
+    // Notifications — users see and manage only their own;
+    // creation is server-only via /api/notifications/create
     match /notifications/{notificationId} {
       allow read: if isAuthenticated() &&
         resource.data.userId == request.auth.uid;
-      allow create: if isAuthenticated() &&
-        request.resource.data.fromUserId == request.auth.uid;
+      allow create: if false;
       allow update: if isAuthenticated() &&
         resource.data.userId == request.auth.uid &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']);

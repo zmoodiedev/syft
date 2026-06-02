@@ -9,7 +9,7 @@ import RecipeCard from '@/app/components/RecipeCard';
 import { useAuth } from '@/app/context/AuthContext';
 import { useFriends } from '@/app/context/FriendsContext';
 import AddFriend from '@/app/components/AddFriend';
-import { getUserProfile, getUserRelationship, updateUserProfile, getProfileFriends, ProfileFriend } from '@/app/lib/user';
+import { getUserProfile, getUserRelationship, updateUserProfile, ProfileFriend } from '@/app/lib/user';
 import { getUserRecipes, getUserStats } from '@/app/lib/recipe';
 import { getUserNotifications, getUnreadNotificationCount, markAllNotificationsAsRead } from '@/app/lib/notification';
 import { UserProfile, UserRelationship, UserStats, Notification } from '@/app/models/User';
@@ -105,11 +105,14 @@ export default function ProfilePage() {
       try {
         let profileData: UserProfile | null = null;
         try {
-          const raw = await getUserProfile(id as string);
-          if (raw) {
-            profileData = raw as UserProfile;
-            setProfile(profileData);
+          if (isOwnProfile) {
+            const raw = await getUserProfile(id as string);
+            if (raw) profileData = raw as UserProfile;
+          } else {
+            const res = await fetch(`/api/users/${id}`);
+            if (res.ok) profileData = await res.json() as UserProfile;
           }
+          if (profileData) setProfile(profileData);
         } catch (profileError) {
           console.error('Error loading user profile:', profileError);
         }
@@ -154,8 +157,18 @@ export default function ProfilePage() {
         }
 
         if (!isOwnProfile) {
-          const pf = await getProfileFriends(id as string);
-          setProfileFriends(pf);
+          try {
+            const token = user ? await user.getIdToken().catch(() => null) : null;
+            const friendsRes = await fetch(`/api/users/${id}/friends`, {
+              headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+            if (friendsRes.ok) {
+              const { friends } = await friendsRes.json();
+              setProfileFriends(friends ?? []);
+            }
+          } catch {
+            // Friends list unavailable
+          }
         }
 
         try {
