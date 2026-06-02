@@ -82,20 +82,16 @@ export async function getUserRelationship(currentUserId: string, targetUserId: s
     let isFollowing = false;
     let isPendingFriend = false;
     
-    // Check if they are friends - wrapped in try/catch for permission errors
+    // Check if they are friends — query by currentUserId so the rule is always satisfied,
+    // then check client-side if targetUserId is also present. Avoids reading non-existent
+    // doc IDs, which would throw permission denied when resource.data is accessed.
     try {
-      const friendshipId1 = `${currentUserId}_${targetUserId}`;
-      const friendshipId2 = `${targetUserId}_${currentUserId}`;
-      
-      const [friendDoc1, friendDoc2] = await Promise.all([
-        getDoc(doc(db, 'friendships', friendshipId1)),
-        getDoc(doc(db, 'friendships', friendshipId2))
-      ]);
-      
-      isFriend = friendDoc1.exists() || friendDoc2.exists();
+      const snap = await getDocs(
+        query(collection(db, 'friendships'), where('userIds', 'array-contains', currentUserId))
+      );
+      isFriend = snap.docs.some(d => (d.data().userIds as string[]).includes(targetUserId));
     } catch (error) {
       console.error('Error checking friendship status:', error);
-      // Continue with default value
     }
     
     // Check if following - wrapped in try/catch for permission errors
